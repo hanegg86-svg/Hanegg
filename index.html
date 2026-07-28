@@ -340,12 +340,9 @@
 
                         <div id="speech-status" class="text-xs text-amber-700 h-4 font-medium"></div>
 
+                        <!-- ปรับปรุง: ตัดปุ่มฟังเสียงออก เหลือเพียงปุ่มตรวจคำตอบขนาดใหญ่เต็มแถว -->
                         <div class="flex gap-2">
-                            <button onclick="speakCurrentWordPrompt()" class="bg-sky-100 active:bg-sky-200 text-sky-800 font-bold py-3 px-4 rounded-xl min-h-[48px] flex items-center justify-center gap-1.5 border border-sky-300 shadow-sm transition">
-                                <i data-lucide="volume-2" class="w-5 h-5"></i>
-                                <span>ฟังเสียงอ่าน 🔊</span>
-                            </button>
-                            <button id="btn-check-answer" onclick="checkSpellingAnswer()" class="flex-1 bg-emerald-500 active:bg-emerald-600 text-white font-bold py-3 rounded-xl min-h-[48px] text-lg shadow">
+                            <button id="btn-check-answer" onclick="checkSpellingAnswer()" class="w-full bg-emerald-500 active:bg-emerald-600 text-white font-bold py-3.5 rounded-2xl min-h-[52px] text-lg shadow">
                                 ตรวจคำตอบ ✨
                             </button>
                         </div>
@@ -2178,7 +2175,7 @@
             nextCard(); 
         }
 
-        // ฟังเสียงอ่านออกเสียงคำเต็มบน Flashcard
+        // ฟังเสียงอ่านออกเสียงคำเต็มบน Flashcard (สำหรับคุณพ่อคุณแม่)
         function speakCurrentWord() {
             if (filteredVocabList.length === 0) return;
             const item = filteredVocabList[currentIndex];
@@ -2192,27 +2189,6 @@
                 utterance.lang = lang; 
                 utterance.rate = 0.85;
                 window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        // ฟังเสียงอ่านออกเสียงคำเต็มสำหรับเด็กๆ ในส่วนทำแบบฝึกหัดสะกดคำ
-        function speakCurrentWordPrompt() {
-            if (!filteredVocabList || filteredVocabList.length === 0) return;
-            const item = filteredVocabList[currentIndex];
-            
-            // ออกเสียงอ่านคำเต็ม
-            let rawText = subjectMode === 'EN' ? item.en : item.th;
-            let lang = subjectMode === 'EN' ? 'en-US' : 'th-TH';
-
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(rawText);
-                utterance.lang = lang; 
-                utterance.rate = 0.85;
-                utterance.pitch = 1.1; // ปรับเสียงสูงนิดหน่อยให้สดใสเหมาะกับเด็ก
-                window.speechSynthesis.speak(utterance);
-            } else {
-                alert("เบราว์เซอร์นี้ยังไม่รองรับระบบอ่านออกเสียงครับ");
             }
         }
 
