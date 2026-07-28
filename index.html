@@ -41,6 +41,28 @@
         @keyframes bounce-gentle { 0%, 100% { transform: translateY(-5%); } 50% { transform: translateY(0); } }
         .bounce-anim { animation: bounce-gentle 2s infinite; }
 
+        /* Style สำหรับกล่องแสดงตัวอักษรแยกช่อง */
+        .letter-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2.2rem;
+            height: 2.6rem;
+            padding: 0 4px;
+            margin: 2px;
+            background-color: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 0.5rem;
+            font-weight: 900;
+            font-size: 1.5rem;
+            color: #78350f;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .letter-space {
+            width: 0.8rem;
+            display: inline-block;
+        }
+
         /* iOS Splash Screen Overlay */
         #ios-splash-screen {
             position: fixed;
@@ -246,8 +268,8 @@
                                 <span id="card-emoji" class="text-7xl">🍎</span>
                                 <img id="card-img" class="w-full h-full object-cover hidden" alt="vocab image">
                             </div>
-                            <h2 id="card-word-main" class="text-3xl font-extrabold text-slate-800 mb-1">Apple</h2>
-                            <p class="text-xs text-slate-400">กดที่การ์ดเพื่อดูคำแปล</p>
+                            <div id="card-word-main" class="flex flex-wrap justify-center items-center gap-1 mb-1 max-w-full"></div>
+                            <p class="text-xs text-slate-400 mt-2">กดที่การ์ดเพื่อดูคำแปล</p>
                         </div>
                         <div class="card-back absolute inset-0 flex flex-col items-center justify-center p-4 bg-amber-100 rounded-3xl">
                             <div id="card-img-container-back" class="w-24 h-24 mb-2 flex items-center justify-center overflow-hidden rounded-2xl bg-white shadow-inner">
@@ -262,7 +284,7 @@
 
                 <div class="flex gap-3 mt-6 w-full max-w-sm justify-center">
                     <button onclick="speakCurrentWord()" class="flex-1 bg-sky-400 active:bg-sky-500 text-white font-bold py-3 px-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-base min-h-[52px]">
-                        <i data-lucide="volume-2"></i> ฟังเสียง
+                        <i data-lucide="volume-2"></i> ฟังเสียงสะกด
                     </button>
                     <button onclick="addStar()" class="bg-emerald-400 active:bg-emerald-500 text-white font-bold py-3 px-5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-base min-h-[52px]">
                         <i data-lucide="check-circle"></i> จำได้แล้ว!
@@ -290,7 +312,7 @@
                     </div>
                     
                     <h3 id="spell-card-title" class="text-2xl font-extrabold text-amber-900 mb-1">Apple</h3>
-                    <p id="spell-card-subtitle" class="text-sm font-medium text-amber-600 mb-4">[ แอบ-เปิ้ล ]</p>
+                    <div id="spell-card-subtitle" class="flex flex-wrap justify-center items-center gap-1 mb-4 w-full"></div>
 
                     <div class="w-full space-y-3">
                         <div class="relative">
@@ -305,7 +327,7 @@
                         <div class="flex gap-2">
                             <button onclick="speakCurrentWordPrompt()" class="bg-sky-100 active:bg-sky-200 text-sky-800 font-bold py-3 px-4 rounded-xl min-h-[48px] flex items-center justify-center gap-1.5 border border-sky-300 shadow-sm transition">
                                 <i data-lucide="volume-2" class="w-5 h-5"></i>
-                                <span>ฟังคำอ่าน 🔊</span>
+                                <span>ฟังเสียงสะกด 🔊</span>
                             </button>
                             <button id="btn-check-answer" onclick="checkSpellingAnswer()" class="flex-1 bg-emerald-500 active:bg-emerald-600 text-white font-bold py-3 rounded-xl min-h-[48px] text-lg shadow">
                                 ตรวจคำตอบ ✨
@@ -658,7 +680,7 @@
             }, 1200);
         });
 
-        // 🔥 ฝัง Firebase Config (แก้ไข URL เป็น asia-southeast1 เรียบร้อย)
+        // 🔥 ฝัง Firebase Config
         const embeddedFirebaseConfig = {
             apiKey: "AIzaSyAvubrOsRF8MHOs2XiRg3JaRjOF1tUk4uY",
             authDomain: "han-vocab.firebaseapp.com",
@@ -741,6 +763,15 @@
         function getTodayDateString() {
             const today = new Date();
             return `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+        }
+
+        // ฟังก์ชันช่วยเรนเดอร์คำศัพท์แยกเป็นตัวอักษรใส่ช่อง
+        function renderSpelledLetters(word) {
+            if (!word) return '';
+            return word.split('').map(char => {
+                if (char === ' ') return '<span class="letter-space"></span>';
+                return `<span class="letter-box">${char.toUpperCase()}</span>`;
+            }).join('');
         }
 
         function initData() {
@@ -1925,7 +1956,7 @@
 
         function updateCard() {
             if (!filteredVocabList || filteredVocabList.length === 0) {
-                document.getElementById("card-word-main").innerText = "ไม่มีคำศัพท์";
+                document.getElementById("card-word-main").innerHTML = "ไม่มีคำศัพท์";
                 document.getElementById("card-word-sub").innerText = "กรุณาเพิ่มคำศัพท์ใหม่";
                 document.getElementById("card-progress").innerText = "0 / 0";
                 return;
@@ -1950,12 +1981,13 @@
                 [emojiEl, emojiBackEl].forEach(el => { el.classList.remove("hidden"); el.innerText = item.emoji || "💡"; });
             }
 
+            // แสดงผลเป็นตัวอักษรแยกช่อง
             if (subjectMode === 'EN') {
-                document.getElementById("card-word-main").innerText = item.en;
+                document.getElementById("card-word-main").innerHTML = renderSpelledLetters(item.en);
                 document.getElementById("card-word-sub").innerText = item.th;
                 document.getElementById("card-phonetic").innerText = `[ ${item.phonetic || item.th} ]`;
             } else {
-                document.getElementById("card-word-main").innerText = item.th;
+                document.getElementById("card-word-main").innerHTML = renderSpelledLetters(item.th);
                 document.getElementById("card-word-sub").innerText = item.en !== item.th ? item.en : "คำภาษาไทย";
                 document.getElementById("card-phonetic").innerText = `[ ${item.phonetic || item.th} ]`;
             }
@@ -1972,13 +2004,14 @@
                 spellEmoji.innerText = item.emoji || "💡";
             }
 
+            // แสดงคำแปลคู่กับตัวอักษรแยกช่องในส่วนสะกดคำ
             if (subjectMode === 'EN') {
                 document.getElementById("spell-card-title").innerText = item.th;
-                document.getElementById("spell-card-subtitle").innerText = `สะกดคำภาษาอังกฤษ`;
+                document.getElementById("spell-card-subtitle").innerHTML = renderSpelledLetters(item.en);
                 document.getElementById("spell-input").placeholder = "พิมพ์คำศัพท์ภาษาอังกฤษ...";
             } else {
                 document.getElementById("spell-card-title").innerText = item.en;
-                document.getElementById("spell-card-subtitle").innerText = `สะกดคำภาษาไทย [ ${item.phonetic || item.th} ]`;
+                document.getElementById("spell-card-subtitle").innerHTML = renderSpelledLetters(item.th);
                 document.getElementById("spell-input").placeholder = "พิมพ์คำภาษาไทย...";
             }
 
@@ -2107,34 +2140,40 @@
             nextCard(); 
         }
 
+        // ฟังเสียงสะกดตัวอักษรเฉพาะบน Flashcard
         function speakCurrentWord() {
             if (filteredVocabList.length === 0) return;
             const item = filteredVocabList[currentIndex];
             
-            let text = isFlipped ? item.th : item.en;
+            let rawText = isFlipped ? item.th : item.en;
             let lang = isFlipped ? 'th-TH' : 'en-US';
+
+            let spelledText = rawText.replace(/[\s\-]/g, '').split('').join(' ');
 
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
+                const utterance = new SpeechSynthesisUtterance(spelledText);
                 utterance.lang = lang; 
-                utterance.rate = 0.8;
+                utterance.rate = 0.65;
                 window.speechSynthesis.speak(utterance);
             }
         }
 
+        // ฟังเสียงสะกดตัวอักษรเฉพาะในส่วนสะกดคำ
         function speakCurrentWordPrompt() {
             if (!filteredVocabList || filteredVocabList.length === 0) return;
             const item = filteredVocabList[currentIndex];
             
-            let text = subjectMode === 'EN' ? item.en : item.th;
+            let rawText = subjectMode === 'EN' ? item.en : item.th;
             let lang = subjectMode === 'EN' ? 'en-US' : 'th-TH';
+
+            let spelledText = rawText.replace(/[\s\-]/g, '').split('').join(' ');
 
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
+                const utterance = new SpeechSynthesisUtterance(spelledText);
                 utterance.lang = lang; 
-                utterance.rate = 0.75;
+                utterance.rate = 0.65;
                 utterance.pitch = 1.1;
                 window.speechSynthesis.speak(utterance);
             } else {
@@ -2400,7 +2439,6 @@
             startAILoading("Gemini กำลังสร้าง...");
 
             const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
-
 
             try {
                 const response = await fetch(textUrl, {
