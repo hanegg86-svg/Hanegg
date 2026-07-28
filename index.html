@@ -41,7 +41,7 @@
         @keyframes bounce-gentle { 0%, 100% { transform: translateY(-5%); } 50% { transform: translateY(0); } }
         .bounce-anim { animation: bounce-gentle 2s infinite; }
 
-        /* Style สำหรับกล่องแสดงตัวอักษรแยกช่อง */
+        /* Style สำหรับกล่องแสดงตัวอักษรแยกช่องบน Flashcard */
         .letter-box {
             display: inline-flex;
             align-items: center;
@@ -58,6 +58,21 @@
             color: #78350f;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+
+        /* Style สำหรับกล่องเส้นขีดช่องว่าง (Blank Fill) ในหน้าแบบฝึกหัด */
+        .blank-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.2rem;
+            height: 2.6rem;
+            margin: 3px;
+            border-bottom: 4px solid #f59e0b;
+            font-weight: 900;
+            font-size: 1.5rem;
+            color: #d97706;
+        }
+
         .letter-space {
             width: 0.8rem;
             display: inline-block;
@@ -312,6 +327,7 @@
                     </div>
                     
                     <h3 id="spell-card-title" class="text-2xl font-extrabold text-amber-900 mb-1">Apple</h3>
+                    <!-- แสดงเส้นขีดช่องว่างสำหรับเติมคำ -->
                     <div id="spell-card-subtitle" class="flex flex-wrap justify-center items-center gap-1 mb-4 w-full"></div>
 
                     <div class="w-full space-y-3">
@@ -765,12 +781,30 @@
             return `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
         }
 
-        // ฟังก์ชันช่วยเรนเดอร์คำศัพท์แยกเป็นตัวอักษรใส่ช่อง
+        // ฟังก์ชันสำหรับสุ่มลำดับอาร์เรย์ (Fisher-Yates Shuffle Algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // ฟังก์ชันเรนเดอร์คำศัพท์แบบครบตัวอักษร (ใช้ใน Flashcard)
         function renderSpelledLetters(word) {
             if (!word) return '';
             return word.split('').map(char => {
                 if (char === ' ') return '<span class="letter-space"></span>';
                 return `<span class="letter-box">${char.toUpperCase()}</span>`;
+            }).join('');
+        }
+
+        // ฟังก์ชันเรนเดอร์เป็นเส้นขีดช่องว่างสำหรับเติมคำ (ใช้ในหน้าแบบฝึกหัดสะกดคำ)
+        function renderBlankLetters(word) {
+            if (!word) return '';
+            return word.split('').map(char => {
+                if (char === ' ') return '<span class="letter-space"></span>';
+                return `<span class="blank-box"></span>`;
             }).join('');
         }
 
@@ -1282,6 +1316,8 @@
                     return item.assignees.includes(currentUser);
                 });
             }
+            // สุ่มคำศัพท์ทันทีหลังจากคัดกรองข้อมูลสำหรับผู้ใช้
+            shuffleArray(filteredVocabList);
         }
 
         function saveToStorage() { 
@@ -1981,7 +2017,7 @@
                 [emojiEl, emojiBackEl].forEach(el => { el.classList.remove("hidden"); el.innerText = item.emoji || "💡"; });
             }
 
-            // แสดงผลเป็นตัวอักษรแยกช่อง
+            // 1. หน้า Flashcard: แสดงตัวอักษรครบทุกช่องให้เด็กท่องจำ
             if (subjectMode === 'EN') {
                 document.getElementById("card-word-main").innerHTML = renderSpelledLetters(item.en);
                 document.getElementById("card-word-sub").innerText = item.th;
@@ -2004,14 +2040,14 @@
                 spellEmoji.innerText = item.emoji || "💡";
             }
 
-            // แสดงคำแปลคู่กับตัวอักษรแยกช่องในส่วนสะกดคำ
+            // 2. หน้าแบบฝึกหัดสะกดคำ: แสดงคำแปล และทำเป็นเส้นขีดช่องว่าง (Blank Fill) ให้เด็กๆ เติมคำตอบ
             if (subjectMode === 'EN') {
                 document.getElementById("spell-card-title").innerText = item.th;
-                document.getElementById("spell-card-subtitle").innerHTML = renderSpelledLetters(item.en);
+                document.getElementById("spell-card-subtitle").innerHTML = renderBlankLetters(item.en);
                 document.getElementById("spell-input").placeholder = "พิมพ์คำศัพท์ภาษาอังกฤษ...";
             } else {
                 document.getElementById("spell-card-title").innerText = item.en;
-                document.getElementById("spell-card-subtitle").innerHTML = renderSpelledLetters(item.th);
+                document.getElementById("spell-card-subtitle").innerHTML = renderBlankLetters(item.th);
                 document.getElementById("spell-input").placeholder = "พิมพ์คำภาษาไทย...";
             }
 
@@ -2048,7 +2084,9 @@
         function restartSession() {
             document.getElementById("completion-modal").classList.add("hidden");
             setCorrectAnswers = 0;
-            currentIndex = (currentIndex + 1) % filteredVocabList.length;
+            // สุ่มลำดับคำศัพท์ใหม่สำหรับชุดถัดไป
+            shuffleArray(filteredVocabList);
+            currentIndex = 0;
             updateCard();
         }
 
