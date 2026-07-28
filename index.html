@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kids Vocab Flashcards AI</title>
+    <title>Kids Vocab Flashcards AI & Bubble Lab</title>
 
     <!-- PWA Settings & Web App Configuration -->
     <link rel="manifest" href="manifest.json">
@@ -91,6 +91,66 @@
             opacity: 0;
             visibility: hidden;
         }
+
+        /* Styles for App 2 (Bubble Lab Math Game Integration) */
+        .math-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            border: 4px solid #fcd34d;
+        }
+        .target-bubble {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle at 30% 30%, #ffd700, #ff9800);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 16px rgba(255, 152, 0, 0.4);
+            animation: pulse 2s infinite ease-in-out;
+        }
+        .equation-box {
+            background: #f0f4f8;
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            min-height: 52px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            padding: 8px;
+            margin-bottom: 12px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #334155;
+        }
+        .item-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .item-btn:active { transform: scale(0.9); }
+        .num-btn { background: #3b82f6; color: white; }
+        .op-btn { background: #ec4899; color: white; }
     </style>
 </head>
 <body class="bg-amber-50 font-sans min-h-screen flex flex-col justify-between select-none touch-btn relative">
@@ -158,13 +218,16 @@
         </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="flex justify-center gap-2 mt-3 px-4">
-        <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition">
-            📋 ภารกิจจากพ่อแม่
+    <!-- Navigation Tabs (3 TABs) -->
+    <div class="flex justify-center gap-1.5 mt-3 px-2">
+        <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 max-w-[120px] py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-0.5 transition">
+            📋 ภารกิจ
         </button>
-        <button id="tab-vocab-btn" onclick="switchMainTab('vocab')" class="flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
+        <button id="tab-vocab-btn" onclick="switchMainTab('vocab')" class="flex-1 max-w-[120px] py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-0.5 transition">
             🎴 ท่องศัพท์
+        </button>
+        <button id="tab-math-btn" onclick="switchMainTab('math')" class="flex-1 max-w-[120px] py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-0.5 transition">
+            🧪 คิดเลขไว
         </button>
     </div>
 
@@ -341,6 +404,101 @@
             </div>
         </div>
 
+        <!-- SECTION 3: MATH BUBBLE LAB TAB (APP 2 INTEGRATED) -->
+        <div id="main-math-tab" class="w-full hidden flex-col items-center max-w-sm">
+            <!-- Math Daily Limit Banner -->
+            <div id="math-daily-limit-banner" class="w-full bg-red-100 border-2 border-red-300 rounded-2xl p-4 text-center mb-4 hidden shadow-md">
+                <div class="text-3xl mb-1">🛑</div>
+                <div class="font-extrabold text-red-900 text-base mb-1">เล่นเกมคิดเลขครบโควต้าวันนี้แล้ว!</div>
+                <div class="text-xs text-red-700 font-bold">พ่อนะ และ แม่พัด กำหนดให้เล่นวันละ <span id="math-limit-rounds-text">3</span> รอบ เพื่อพักสายตา พรุ่งนี้ค่อยมาเล่นใหม่นะ! 🎈</div>
+            </div>
+
+            <div class="math-card">
+                <!-- Screen 1: Select Difficulty -->
+                <div id="math-screen-menu">
+                    <div class="w-full flex justify-end mb-1">
+                        <span id="math-daily-quota-text" class="text-[10px] font-extrabold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-full">วันนี้ 0/3 รอบ</span>
+                    </div>
+                    <h2 class="text-xl font-extrabold text-slate-800 mb-1">🧪 Bubble Lab</h2>
+                    <p class="text-xs text-slate-500 mb-4">สุ่มโจทย์ 5 ข้อ ผสมตัวเลขท้าทายความไว!</p>
+                    
+                    <div class="flex flex-col gap-2.5">
+                        <button class="w-full p-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-md transition active:scale-95 text-left flex flex-col" onclick="startMathGame('easy')">
+                            <span>🟢 ระดับง่าย (ป.1) — รับ 🌟 1 ดาว</span>
+                            <span class="text-[11px] font-normal opacity-90">บวก / ลบ | มีเลขให้เลือก 4 ตัว</span>
+                        </button>
+
+                        <button class="w-full p-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-md transition active:scale-95 text-left flex flex-col" onclick="startMathGame('medium')">
+                            <span>🟡 ระดับปานกลาง (ป.3) — รับ 🌟 2 ดาว</span>
+                            <span class="text-[11px] font-normal opacity-90">บวก ลบ คูณ หาร | มีเลขให้เลือก 4 ตัว</span>
+                        </button>
+
+                        <button class="w-full p-3 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm shadow-md transition active:scale-95 text-left flex flex-col" onclick="startMathGame('hard')">
+                            <span>🔴 ระดับยาก (ป.3+) — รับ 🌟 3 ดาว</span>
+                            <span class="text-[11px] font-normal opacity-90">บวก ลบ คูณ หาร | มีเลขให้เลือก 5 ตัว</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Screen 2: Game Play -->
+                <div id="math-screen-game" style="display: none;">
+                    <div class="flex justify-between items-center mb-2">
+                        <button class="bg-slate-200 text-slate-700 px-2.5 py-1 rounded-xl text-xs font-bold" onclick="showMathMenu()">← เปลี่ยนระดับ</button>
+                        <button class="bg-amber-500 text-white px-2.5 py-1 rounded-xl text-xs font-bold shadow" onclick="handleMathSkip()">ข้ามข้อนี้ ➔</button>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-3 text-xs font-bold text-slate-600">
+                        <div class="bg-amber-50 px-3 py-1 rounded-full border border-amber-200">ข้อที่: <span id="math-question-count" class="text-amber-900 font-extrabold">1</span>/5</div>
+                        <div class="bg-amber-50 px-3 py-1 rounded-full border border-amber-200">คะแนน: <span id="math-score" class="text-emerald-600 font-extrabold">0</span></div>
+                    </div>
+
+                    <div class="my-2">
+                        <div class="text-[11px] text-slate-500 font-bold mb-1">เป้าหมายที่ต้องผสมให้ได้</div>
+                        <div class="target-bubble" id="math-target">0</div>
+                    </div>
+
+                    <!-- Equation Container -->
+                    <div class="equation-box" id="math-equation">
+                        <span class="text-slate-400 text-xs font-normal">แตะตัวเลขและเครื่องหมายเพื่อผสม</span>
+                    </div>
+
+                    <!-- Number Buttons -->
+                    <div class="text-[11px] text-slate-500 font-bold mb-1">ตัวเลขของคุณ:</div>
+                    <div class="flex justify-center gap-2 mb-2 flex-wrap" id="math-num-container"></div>
+
+                    <!-- Operator Buttons -->
+                    <div class="text-[11px] text-slate-500 font-bold mb-1">เครื่องหมาย:</div>
+                    <div class="flex justify-center gap-2 mb-2 flex-wrap" id="math-op-container"></div>
+
+                    <div class="text-xs font-bold h-5 mt-1" id="math-message"></div>
+
+                    <div class="flex gap-2 mt-3">
+                        <button class="flex-1 bg-slate-200 text-slate-700 py-2.5 rounded-xl font-bold text-xs" onclick="clearMathEquation()">ล้างใหม่</button>
+                        <button class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white py-2.5 rounded-xl font-bold text-xs shadow" onclick="checkMathAnswer()">ผสมเลขเลย!</button>
+                    </div>
+                </div>
+
+                <!-- Screen 3: Result Summary -->
+                <div id="math-screen-result" style="display: none;">
+                    <h3 class="text-lg font-black text-slate-800 mb-1">🏆 เก่งมาก! จบเกมแล้ว</h3>
+                    <p class="text-xs text-slate-500 mb-2">สรุปผลการเล่นคิดเลขไว</p>
+
+                    <div class="text-4xl my-2" id="math-stars-display">⭐⭐⭐</div>
+                    <div class="text-3xl font-black text-sky-600 my-1" id="math-final-score">0</div>
+                    <p class="text-xs text-slate-400 mb-3">คะแนนเต็ม 50 คะแนน</p>
+
+                    <div id="math-reward-earned-box" class="bg-amber-100 border border-amber-300 p-2.5 rounded-2xl mb-4 text-xs font-bold text-amber-900">
+                        🎉 ผ่านระดับ <span id="math-earned-diff-text">ง่าย</span> รับรางวัล <span id="math-earned-stars-text" class="text-amber-600 font-extrabold">🌟 1 ดาว</span> และ <span id="math-earned-exp-text" class="text-purple-600 font-extrabold">+100 EXP</span>!
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <button class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-xs shadow" onclick="startMathGame(currentMathMode)">🔄 เล่นอีกรอบ (ระดับเดิม)</button>
+                        <button class="w-full bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs" onclick="showMathMenu()">🏠 กลับเลือกระดับ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Floating Action Button -->
         <button id="btn-add-vocab" onclick="openAddModal()" class="fixed bottom-20 right-5 bg-gradient-to-r from-amber-500 to-amber-600 text-white p-4 rounded-full shadow-2xl z-40 border-2 border-white active:scale-95 transition-all flex items-center justify-center hidden">
             <i data-lucide="plus" class="w-7 h-7"></i>
@@ -450,7 +608,7 @@
         </div>
     </div>
 
-    <!-- Completion Modal -->
+    <!-- Vocab Completion Modal -->
     <div id="completion-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center border-4 border-amber-300 relative overflow-hidden">
             <div class="text-6xl mb-2 bounce-anim">🌟</div>
@@ -637,12 +795,24 @@
                     <span>🎮</span> ตั้งค่า Level & รูปตัวละคร (พูน/เพลิน)
                 </button>
 
+                <!-- Vocab Daily Limit Config -->
                 <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200">
                     <label class="block text-xs font-bold text-amber-900 mb-1">🛑 จำกัดสิทธิ์ท่องศัพท์ต่อวัน (รอบ/วัน)</label>
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="input-enable-daily-limit" class="w-4 h-4 text-amber-600 rounded">
                         <span class="text-xs font-bold text-slate-700">เปิดใช้งานจำกัดรอบ</span>
                         <input type="number" id="input-daily-limit-rounds" min="1" max="50" placeholder="3" class="w-16 border-2 border-amber-200 rounded-xl p-1 text-center font-bold text-sm">
+                        <span class="text-xs text-slate-600 font-bold">รอบ/วัน</span>
+                    </div>
+                </div>
+
+                <!-- Math Game Daily Limit Config -->
+                <div class="bg-purple-50 p-3 rounded-2xl border border-purple-200">
+                    <label class="block text-xs font-bold text-purple-900 mb-1">🧪 จำกัดสิทธิ์เล่นคิดเลขไวต่อวัน (รอบ/วัน)</label>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="input-enable-math-daily-limit" class="w-4 h-4 text-purple-600 rounded">
+                        <span class="text-xs font-bold text-slate-700">เปิดใช้งานจำกัดรอบ</span>
+                        <input type="number" id="input-math-daily-limit-rounds" min="1" max="50" placeholder="3" class="w-16 border-2 border-purple-200 rounded-xl p-1 text-center font-bold text-sm">
                         <span class="text-xs text-slate-600 font-bold">รอบ/วัน</span>
                     </div>
                 </div>
@@ -665,7 +835,6 @@
             </div>
         </div>
     </div>
-
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -742,6 +911,20 @@
         let dailyLimitRounds = 3;
         let todayPlayedRounds = 0;
 
+        // Math Game Specific Settings & State
+        let isMathDailyLimitEnabled = true;
+        let mathDailyLimitRounds = 3;
+        let mathTodayPlayedRounds = 0;
+
+        const TOTAL_MATH_QUESTIONS = 5;
+        let currentMathMode = 'easy';
+        let mathQuestionCount = 1;
+        let mathScore = 0;
+        let mathCurrentTarget = 0;
+        let mathCurrentNumbers = [];
+        let mathSelectedItems = [];
+        let mathUsedNumIndices = new Set();
+
         let maxLevel = 10;
         let currentChildEXP = 0;
         let currentChildLevel = 1;
@@ -805,6 +988,10 @@
 
             isDailyLimitEnabled = localStorage.getItem("enable_daily_limit") !== "false";
             dailyLimitRounds = parseInt(localStorage.getItem("daily_limit_rounds") || "3", 10);
+            
+            isMathDailyLimitEnabled = localStorage.getItem("enable_math_daily_limit") !== "false";
+            mathDailyLimitRounds = parseInt(localStorage.getItem("math_daily_limit_rounds") || "3", 10);
+
             maxLevel = parseInt(localStorage.getItem("max_level") || "10", 10);
             document.getElementById("input-max-level").value = maxLevel;
 
@@ -814,6 +1001,9 @@
             document.getElementById("input-enable-daily-limit").checked = isDailyLimitEnabled;
             document.getElementById("input-daily-limit-rounds").value = dailyLimitRounds;
 
+            document.getElementById("input-enable-math-daily-limit").checked = isMathDailyLimitEnabled;
+            document.getElementById("input-math-daily-limit-rounds").value = mathDailyLimitRounds;
+
             setTimeout(initFirebase, 300);
             openProfileModal();
         }
@@ -822,35 +1012,58 @@
             currentMainTab = tab;
             const vocabBtn = document.getElementById("tab-vocab-btn");
             const questBtn = document.getElementById("tab-quest-btn");
+            const mathBtn = document.getElementById("tab-math-btn");
+
             const vocabSec = document.getElementById("main-vocab-tab");
             const questSec = document.getElementById("main-quest-tab");
+            const mathSec = document.getElementById("main-math-tab");
+
             const footerNav = document.getElementById("footer-nav");
             const langSwitchBox = document.getElementById("lang-switch-box");
 
+            const activeClass = "flex-1 max-w-[120px] py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-0.5 transition";
+            const inactiveClass = "flex-1 max-w-[120px] py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-0.5 transition";
+
+            questBtn.className = tab === 'quest' ? activeClass : inactiveClass;
+            vocabBtn.className = tab === 'vocab' ? activeClass : inactiveClass;
+            mathBtn.className = tab === 'math' ? activeClass : inactiveClass;
+
             if (tab === 'quest') {
-                questBtn.className = "flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition";
-                vocabBtn.className = "flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition";
                 questSec.classList.remove("hidden");
                 questSec.classList.add("flex");
                 vocabSec.classList.add("hidden");
                 vocabSec.classList.remove("flex");
+                mathSec.classList.add("hidden");
+                mathSec.classList.remove("flex");
+
                 footerNav.classList.add("hidden");
                 langSwitchBox.classList.add("hidden");
                 renderParentQuestsList();
-            } else {
-                vocabBtn.className = "flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition";
-                questBtn.className = "flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition";
+            } else if (tab === 'vocab') {
                 vocabSec.classList.remove("hidden");
                 vocabSec.classList.add("flex");
                 questSec.classList.add("hidden");
                 questSec.classList.remove("flex");
-                langSwitchBox.classList.remove("hidden");
+                mathSec.classList.add("hidden");
+                mathSec.classList.remove("flex");
 
+                langSwitchBox.classList.remove("hidden");
                 if (isParentUser) {
                     footerNav.classList.remove("hidden");
                 } else {
                     footerNav.classList.add("hidden");
                 }
+            } else if (tab === 'math') {
+                mathSec.classList.remove("hidden");
+                mathSec.classList.add("flex");
+                questSec.classList.add("hidden");
+                questSec.classList.remove("flex");
+                vocabSec.classList.add("hidden");
+                vocabSec.classList.remove("flex");
+
+                footerNav.classList.add("hidden");
+                langSwitchBox.classList.add("hidden");
+                checkMathDailyLimitStatus();
             }
         }
 
@@ -899,6 +1112,12 @@
                     checkDailyLimitStatus();
                 });
 
+                onValue(ref(db, `user_math_daily_rounds/${currentUser}/${todayStr}`), (snapshot) => {
+                    const val = snapshot.val();
+                    mathTodayPlayedRounds = val !== null ? val : 0;
+                    checkMathDailyLimitStatus();
+                });
+
                 onValue(ref(db, `user_inventory/${currentUser}`), (snapshot) => {
                     const val = snapshot.val();
                     userInventoryList = [];
@@ -917,12 +1136,14 @@
 
                 const todayStr = getTodayDateString();
                 todayPlayedRounds = parseInt(localStorage.getItem(`daily_rounds_${currentUser}_${todayStr}`) || "0", 10);
+                mathTodayPlayedRounds = parseInt(localStorage.getItem(`math_daily_rounds_${currentUser}_${todayStr}`) || "0", 10);
                 
                 const localInv = localStorage.getItem(`user_inventory_${currentUser}`);
                 userInventoryList = localInv ? JSON.parse(localInv) : [];
                 renderUserInventory();
 
                 checkDailyLimitStatus();
+                checkMathDailyLimitStatus();
             }
         }
 
@@ -1098,6 +1319,21 @@
             checkDailyLimitStatus();
         }
 
+        function incrementMathTodayRounds() {
+            mathTodayPlayedRounds += 1;
+            const todayStr = getTodayDateString();
+
+            if (isFirebaseActive && currentUser) {
+                const { ref, set } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                set(ref(db, `user_math_daily_rounds/${currentUser}/${todayStr}`), mathTodayPlayedRounds);
+            } else {
+                localStorage.setItem(`math_daily_rounds_${currentUser}_${todayStr}`, mathTodayPlayedRounds.toString());
+            }
+
+            checkMathDailyLimitStatus();
+        }
+
         function checkDailyLimitStatus() {
             const limitBanner = document.getElementById("daily-limit-banner");
             const checkBtn = document.getElementById("btn-check-answer");
@@ -1124,6 +1360,30 @@
                 quotaText.classList.add("hidden");
                 checkBtn.disabled = false;
                 checkBtn.classList.remove("opacity-50", "cursor-not-allowed");
+            }
+        }
+
+        function checkMathDailyLimitStatus() {
+            const limitBanner = document.getElementById("math-daily-limit-banner");
+            const quotaText = document.getElementById("math-daily-quota-text");
+            const limitRoundsText = document.getElementById("math-limit-rounds-text");
+
+            if (limitRoundsText) limitRoundsText.innerText = mathDailyLimitRounds;
+
+            if (!isParentUser && isMathDailyLimitEnabled) {
+                if (quotaText) {
+                    quotaText.innerText = `วันนี้ ${mathTodayPlayedRounds}/${mathDailyLimitRounds} รอบ`;
+                    quotaText.classList.remove("hidden");
+                }
+
+                if (mathTodayPlayedRounds >= mathDailyLimitRounds) {
+                    if (limitBanner) limitBanner.classList.remove("hidden");
+                } else {
+                    if (limitBanner) limitBanner.classList.add("hidden");
+                }
+            } else {
+                if (limitBanner) limitBanner.classList.add("hidden");
+                if (quotaText) quotaText.classList.add("hidden");
             }
         }
 
@@ -1198,11 +1458,20 @@
                 onValue(dbRefDailyConfig, (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        isDailyLimitEnabled = data.enabled;
-                        dailyLimitRounds = data.rounds;
+                        isDailyLimitEnabled = data.enabled !== undefined ? data.enabled : true;
+                        dailyLimitRounds = data.rounds || 3;
+                        
+                        isMathDailyLimitEnabled = data.mathEnabled !== undefined ? data.mathEnabled : true;
+                        mathDailyLimitRounds = data.mathRounds || 3;
+
                         document.getElementById("input-enable-daily-limit").checked = isDailyLimitEnabled;
                         document.getElementById("input-daily-limit-rounds").value = dailyLimitRounds;
+
+                        document.getElementById("input-enable-math-daily-limit").checked = isMathDailyLimitEnabled;
+                        document.getElementById("input-math-daily-limit-rounds").value = mathDailyLimitRounds;
+
                         checkDailyLimitStatus();
+                        checkMathDailyLimitStatus();
                     }
                 });
 
@@ -1766,6 +2035,21 @@
                             `}
                         </div>
                     `;
+                } else if (n.type === 'COMPLETED_MATH') {
+                    return `
+                        <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 flex items-start gap-3 shadow-sm">
+                            <span class="text-3xl bg-white p-2 rounded-xl border border-amber-200">${avatars[n.user] || '👦'}</span>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center mb-0.5">
+                                    <span class="font-extrabold text-sm text-amber-950">${n.user} ผ่านคิดเลขไว! 🧪</span>
+                                    <span class="text-[10px] font-bold text-amber-700/60">${n.time}</span>
+                                </div>
+                                <p class="text-xs text-amber-900/80 font-medium">
+                                    ระดับ <span class="font-bold text-amber-700">${n.details.diffText}</span> | ได้รับดาว <span class="font-bold text-amber-600">🌟 ${n.details.starsReward} ดวง</span> | คะแนน <span class="font-bold text-emerald-600">${n.details.score}</span>
+                                </p>
+                            </div>
+                        </div>
+                    `;
                 } else {
                     return `
                         <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 flex items-start gap-3 shadow-sm">
@@ -1977,6 +2261,7 @@
             updateCard();
             renderParentQuestsList();
             renderNotifications();
+            checkMathDailyLimitStatus();
         }
 
         function updateCard() {
@@ -2173,6 +2458,263 @@
             }
         }
 
+        /* ----------------------------------------------------
+           APP 2 INTEGRATION LOGIC (MATH BUBBLE LAB)
+        ---------------------------------------------------- */
+        function startMathGame(mode) {
+            if (!isParentUser && isMathDailyLimitEnabled && mathTodayPlayedRounds >= mathDailyLimitRounds) {
+                alert(`🛑 เล่นครบ ${mathDailyLimitRounds} รอบประจำวันแล้วนะครับ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะ!`);
+                return;
+            }
+
+            currentMathMode = mode;
+            mathQuestionCount = 1;
+            mathScore = 0;
+            document.getElementById('math-score').innerText = mathScore;
+            
+            document.getElementById('math-screen-menu').style.display = 'none';
+            document.getElementById('math-screen-result').style.display = 'none';
+            document.getElementById('math-screen-game').style.display = 'block';
+
+            const opContainer = document.getElementById('math-op-container');
+            if (mode === 'easy') {
+                opContainer.innerHTML = `
+                    <button class="item-btn op-btn" onclick="addMathOperator('+')">+</button>
+                    <button class="item-btn op-btn" onclick="addMathOperator('-')">-</button>
+                `;
+            } else {
+                opContainer.innerHTML = `
+                    <button class="item-btn op-btn" onclick="addMathOperator('+')">+</button>
+                    <button class="item-btn op-btn" onclick="addMathOperator('-')">-</button>
+                    <button class="item-btn op-btn" onclick="addMathOperator('×')">×</button>
+                    <button class="item-btn op-btn" onclick="addMathOperator('÷')">÷</button>
+                `;
+            }
+
+            loadMathQuestion();
+        }
+
+        function showMathMenu() {
+            document.getElementById('math-screen-menu').style.display = 'block';
+            document.getElementById('math-screen-game').style.display = 'none';
+            document.getElementById('math-screen-result').style.display = 'none';
+            checkMathDailyLimitStatus();
+        }
+
+        function generateMathProblem(mode) {
+            let numCount = (mode === 'easy' || mode === 'medium') ? 4 : 5;
+            let ops = (mode === 'easy') ? ['+', '-'] : ['+', '-', '*', '/'];
+            
+            let numbers = [];
+            let target = 0;
+            let isValid = false;
+
+            while (!isValid) {
+                numbers = [];
+                for (let i = 0; i < numCount; i++) {
+                    let maxNum = (mode === 'easy') ? 15 : 10;
+                    numbers.push(Math.floor(Math.random() * maxNum) + 1);
+                }
+
+                let countToUse = Math.floor(Math.random() * 2) + 2;
+                let exprNumbers = [...numbers].sort(() => Math.random() - 0.5).slice(0, countToUse);
+                
+                let currentVal = exprNumbers[0];
+
+                for (let i = 1; i < exprNumbers.length; i++) {
+                    let op = ops[Math.floor(Math.random() * ops.length)];
+                    let nextNum = exprNumbers[i];
+
+                    if (op === '+') {
+                        currentVal += nextNum;
+                    } else if (op === '-') {
+                        if (currentVal - nextNum > 0) {
+                            currentVal -= nextNum;
+                        }
+                    } else if (op === '*') {
+                        currentVal *= nextNum;
+                    } else if (op === '/') {
+                        if (currentVal % nextNum === 0) {
+                            currentVal /= nextNum;
+                        }
+                    }
+                }
+
+                if (currentVal > 0 && currentVal <= 100 && Number.isInteger(currentVal)) {
+                    target = currentVal;
+                    isValid = true;
+                }
+            }
+
+            numbers.sort(() => Math.random() - 0.5);
+            return { target, numbers };
+        }
+
+        function loadMathQuestion() {
+            mathSelectedItems = [];
+            mathUsedNumIndices.clear();
+            
+            const problem = generateMathProblem(currentMathMode);
+            mathCurrentTarget = problem.target;
+            mathCurrentNumbers = problem.numbers;
+
+            document.getElementById('math-question-count').innerText = mathQuestionCount;
+            document.getElementById('math-target').innerText = mathCurrentTarget;
+            document.getElementById('math-message').innerText = '';
+            
+            const numContainer = document.getElementById('math-num-container');
+            numContainer.innerHTML = '';
+            mathCurrentNumbers.forEach((num, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'item-btn num-btn';
+                btn.innerText = num;
+                btn.id = `math-num-btn-${index}`;
+                btn.onclick = () => addMathNumber(num, index);
+                numContainer.appendChild(btn);
+            });
+
+            updateMathEquationUI();
+        }
+
+        function handleMathSkip() {
+            proceedMathNext();
+        }
+
+        function proceedMathNext() {
+            if (mathQuestionCount < TOTAL_MATH_QUESTIONS) {
+                mathQuestionCount++;
+                loadMathQuestion();
+            } else {
+                showMathResultScreen();
+            }
+        }
+
+        function showMathResultScreen() {
+            document.getElementById('math-screen-game').style.display = 'none';
+            document.getElementById('math-screen-result').style.display = 'block';
+            
+            document.getElementById('math-final-score').innerText = mathScore;
+
+            const starsEl = document.getElementById('math-stars-display');
+            if (mathScore >= 50) {
+                starsEl.innerText = '⭐⭐⭐';
+            } else if (mathScore >= 30) {
+                starsEl.innerText = '⭐⭐';
+            } else if (mathScore >= 10) {
+                starsEl.innerText = '⭐';
+            } else {
+                starsEl.innerText = '🌧️';
+            }
+
+            // Award Stars & EXP Based on Difficulty Rules
+            let starReward = 0;
+            let diffText = 'ง่าย';
+            if (currentMathMode === 'easy') {
+                starReward = 1;
+                diffText = 'ง่าย';
+            } else if (currentMathMode === 'medium') {
+                starReward = 2;
+                diffText = 'ปานกลาง';
+            } else if (currentMathMode === 'hard') {
+                starReward = 3;
+                diffText = 'ยาก';
+            }
+
+            document.getElementById('math-earned-diff-text').innerText = diffText;
+            document.getElementById('math-earned-stars-text').innerText = `🌟 ${starReward} ดาว`;
+
+            // Give Reward
+            totalStars += starReward;
+            saveUserStars();
+            addEXPToUser(100);
+            incrementMathTodayRounds();
+
+            sendInAppNotification('COMPLETED_MATH', {
+                diffText: diffText,
+                starsReward: starReward,
+                score: mathScore
+            });
+        }
+
+        function addMathNumber(num, index) {
+            if (mathUsedNumIndices.has(index)) return;
+            
+            const lastItem = mathSelectedItems[mathSelectedItems.length - 1];
+            if (lastItem && lastItem.type === 'num') return;
+
+            mathSelectedItems.push({ type: 'num', val: num, index: index });
+            mathUsedNumIndices.add(index);
+            document.getElementById(`math-num-btn-${index}`).style.opacity = '0.3';
+            updateMathEquationUI();
+        }
+
+        function addMathOperator(op) {
+            if (mathSelectedItems.length === 0) return;
+            
+            const lastItem = mathSelectedItems[mathSelectedItems.length - 1];
+            if (lastItem && lastItem.type === 'op') return;
+
+            mathSelectedItems.push({ type: 'op', val: op });
+            updateMathEquationUI();
+        }
+
+        function clearMathEquation() {
+            mathSelectedItems = [];
+            mathUsedNumIndices.clear();
+            
+            mathCurrentNumbers.forEach((_, index) => {
+                const btn = document.getElementById(`math-num-btn-${index}`);
+                if (btn) btn.style.opacity = '1';
+            });
+
+            document.getElementById('math-message').innerText = '';
+            updateMathEquationUI();
+        }
+
+        function updateMathEquationUI() {
+            const eqBox = document.getElementById('math-equation');
+            if (mathSelectedItems.length === 0) {
+                eqBox.innerHTML = '<span class="text-slate-400 text-xs font-normal">แตะตัวเลขและเครื่องหมายเพื่อผสม</span>';
+                return;
+            }
+
+            eqBox.innerHTML = mathSelectedItems.map(item => item.val).join(' ');
+        }
+
+        function checkMathAnswer() {
+            if (mathSelectedItems.length === 0) return;
+            
+            let expr = mathSelectedItems.map(item => {
+                if (item.val === '×') return '*';
+                if (item.val === '÷') return '/';
+                return item.val;
+            }).join('');
+
+            try {
+                const result = eval(expr);
+                const msg = document.getElementById('math-message');
+
+                if (result === mathCurrentTarget) {
+                    msg.className = 'text-xs font-bold text-emerald-600 mt-1';
+                    msg.innerText = '🎉 ถูกต้องแล้ว! เก่งมาก';
+                    mathScore += 10;
+                    document.getElementById('math-score').innerText = mathScore;
+
+                    setTimeout(() => {
+                        proceedMathNext();
+                    }, 1000);
+
+                } else {
+                    msg.className = 'text-xs font-bold text-red-600 mt-1';
+                    msg.innerText = `โอ๊ะโอ! ได้ ${result} ยังไม่เท่ากับ ${mathCurrentTarget}`;
+                }
+            } catch (e) {
+                const msg = document.getElementById('math-message');
+                msg.className = 'text-xs font-bold text-red-600 mt-1';
+                msg.innerText = 'สมการยังไม่สมบูรณ์ครับ';
+            }
+        }
+
         function openKeyModal() { document.getElementById("key-modal").classList.remove("hidden"); }
         function closeKeyModal() { document.getElementById("key-modal").classList.add("hidden"); }
 
@@ -2184,12 +2726,23 @@
             isDailyLimitEnabled = document.getElementById("input-enable-daily-limit").checked;
             dailyLimitRounds = parseInt(document.getElementById("input-daily-limit-rounds").value || "3", 10);
 
+            isMathDailyLimitEnabled = document.getElementById("input-enable-math-daily-limit").checked;
+            mathDailyLimitRounds = parseInt(document.getElementById("input-math-daily-limit-rounds").value || "3", 10);
+
             localStorage.setItem("enable_daily_limit", isDailyLimitEnabled ? "true" : "false");
             localStorage.setItem("daily_limit_rounds", dailyLimitRounds.toString());
 
+            localStorage.setItem("enable_math_daily_limit", isMathDailyLimitEnabled ? "true" : "false");
+            localStorage.setItem("math_daily_limit_rounds", mathDailyLimitRounds.toString());
+
             if (isFirebaseActive && dbRefDailyConfig) {
                 const { set } = window.firebaseModules;
-                set(dbRefDailyConfig, { enabled: isDailyLimitEnabled, rounds: dailyLimitRounds });
+                set(dbRefDailyConfig, { 
+                    enabled: isDailyLimitEnabled, 
+                    rounds: dailyLimitRounds,
+                    mathEnabled: isMathDailyLimitEnabled,
+                    mathRounds: mathDailyLimitRounds
+                });
             }
 
             if (key) localStorage.setItem("gemini_api_key", key); else localStorage.removeItem("gemini_api_key");
@@ -2210,6 +2763,7 @@
 
             alert("บันทึกการตั้งค่าเรียบร้อยแล้ว!");
             checkDailyLimitStatus();
+            checkMathDailyLimitStatus();
             closeKeyModal();
         }
 
@@ -2461,7 +3015,6 @@
             }
         }
 
-        // 🟢 ฟังก์ชันเจนรูปที่ปรับ Prompt เพิ่มข้อบังคับไม่ให้มีตัวอักษร/คำศัพท์ในภาพ
         function openGeminiForImage() {
             const enWord = document.getElementById("input-en").value.trim();
             const thWord = document.getElementById("input-th").value.trim();
