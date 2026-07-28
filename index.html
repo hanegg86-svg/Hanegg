@@ -352,7 +352,7 @@
             </div>
         </div>
 
-        <!-- SECTION 3: MATH MINIGAME TAB (แบบกดผสมเลข + บังคับใช้ครบทุกตัว) -->
+        <!-- SECTION 3: MATH MINIGAME TAB -->
         <div id="main-math-tab" class="w-full max-w-sm hidden flex-col items-center">
             
             <!-- Controls & Levels -->
@@ -395,7 +395,6 @@
                         <span id="math-numbers-left-tag" class="text-[10px] font-black bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">เหลือ 4 ตัว</span>
                     </div>
                     <div id="math-numbers-container" class="flex flex-wrap justify-center gap-2 min-h-[56px] items-center">
-                        <!-- Bubbles dynamic -->
                     </div>
                 </div>
 
@@ -834,7 +833,7 @@
         let selectedLvlConfigChild = 'พูน';
 
         // --- MATH BUBBLE COMBINATION GAME VARIABLES ---
-        let mathDifficulty = 'easy'; // easy, medium, hard
+        let mathDifficulty = 'easy';
         let mathQuestionIndex = 1;
         let mathInitialNumbers = [];
         let mathCurrentNumbers = [];
@@ -953,7 +952,7 @@
             }
         }
 
-        // --- MATH COMBINATION GAME ENGINE (SOLVER-BASED + FORCE USE ALL NUMBERS) ---
+        // --- MATH COMBINATION GAME ENGINE ---
         function setMathDifficulty(diff) {
             mathDifficulty = diff;
             const easyBtn = document.getElementById("math-diff-easy");
@@ -992,7 +991,7 @@
 
             let nums = [];
             for (let i = 0; i < count; i++) {
-                nums.push(Math.floor(Math.random() * 9) + 1); // 1-9
+                nums.push(Math.floor(Math.random() * 9) + 1);
             }
 
             let tempNums = [...nums];
@@ -1154,7 +1153,6 @@
             let lastRemainingNum = mathCurrentNumbers[0];
 
             if (lastRemainingNum === mathTargetNumber) {
-                // บังคับเช็ก: ตัวเลขต้องเหลือ 1 ตัวพอดี (แปลว่าใช้ครบทุกตัวแล้ว)
                 if (mathCurrentNumbers.length === 1) {
                     setTimeout(() => {
                         alert("🎉 ถูกต้องแล้วเก่งมากครับ! ใช้ตัวเลขครบทุกตัวและผสมได้เป้าหมายพอดี!");
@@ -1755,20 +1753,23 @@
             alert(`อัปเดตผู้รับภารกิจ "${quest.title}" เรียบร้อยแล้ว!`);
         }
 
+        // --- แก้ไข BUG: กรองภารกิจแสดงผลที่เด็กให้ถูกต้อง ---
         function renderParentQuestsList() {
             const container = document.getElementById("parent-quests-list");
             if (!container) return;
 
             let filteredQuests = parentQuestsList;
+            
             if (!isParentUser && currentUser) {
                 filteredQuests = parentQuestsList.filter(q => {
-                    const isForUser = !q.assignees || q.assignees.includes(currentUser);
+                    const assignees = q.assignees || ["พูน", "เพลิน"];
+                    const isForUser = assignees.includes(currentUser);
                     if (!isForUser) return false;
 
                     const existingNotify = notificationsList.find(n => 
                         n.type === 'SUBMIT_QUEST' && 
                         n.user === currentUser && 
-                        n.details.questTitle === q.title
+                        n.details && n.details.questTitle === q.title
                     );
 
                     if (existingNotify && existingNotify.status === 'approved') {
@@ -1798,7 +1799,7 @@
                     const existingNotify = notificationsList.find(n => 
                         n.type === 'SUBMIT_QUEST' && 
                         n.user === currentUser && 
-                        n.details.questTitle === q.title &&
+                        n.details && n.details.questTitle === q.title &&
                         n.status === 'pending'
                     );
 
@@ -1823,7 +1824,7 @@
                             <div class="font-extrabold text-amber-900 text-sm mb-1">${q.title}</div>
                             <div class="flex items-center gap-2">
                                 <span class="text-xs bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">รางวัล 🌟 ${q.stars} ดวง</span>
-                                <span class="text-[10px] text-slate-500 font-bold">🎯 ${q.assignees && q.assignees.length > 0 ? q.assignees.join(', ') : 'ไม่มีผู้รับมอบหมาย'}</span>
+                                <span class="text-[10px] text-slate-500 font-bold">🎯 ${q.assignees && q.assignees.length > 0 ? q.assignees.join(', ') : 'ทุกคน'}</span>
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5">
@@ -2019,6 +2020,21 @@
             }
         }
 
+        // --- เพิ่มฟังก์ชัน ลบ NOTIFICATION ---
+        function deleteNotification(notifyId) {
+            if (confirm("ต้องการลบการแจ้งเตือนนี้ใช่หรือไม่?")) {
+                if (isFirebaseActive && dbRefNotify) {
+                    const { ref, set } = window.firebaseModules;
+                    const db = window.firebaseModules.getDatabase();
+                    set(ref(db, `kids_notifications/${notifyId}`), null);
+                } else {
+                    notificationsList = notificationsList.filter(n => (n.id || n.timestamp.toString()) !== notifyId.toString());
+                    renderNotifications();
+                }
+            }
+        }
+
+        // --- ปรับปรุง RENDER NOTIFICATIONS (มีปุ่มลบเมื่อตรวจเรียบร้อยแล้ว) ---
         function renderNotifications() {
             const listEl = document.getElementById("notify-list");
             if (!listEl) return;
@@ -2032,22 +2048,29 @@
 
             listEl.innerHTML = notificationsList.map(n => {
                 const isPending = n.status === 'pending';
+                const itemKey = n.id || n.timestamp;
+
+                const deleteBtnHtml = (isParentUser && !isPending) ? `
+                    <button onclick="deleteNotification('${itemKey}')" class="text-xs bg-red-100 text-red-700 hover:bg-red-200 px-2 py-1 rounded-lg font-bold border border-red-300 ml-auto active:scale-95 transition">
+                        🗑️ ลบ
+                    </button>
+                ` : '';
 
                 if (n.type === 'MANUAL_STAR_ADJUST') {
-                    const isPos = n.details.change > 0;
                     return `
-                        <div class="p-3.5 ${isPos ? 'bg-emerald-50 border-emerald-300' : 'bg-red-50 border-red-300'} rounded-2xl border-2 flex items-start gap-3 shadow-sm">
+                        <div class="p-3.5 ${n.details.change > 0 ? 'bg-emerald-50 border-emerald-300' : 'bg-red-50 border-red-300'} rounded-2xl border-2 flex items-start gap-3 shadow-sm relative">
                             <span class="text-3xl bg-white p-2 rounded-xl border border-amber-200">${avatars[n.user] || '👨‍💼'}</span>
                             <div class="flex-1">
                                 <div class="flex justify-between items-center mb-0.5">
-                                    <span class="font-extrabold text-sm ${isPos ? 'text-emerald-950' : 'text-red-950'}">${isPos ? '🌟 ปรับเพิ่มดาว!' : '🔻 ถูกลดดาว!'}</span>
+                                    <span class="font-extrabold text-sm ${n.details.change > 0 ? 'text-emerald-950' : 'text-red-950'}">${n.details.change > 0 ? '🌟 ปรับเพิ่มดาว!' : '🔻 ถูกลดดาว!'}</span>
                                     <span class="text-[10px] font-bold text-slate-500">${n.time}</span>
                                 </div>
                                 <p class="text-xs font-bold text-slate-800">
-                                    ${n.user} ได้${isPos ? 'เพิ่มดาวให้' : 'ลดดาว'} น้อง <span class="text-amber-800 font-black">${n.details.childName}</span> จำนวน <span class="font-black ${isPos ? 'text-emerald-600' : 'text-red-600'}">${Math.abs(n.details.change)} ดาว</span>
+                                    ${n.user} ได้${n.details.change > 0 ? 'เพิ่มดาวให้' : 'ลดดาว'} น้อง <span class="text-amber-800 font-black">${n.details.childName}</span> จำนวน <span class="font-black ${n.details.change > 0 ? 'text-emerald-600' : 'text-red-600'}">${Math.abs(n.details.change)} ดาว</span>
                                 </p>
                                 <p class="text-[11px] text-slate-600 font-medium mt-0.5">เหตุผล: "${n.details.reason}"</p>
                             </div>
+                            ${deleteBtnHtml}
                         </div>
                     `;
                 } else if (n.type === 'REQUEST_REWARD') {
@@ -2068,16 +2091,17 @@
                             
                             ${isParentUser && isPending ? `
                                 <div class="flex gap-2 mt-1 border-t border-amber-200/60 pt-2">
-                                    <button onclick="approveReward('${n.id || n.timestamp}', '${n.user}', '${n.details.rewardName}', ${n.details.starsUsed}, true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1.5 rounded-xl text-xs shadow">
+                                    <button onclick="approveReward('${itemKey}', '${n.user}', '${n.details.rewardName}', ${n.details.starsUsed}, true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1.5 rounded-xl text-xs shadow">
                                         ✅ อนุมัติรางวัล
                                     </button>
-                                    <button onclick="approveReward('${n.id || n.timestamp}', '${n.user}', '${n.details.rewardName}', ${n.details.starsUsed}, false)" class="bg-red-100 text-red-700 hover:bg-red-200 active:scale-95 font-bold py-1.5 px-3 rounded-xl text-xs border border-red-300">
+                                    <button onclick="approveReward('${itemKey}', '${n.user}', '${n.details.rewardName}', ${n.details.starsUsed}, false)" class="bg-red-100 text-red-700 hover:bg-red-200 active:scale-95 font-bold py-1.5 px-3 rounded-xl text-xs border border-red-300">
                                         ❌ ปฏิเสธ
                                     </button>
                                 </div>
                             ` : `
-                                <div class="text-[11px] font-bold text-center bg-white/60 py-1 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-red-600' : 'text-amber-800'}">
-                                    Status: ${n.status === 'approved' ? '✅ อนุมัติและย้ายไปกระเป๋าแล้ว' : n.status === 'rejected' ? '❌ คำขอถูกปฏิเสธ' : '⏳ รอพ่อนะ/แม่พัด อนุมัติ'}
+                                <div class="flex justify-between items-center text-[11px] font-bold bg-white/60 p-1.5 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-red-600' : 'text-amber-800'}">
+                                    <span>Status: ${n.status === 'approved' ? '✅ อนุมัติและย้ายไปกระเป๋าแล้ว' : n.status === 'rejected' ? '❌ คำขอถูกปฏิเสธ' : '⏳ รอพ่อนะ/แม่พัด อนุมัติ'}</span>
+                                    ${deleteBtnHtml}
                                 </div>
                             `}
                         </div>
@@ -2100,16 +2124,17 @@
                             
                             ${isParentUser && isPending ? `
                                 <div class="flex gap-2 mt-1 border-t border-amber-200/60 pt-2">
-                                    <button onclick="approveParentQuest('${n.id || n.timestamp}', '${n.user}', ${n.details.starsReward}, true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1.5 rounded-xl text-xs shadow">
+                                    <button onclick="approveParentQuest('${itemKey}', '${n.user}', ${n.details.starsReward}, true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1.5 rounded-xl text-xs shadow">
                                         ✅ ตรวจผ่าน (แจก 🌟 ${n.details.starsReward} ดาว)
                                     </button>
-                                    <button onclick="approveParentQuest('${n.id || n.timestamp}', '${n.user}', ${n.details.starsReward}, false)" class="bg-red-100 text-red-700 hover:bg-red-200 active:scale-95 font-bold py-1.5 px-3 rounded-xl text-xs border border-red-300">
+                                    <button onclick="approveParentQuest('${itemKey}', '${n.user}', ${n.details.starsReward}, false)" class="bg-red-100 text-red-700 hover:bg-red-200 active:scale-95 font-bold py-1.5 px-3 rounded-xl text-xs border border-red-300">
                                         ❌ ไม่ผ่าน
                                     </button>
                                 </div>
                             ` : `
-                                <div class="text-[11px] font-bold text-center bg-white/60 py-1 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-red-600' : 'text-amber-800'}">
-                                    Status: ${n.status === 'approved' ? '✅ ตรวจผ่านแล้ว! ได้รับดาวเรียบร้อย' : n.status === 'rejected' ? '❌ ไม่ผ่าน' : '⏳ รอพ่อนะ/แม่พัด ตรวจ'}
+                                <div class="flex justify-between items-center text-[11px] font-bold bg-white/60 p-1.5 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-red-600' : 'text-amber-800'}">
+                                    <span>Status: ${n.status === 'approved' ? '✅ ตรวจผ่านแล้ว! ได้รับดาวเรียบร้อย' : n.status === 'rejected' ? '❌ ไม่ผ่าน' : '⏳ รอพ่อนะ/แม่พัด ตรวจ'}</span>
+                                    ${deleteBtnHtml}
                                 </div>
                             `}
                         </div>
@@ -2127,6 +2152,7 @@
                                     ระดับ <span class="font-bold text-amber-700">${n.details.diff}</span> | ถูกครบ <span class="font-bold text-emerald-600">5/5 ข้อ</span> | ได้รับ <span class="font-bold text-amber-600">🌟 1 ดวง</span>
                                 </p>
                             </div>
+                            ${deleteBtnHtml}
                         </div>
                     `;
                 } else {
@@ -2142,6 +2168,7 @@
                                     หมวด <span class="font-bold text-amber-700">${n.subject}</span> | ถูกครบ <span class="font-bold text-emerald-600">5/5 คำ</span> | ได้รับดาว <span class="font-bold text-amber-600">🌟 1 ดวง</span>
                                 </p>
                             </div>
+                            ${deleteBtnHtml}
                         </div>
                     `;
                 }
