@@ -1,0 +1,2540 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kids Vocab Flashcards AI</title>
+
+    <!-- PWA Settings & Web App Configuration -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#fbbf24">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kids Vocab">
+    
+    <!-- iOS App Icon -->
+    <link rel="apple-touch-icon" href="Icon.png">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Firebase SDKs (Modular via CDN) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set, push, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        window.firebaseModules = { initializeApp, getDatabase, ref, onValue, set, push, update, get };
+    </script>
+
+    <style>
+        .touch-btn { -webkit-tap-highlight-color: transparent; }
+        .card-flip { perspective: 1000px; }
+        .card-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+        .card-flipped { transform: rotateY(180deg); }
+        .card-front, .card-back { backface-visibility: hidden; }
+        .card-back { transform: rotateY(180deg); }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #f59e0b; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .listening-pulse { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes bounce-gentle { 0%, 100% { transform: translateY(-5%); } 50% { transform: translateY(0); } }
+        .bounce-anim { animation: bounce-gentle 2s infinite; }
+
+        /* iOS Splash Screen Overlay */
+        #ios-splash-screen {
+            position: fixed;
+            inset: 0;
+            background-color: #3b3098;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        #ios-splash-screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 font-sans min-h-screen flex flex-col justify-between select-none touch-btn relative">
+
+    <!-- iOS Splash Screen Overlay -->
+    <div id="ios-splash-screen">
+        <div id="splash-icon-container" class="w-48 h-48 rounded-3xl shadow-2xl mb-4 bg-amber-400 flex items-center justify-center animate-pulse overflow-hidden">
+            <img src="Icon.png" alt="App Cover" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('splash-fallback-icon').classList.remove('hidden');">
+            <span id="splash-fallback-icon" class="text-7xl hidden">🎴</span>
+        </div>
+        <div class="text-white font-bold text-lg tracking-wider">Kids Vocab AI</div>
+        <div class="text-amber-200 text-xs mt-1">กำลังโหลด...</div>
+    </div>
+
+    <!-- Header / Score Bar -->
+    <header class="bg-amber-400 p-3 shadow-md rounded-b-3xl flex justify-between items-center z-10 relative">
+        <div class="flex items-center gap-1.5">
+            <button onclick="openProfileModal()" class="bg-amber-100 px-2.5 py-1.5 rounded-full text-xs font-bold text-amber-900 shadow border border-amber-300 flex items-center gap-1.5 min-h-[40px]">
+                <div class="w-7 h-7 rounded-full overflow-hidden bg-white flex items-center justify-center border border-amber-300">
+                    <img id="user-avatar-img" class="w-full h-full object-cover hidden" alt="Avatar">
+                    <span id="user-avatar" class="text-sm">👤</span>
+                </div>
+                <div class="flex flex-col items-start leading-tight">
+                    <span id="user-name" class="max-w-[65px] truncate font-extrabold sm:max-w-none">เลือกผู้ใช้</span>
+                    <span id="user-level-tag" class="text-[9px] text-amber-700 font-bold hidden">Lv.1</span>
+                </div>
+            </button>
+            
+            <div class="flex items-center gap-1 bg-white px-2 py-1 rounded-full shadow border border-amber-200 min-h-[40px]">
+                <span class="text-base">🌟</span>
+                <span id="score" class="text-base font-bold text-amber-900">0</span>
+            </div>
+        </div>
+
+        <!-- ปุ่มสลับหมวดหมู่ภาษา EN / TH -->
+        <div id="lang-switch-box" class="flex bg-amber-500/40 p-1 rounded-2xl border border-amber-600/30 hidden">
+            <button id="mode-en-btn" onclick="switchSubjectMode('EN')" class="px-2.5 py-1 rounded-xl text-xs font-black bg-white text-amber-900 shadow transition">🇬🇧 EN</button>
+            <button id="mode-th-btn" onclick="switchSubjectMode('TH')" class="px-2.5 py-1 rounded-xl text-xs font-black text-amber-950 hover:bg-amber-300/50 transition">🇹🇭 TH</button>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+            <button onclick="openQuestModal()" title="ร้านค้าแลกรางวัล" class="bg-amber-100 p-2 rounded-full shadow border border-amber-300 text-amber-900 min-w-[40px] min-h-[40px] flex items-center justify-center">
+                <span class="text-base">🎁</span>
+            </button>
+
+            <button onclick="openNotifyModal()" class="bg-amber-100 text-amber-900 p-2 rounded-full shadow border border-amber-300 min-w-[40px] min-h-[40px] flex items-center justify-center relative">
+                <i data-lucide="bell" class="w-4 h-4"></i>
+                <span id="notify-badge" class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-ping"></span>
+                <span id="notify-dot" class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden"></span>
+            </button>
+
+            <button id="btn-key" onclick="openKeyModal()" class="bg-amber-100 text-amber-900 p-2 rounded-full shadow min-w-[40px] min-h-[40px] flex items-center justify-center border border-amber-300">
+                <i data-lucide="key" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- EXP Progress Bar (สำหรับแสดงในหน้าท่องศัพท์) -->
+    <div id="exp-bar-container" class="w-full px-4 pt-2 hidden">
+        <div class="bg-white/80 p-2 rounded-2xl border border-amber-200 shadow-sm flex items-center gap-2">
+            <span id="exp-level-text" class="text-xs font-black text-amber-900 whitespace-nowrap">Lv.1</span>
+            <div class="flex-1 bg-slate-200 h-3 rounded-full overflow-hidden relative">
+                <div id="exp-progress" class="bg-gradient-to-r from-amber-400 to-amber-500 h-full w-0 transition-all duration-500"></div>
+            </div>
+            <span id="exp-val-text" class="text-[10px] font-bold text-amber-800 whitespace-nowrap">0/200 EXP</span>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs หน้าหลัก -->
+    <div class="flex justify-center gap-2 mt-3 px-4">
+        <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition">
+            📋 ภารกิจจากพ่อแม่
+        </button>
+        <button id="tab-vocab-btn" onclick="switchMainTab('vocab')" class="flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
+            🎴 ท่องศัพท์
+        </button>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col justify-center items-center p-4 relative">
+        
+        <!-- SECTION 1: PARENT QUESTS TAB -->
+        <div id="main-quest-tab" class="w-full max-w-sm flex flex-col items-center">
+            
+            <!-- ⭐ รูปตัวละครขนาดใหญ่ตรงกลางหน้าภารกิจ ⭐ -->
+            <div id="hero-avatar-box" class="flex flex-col items-center justify-center my-2 text-center w-full">
+                <div class="relative group">
+                    <div class="w-36 h-36 sm:w-40 sm:h-40 rounded-full border-4 border-amber-400 bg-gradient-to-b from-amber-100 to-amber-200 shadow-xl flex items-center justify-center overflow-hidden relative">
+                        <img id="hero-avatar-img" class="w-full h-full object-cover hidden" alt="Hero Avatar">
+                        <span id="hero-avatar-emoji" class="text-8xl bounce-anim">👦</span>
+                    </div>
+                    <span id="hero-level-badge" class="absolute -bottom-1 bg-amber-500 border-2 border-white text-white font-black text-xs px-3 py-1 rounded-full shadow-md">
+                        Lv.1
+                    </span>
+                </div>
+                <h2 id="hero-user-name" class="text-xl font-extrabold text-amber-950 mt-3 flex items-center gap-1.5">
+                    น้องพูน
+                </h2>
+                <!-- EXP Bar เล็กกำกับใต้รูป -->
+                <div id="hero-exp-container" class="w-48 bg-white/90 p-1.5 rounded-full border border-amber-300 shadow-sm mt-1 flex items-center gap-2">
+                    <div class="flex-1 bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                        <div id="hero-exp-progress" class="bg-gradient-to-r from-amber-400 to-amber-500 h-full w-0 transition-all duration-500"></div>
+                    </div>
+                    <span id="hero-exp-text" class="text-[9px] font-black text-amber-900 pr-1">0/200</span>
+                </div>
+            </div>
+
+            <!-- ผู้ปกครอง: กล่องจัดการเพิ่ม/ลดดาวให้ลูก -->
+            <div id="parent-manage-stars-box" class="bg-amber-100 border-4 border-amber-300 rounded-3xl p-4 shadow-xl w-full mb-4 hidden">
+                <div class="font-extrabold text-sm text-amber-950 mb-2 flex items-center gap-1">
+                    🌟 จัดการดาวสะสมให้ลูกๆ (พ่อนะ / แม่พัด)
+                </div>
+                <div class="space-y-2.5 bg-white p-3 rounded-2xl border border-amber-200">
+                    <div class="flex gap-2 items-center">
+                        <label class="text-xs font-bold text-slate-700">เลือกเด็ก:</label>
+                        <select id="manage-star-child" class="flex-1 border border-amber-300 rounded-xl p-1.5 text-xs font-bold text-amber-900 focus:outline-none">
+                            <option value="พูน">👦 พูน</option>
+                            <option value="เพลิน">👧 เพลิน</option>
+                        </select>
+                        <input type="number" id="manage-star-count" min="1" max="100" placeholder="จำนวนดาว" class="w-20 border border-amber-300 rounded-xl p-1.5 text-xs text-center font-bold focus:outline-none">
+                    </div>
+                    <input type="text" id="manage-star-reason" placeholder="เหตุผล (เช่น ช่วยทำความสะอาดบ้าน, ดื้อ)" class="w-full border border-amber-300 rounded-xl p-1.5 text-xs focus:outline-none">
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="adjustChildStars(true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-2 rounded-xl text-xs shadow flex items-center justify-center gap-1">
+                            ➕ เพิ่มดาว
+                        </button>
+                        <button onclick="adjustChildStars(false)" class="flex-1 bg-red-500 hover:bg-red-600 active:scale-95 text-white font-bold py-2 rounded-xl text-xs shadow flex items-center justify-center gap-1">
+                            ➖ ลดดาว
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-black text-amber-900 flex items-center gap-1.5">
+                        📋 ภารกิจพิเศษรับดาว
+                    </h3>
+                    <span class="text-xs bg-amber-100 text-amber-900 px-2.5 py-1 rounded-full font-bold border border-amber-200">
+                        สะสมแลกรางวัล 🎁
+                    </span>
+                </div>
+
+                <!-- ผู้ปกครอง: ฟอร์มเพิ่มภารกิจ -->
+                <div id="parent-create-quest-box" class="bg-amber-50 p-3 rounded-2xl border border-amber-200 mb-4 hidden">
+                    <div class="font-extrabold text-xs text-amber-900 mb-2">➕ สร้างภารกิจใหม่ (สำหรับ พ่อนะ / แม่พัด)</div>
+                    <div class="space-y-2">
+                        <input type="text" id="new-quest-title" placeholder="ชื่อภารกิจ (เช่น ช่วยล้างจาน, ทำการบ้านเสร็จ)" class="w-full border border-amber-300 rounded-xl p-2 text-xs focus:outline-none focus:border-amber-500">
+                        <div class="flex gap-2">
+                            <input type="number" id="new-quest-stars" min="1" placeholder="ดาวรางวัล (เช่น 2)" class="w-1/2 border border-amber-300 rounded-xl p-2 text-xs text-center font-bold focus:outline-none focus:border-amber-500">
+                            <div class="w-1/2 flex items-center gap-2 text-xs font-bold text-slate-700">
+                                <label><input type="checkbox" id="quest-assign-poon" checked> 👦พูน</label>
+                                <label><input type="checkbox" id="quest-assign-ploern" checked> 👧เพลิน</label>
+                            </div>
+                        </div>
+                        <button onclick="createNewParentQuest()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-xl text-xs shadow">
+                            บันทึกภารกิจ 💾
+                        </button>
+                    </div>
+                </div>
+
+                <!-- รายการภารกิจ -->
+                <div id="parent-quests-list" class="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: VOCABULARY TAB -->
+        <div id="main-vocab-tab" class="w-full hidden flex-col items-center">
+            <div id="flashcard-section" class="w-full flex flex-col items-center">
+                <div id="parent-controls" class="w-full max-w-sm flex justify-between items-center mb-2 px-1 hidden">
+                    <span id="target-assigned-badge" class="text-xs bg-amber-200 text-amber-900 px-2.5 py-1 rounded-full font-bold">🎯 เรียนได้ทุกคน</span>
+                    <div class="flex gap-2">
+                        <button onclick="editCurrentCard()" class="bg-sky-100 text-sky-800 hover:bg-sky-200 px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1 border border-sky-300 transition">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> แก้ไข
+                        </button>
+                        <button onclick="deleteCurrentCard()" class="bg-red-100 text-red-800 hover:bg-red-200 px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1 border border-red-300 transition">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> ลบ
+                        </button>
+                    </div>
+                </div>
+
+                <div id="card-container" class="w-full max-w-sm h-80 card-flip cursor-pointer" onclick="flipCard()">
+                    <div id="card-inner" class="card-inner w-full h-full relative shadow-xl rounded-3xl bg-white border-4 border-amber-300 flex flex-col items-center justify-center p-6 text-center">
+                        <div class="card-front absolute inset-0 flex flex-col items-center justify-center p-4">
+                            <div id="card-img-container" class="w-32 h-32 mb-3 flex items-center justify-center overflow-hidden rounded-2xl bg-amber-50">
+                                <span id="card-emoji" class="text-7xl">🍎</span>
+                                <img id="card-img" class="w-full h-full object-cover hidden" alt="vocab image">
+                            </div>
+                            <h2 id="card-word-main" class="text-3xl font-extrabold text-slate-800 mb-1">Apple</h2>
+                            <p class="text-xs text-slate-400">กดที่การ์ดเพื่อดูคำแปล</p>
+                        </div>
+                        <div class="card-back absolute inset-0 flex flex-col items-center justify-center p-4 bg-amber-100 rounded-3xl">
+                            <div id="card-img-container-back" class="w-24 h-24 mb-2 flex items-center justify-center overflow-hidden rounded-2xl bg-white shadow-inner">
+                                <span id="card-emoji-back" class="text-5xl">🍎</span>
+                                <img id="card-img-back" class="w-full h-full object-cover hidden" alt="vocab image">
+                            </div>
+                            <h2 id="card-word-sub" class="text-2xl font-extrabold text-amber-800 mb-1">แอปเปิ้ล</h2>
+                            <p id="card-phonetic" class="text-base font-medium text-amber-600 mb-2">[ แอบ-เปิ้ล ]</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6 w-full max-w-sm justify-center">
+                    <button onclick="speakCurrentWord()" class="flex-1 bg-sky-400 active:bg-sky-500 text-white font-bold py-3 px-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-base min-h-[52px]">
+                        <i data-lucide="volume-2"></i> ฟังเสียง
+                    </button>
+                    <button onclick="addStar()" class="bg-emerald-400 active:bg-emerald-500 text-white font-bold py-3 px-5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-base min-h-[52px]">
+                        <i data-lucide="check-circle"></i> จำได้แล้ว!
+                    </button>
+                </div>
+            </div>
+
+            <!-- Spelling Practice Section -->
+            <div id="spelling-section" class="w-full max-w-sm hidden flex-col items-center">
+                <div id="daily-limit-banner" class="w-full bg-red-100 border-2 border-red-300 rounded-2xl p-4 text-center mb-4 hidden shadow-md">
+                    <div class="text-3xl mb-1">🛑</div>
+                    <div class="font-extrabold text-red-900 text-base mb-1">หนูเล่นครบโควต้าวันนี้แล้วครับ!</div>
+                    <div class="text-xs text-red-700 font-bold">พ่อนะ และ แม่พัด กำหนดให้ท่องวันละ <span id="limit-rounds-text">3</span> รอบ เพื่อพักสายตา พรุ่งนี้ค่อยมาเล่นใหม่นะ! 🎈</div>
+                </div>
+
+                <div id="spelling-card-box" class="bg-white border-4 border-amber-300 rounded-3xl p-6 shadow-xl w-full text-center flex flex-col items-center">
+                    <div class="w-full flex justify-between items-center mb-3 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-200">
+                        <span id="set-progress-text" class="text-xs font-bold text-amber-900">ชุดที่ 1 (คำที่ 1/5)</span>
+                        <span id="daily-quota-text" class="text-[10px] font-extrabold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-full">วันนี้ 0/3 รอบ</span>
+                    </div>
+
+                    <div class="w-24 h-24 mb-3 flex items-center justify-center overflow-hidden rounded-2xl bg-amber-50">
+                        <span id="spell-card-emoji" class="text-6xl">🍎</span>
+                        <img id="spell-card-img" class="w-full h-full object-cover hidden" alt="vocab image">
+                    </div>
+                    
+                    <h3 id="spell-card-title" class="text-2xl font-extrabold text-amber-900 mb-1">Apple</h3>
+                    <p id="spell-card-subtitle" class="text-sm font-medium text-amber-600 mb-4">[ แอบ-เปิ้ล ]</p>
+
+                    <div class="w-full space-y-3">
+                        <div class="relative">
+                            <input type="text" id="spell-input" placeholder="พิมพ์คำตอบ..." class="w-full border-2 border-amber-300 rounded-2xl p-3 text-center text-xl font-bold tracking-widest focus:outline-none focus:border-amber-500">
+                            <button onclick="startSpeechRecognition()" id="mic-btn" title="กดเพื่อพูดคำตอบ" class="absolute right-2 top-1.5 bg-amber-400 text-amber-900 p-2.5 rounded-xl shadow active:bg-amber-500 min-w-[44px] min-h-[44px] flex items-center justify-center">
+                                <i data-lucide="mic" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <div id="speech-status" class="text-xs text-amber-700 h-4 font-medium"></div>
+
+                        <div class="flex gap-2">
+                            <button onclick="speakCurrentWordPrompt()" class="bg-sky-100 active:bg-sky-200 text-sky-800 font-bold py-3 px-4 rounded-xl min-h-[48px] flex items-center justify-center gap-1.5 border border-sky-300 shadow-sm transition">
+                                <i data-lucide="volume-2" class="w-5 h-5"></i>
+                                <span>ฟังคำอ่าน 🔊</span>
+                            </button>
+                            <button id="btn-check-answer" onclick="checkSpellingAnswer()" class="flex-1 bg-emerald-500 active:bg-emerald-600 text-white font-bold py-3 rounded-xl min-h-[48px] text-lg shadow">
+                                ตรวจคำตอบ ✨
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Action Button (FAB) -->
+        <button id="btn-add-vocab" onclick="openAddModal()" class="fixed bottom-20 right-5 bg-gradient-to-r from-amber-500 to-amber-600 text-white p-4 rounded-full shadow-2xl z-40 border-2 border-white active:scale-95 transition-all flex items-center justify-center hidden">
+            <i data-lucide="plus" class="w-7 h-7"></i>
+        </button>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <footer id="footer-nav" class="bg-white border-t border-amber-200 p-3 flex justify-around items-center z-10 relative hidden">
+        <button onclick="prevCard()" class="p-3 text-amber-700 font-bold flex items-center gap-1 rounded-xl active:bg-amber-100 min-h-[48px] min-w-[48px]">
+            <i data-lucide="chevron-left"></i> ก่อนหน้า
+        </button>
+        <span id="card-progress" class="text-amber-800 font-bold">1 / 5</span>
+        <button onclick="nextCard()" class="p-3 text-amber-700 font-bold flex items-center gap-1 rounded-xl active:bg-amber-100 min-h-[48px] min-w-[48px]">
+            ถัดไป <i data-lucide="chevron-right"></i>
+        </button>
+    </footer>
+
+    <!-- Modal 🎯 มอบหมาย (Assign) ภารกิจย้อนหลัง -->
+    <div id="assign-quest-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-5 shadow-2xl relative border-4 border-amber-300">
+            <h3 class="text-base font-extrabold text-amber-900 mb-2 text-center">🎯 มอบหมายภารกิจ</h3>
+            <p id="assign-quest-title" class="text-xs font-bold text-amber-800 text-center mb-4 bg-amber-50 p-2.5 rounded-xl border border-amber-200"></p>
+            
+            <input type="hidden" id="assign-quest-id">
+            
+            <div class="space-y-2 mb-5">
+                <label class="flex items-center gap-2 p-2.5 bg-amber-50 rounded-xl border border-amber-200 cursor-pointer text-xs font-bold text-slate-700 hover:bg-amber-100 transition">
+                    <input type="checkbox" id="reassign-poon" class="w-4 h-4 text-amber-600 rounded">
+                    👦 น้องพูน
+                </label>
+                <label class="flex items-center gap-2 p-2.5 bg-amber-50 rounded-xl border border-amber-200 cursor-pointer text-xs font-bold text-slate-700 hover:bg-amber-100 transition">
+                    <input type="checkbox" id="reassign-ploern" class="w-4 h-4 text-amber-600 rounded">
+                    👧 น้องเพลิน
+                </label>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="closeAssignModal()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs">ยกเลิก</button>
+                <button onclick="saveQuestAssignment()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-xs shadow">บันทึก 💾</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 🎯 ร้านค้าแลกรางวัล & กระเป๋าของฉัน -->
+    <div id="quest-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative border-4 border-amber-300 max-h-[85vh] flex flex-col">
+            <button onclick="closeQuestModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1">
+                <i data-lucide="x"></i>
+            </button>
+            
+            <div class="flex bg-amber-100 p-1 rounded-2xl mb-3 border border-amber-300">
+                <button id="shop-tab-btn" onclick="switchRewardTab('shop')" class="flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition">🎁 ร้านค้าแลกรางวัล</button>
+                <button id="inventory-tab-btn" onclick="switchRewardTab('inventory')" class="flex-1 py-1.5 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition">🎒 กระเป๋าของฉัน</button>
+            </div>
+
+            <div id="reward-shop-view">
+                <div class="text-center mb-3">
+                    <p class="text-xs text-amber-700">สะสมดาวจากการท่องศัพท์และภารกิจเพื่อแลกรางวัล!</p>
+                    <div class="mt-1 bg-amber-100 py-1 px-4 rounded-full inline-block border border-amber-300 font-bold text-amber-900 text-xs">
+                        ดาวสะสม: <span id="quest-user-stars" class="text-amber-600 text-base">🌟 0</span>
+                    </div>
+                </div>
+
+                <div id="parent-add-reward-section" class="mb-3 bg-amber-50 p-3 rounded-2xl border border-amber-200 hidden">
+                    <div class="font-extrabold text-xs text-amber-900 mb-2">➕ เพิ่มรางวัลใหม่ (สำหรับ พ่อนะ / แม่พัด)</div>
+                    <div class="space-y-2">
+                        <input type="text" id="new-reward-name" placeholder="ชื่อของรางวัล (เช่น ไอศกรีม 1 ถ้วย)" class="w-full border border-amber-300 rounded-xl p-2 text-xs focus:outline-none focus:border-amber-500">
+                        <div class="flex gap-2">
+                            <input type="number" id="new-reward-stars" min="1" placeholder="จำนวนดาว" class="w-1/2 border border-amber-300 rounded-xl p-2 text-xs text-center font-bold focus:outline-none focus:border-amber-500">
+                            <button onclick="addNewRewardItem()" class="w-1/2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow">
+                                บันทึกรางวัล 💾
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="rewards-list-container" class="flex-1 overflow-y-auto space-y-3 max-h-[45vh] pr-1">
+                </div>
+            </div>
+
+            <div id="reward-inventory-view" class="hidden flex-1 overflow-y-auto max-h-[55vh]">
+                <div class="text-center mb-3">
+                    <h4 class="text-sm font-extrabold text-amber-900">🎒 ของรางวัลที่ได้รับแล้ว</h4>
+                    <p class="text-[11px] text-slate-500">นำรางวัลนี้ไปขอพ่อนะและแม่พัดเพื่อรับจริงได้เลย!</p>
+                </div>
+                <div id="inventory-list-container" class="space-y-2.5 pr-1">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- In-App Notification Feed Modal -->
+    <div id="notify-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative border-4 border-amber-300 max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-extrabold text-amber-900 flex items-center gap-2">
+                    <i data-lucide="bell" class="w-5 h-5"></i> บันทึก & คำขอแจ้งเตือน 🎈
+                </h3>
+                <button onclick="closeNotifyModal()" class="text-slate-400 hover:text-slate-600 p-1 min-w-[44px] min-h-[44px] flex items-center justify-center">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div id="notify-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                <div class="text-center text-xs text-slate-400 py-8">ยังไม่มีรายการแจ้งเตือนล่าสุด</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completion Modal -->
+    <div id="completion-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center border-4 border-amber-300 relative overflow-hidden">
+            <div class="text-6xl mb-2 bounce-anim">🌟</div>
+            <h3 class="text-2xl font-black text-amber-900 mb-1">ตอบถูกครบ 5 คำแล้ว! 🎉</h3>
+            <p id="completion-subtitle" class="text-sm font-bold text-amber-700 mb-4">ได้รับ 1 ดาวสะสม!</p>
+
+            <div class="bg-amber-50 rounded-2xl p-4 border border-amber-200 mb-5 space-y-2">
+                <div class="flex justify-between items-center text-sm font-bold text-amber-900">
+                    <span>คำศัพท์ที่ท่องถูกต้อง:</span>
+                    <span id="summary-total-count" class="text-lg text-emerald-600">5 / 5 คำ</span>
+                </div>
+                <div class="flex justify-between items-center text-sm font-bold text-amber-900">
+                    <span>ดาวที่ได้รับในรอบนี้:</span>
+                    <span class="text-lg text-amber-500">🌟 1 ดวง</span>
+                </div>
+                <div class="flex justify-between items-center text-sm font-bold text-amber-900 pt-1 border-t border-amber-200">
+                    <span>EXP ที่ได้รับ:</span>
+                    <span class="text-sm text-purple-600 font-black">+100 EXP ✨</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="bg-emerald-50 text-emerald-800 text-xs font-bold p-3 rounded-xl border border-emerald-200">
+                    ✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!
+                </div>
+                <button onclick="restartSession()" class="w-full bg-amber-500 active:bg-amber-600 text-white font-bold py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-base">
+                    <i data-lucide="rotate-ccw"></i> ฝึกชุดถัดไป 🔄
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Selection Modal -->
+    <div id="profile-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
+            <h3 class="text-xl font-extrabold text-amber-900 mb-4">ใครกำลังใช้งานอยู่เอ่ย? 🎈</h3>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="selectProfile('พ่อนะ', true)" class="p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl flex flex-col items-center hover:bg-blue-100 active:scale-95 transition">
+                    <span class="text-4xl mb-1">👨‍💼</span>
+                    <span class="font-bold text-blue-900">พ่อนะ</span>
+                    <span class="text-[10px] text-blue-500">(ใส่รหัสผ่าน)</span>
+                </button>
+                <button onclick="selectProfile('แม่พัด', true)" class="p-4 bg-pink-50 border-2 border-pink-200 rounded-2xl flex flex-col items-center hover:bg-pink-100 active:scale-95 transition">
+                    <span class="text-4xl mb-1">👩‍💼</span>
+                    <span class="font-bold text-pink-900">แม่พัด</span>
+                    <span class="text-[10px] text-pink-500">(ใส่รหัสผ่าน)</span>
+                </button>
+                <button onclick="selectProfile('พูน', false)" class="p-4 bg-amber-50 border-2 border-amber-200 rounded-2xl flex flex-col items-center hover:bg-amber-100 active:scale-95 transition">
+                    <span class="text-4xl mb-1">👦</span>
+                    <span class="font-bold text-amber-900">พูน</span>
+                    <span class="text-[10px] text-amber-600">สะกดคำศัพท์</span>
+                </button>
+                <button onclick="selectProfile('เพลิน', false)" class="p-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl flex flex-col items-center hover:bg-emerald-100 active:scale-95 transition">
+                    <span class="text-4xl mb-1">👧</span>
+                    <span class="font-bold text-emerald-900">เพลิน</span>
+                    <span class="text-[10px] text-emerald-600">สะกดคำศัพท์</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIN Verification Modal -->
+    <div id="pin-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl text-center">
+            <h3 class="text-lg font-extrabold text-amber-900 mb-2">ใส่รหัสผ่าน 🔒</h3>
+            <p id="pin-target-name" class="text-xs text-slate-500 mb-4">สำหรับ พ่อนะ / แม่พัด</p>
+            <input type="password" id="pin-input" maxlength="4" placeholder="1234" class="w-full text-center text-2xl tracking-widest border-2 border-amber-300 rounded-xl p-3 mb-4 focus:outline-none focus:border-amber-500 font-mono">
+            <div class="flex gap-2">
+                <button onclick="closePinModal()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl">ยกเลิก</button>
+                <button onclick="verifyPin()" class="flex-1 bg-amber-500 text-white font-bold py-2.5 rounded-xl">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 🎮 ตั้งค่า Level & Avatar (สำหรับผู้ปกครอง) -->
+    <div id="level-avatar-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative border-4 border-amber-300 max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-extrabold text-amber-900 flex items-center gap-1.5">
+                    🎮 รูปตัวละครตาม Level
+                </h3>
+                <button onclick="closeLevelAvatarModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 overflow-y-auto flex-1 pr-1">
+                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 flex items-center justify-between">
+                    <span class="text-xs font-bold text-amber-900">🎯 กำหนด Level สูงสุด (Max Lv):</span>
+                    <input type="number" id="input-max-level" min="1" max="50" class="w-16 border-2 border-amber-300 rounded-xl p-1 text-center font-bold text-xs" onchange="updateMaxLevelSetting()">
+                </div>
+
+                <div class="flex bg-amber-100 p-1 rounded-2xl border border-amber-300">
+                    <button id="lvl-btn-poon" onclick="switchLevelConfigChild('พูน')" class="flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white shadow">👦 น้องพูน</button>
+                    <button id="lvl-btn-ploern" onclick="switchLevelConfigChild('เพลิน')" class="flex-1 py-1.5 rounded-xl text-xs font-black text-amber-900">👧 น้องเพลิน</button>
+                </div>
+
+                <div id="level-avatar-list" class="space-y-2.5">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add / Edit Word Modal -->
+    <div id="add-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-title" class="text-xl font-extrabold text-amber-900">เพิ่มคำศัพท์ใหม่ 📝</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-2 min-w-[48px] min-h-[48px]">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="vocab-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="edit-index" value="-1">
+                
+                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200">
+                    <label class="block text-xs font-bold text-amber-900 mb-2">🎯 คำศัพท์นี้สำหรับผู้เรียนคนไหน?</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm font-bold text-slate-700">
+                            <input type="checkbox" id="assign-poon" checked class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500">
+                            👦 พูน
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-sm font-bold text-slate-700">
+                            <input type="checkbox" id="assign-ploern" checked class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500">
+                            👧 เพลิน
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label id="label-en" class="block text-xs font-bold text-slate-600">คำศัพท์ภาษาอังกฤษ (EN)</label>
+                        <button type="button" onclick="askGeminiAI()" id="ai-btn" class="text-xs bg-amber-100 text-amber-700 px-2 py-1.5 rounded-lg font-bold flex items-center gap-1 border border-amber-200 min-h-[36px]">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> ใช้ Gemini แปลคำศัพท์ ✨
+                        </button>
+                    </div>
+                    <input type="text" id="input-en" required placeholder="e.g. Banana" class="w-full border-2 border-amber-200 rounded-xl p-3 focus:outline-none focus:border-amber-500 text-base">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label id="label-th" class="block text-xs font-bold text-slate-600 mb-1">ภาษาไทย (TH)</label>
+                        <input type="text" id="input-th" required placeholder="เช่น กล้วย" class="w-full border-2 border-amber-200 rounded-xl p-3 focus:outline-none focus:border-amber-500 text-base">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">คำอ่านไทย</label>
+                        <input type="text" id="input-phonetic" placeholder="เช่น กล้วย" class="w-full border-2 border-amber-200 rounded-xl p-3 focus:outline-none focus:border-amber-500 text-base">
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-bold text-slate-600">รูปภาพคำศัพท์</label>
+                        <button type="button" onclick="openGeminiForImage()" class="text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 border border-amber-300">
+                            ✨ เปิด Gemini เจนรูป
+                        </button>
+                    </div>
+                    <input type="file" id="input-img" accept="image/*" onchange="previewAndResizeImage(event)" class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200">
+                    <div id="img-preview-container" class="mt-2 hidden flex items-center gap-3 bg-amber-50 p-2 rounded-xl border border-amber-200">
+                        <img id="img-preview" class="w-16 h-16 object-cover rounded-lg" src="" alt="preview">
+                        <span id="img-size-info" class="text-xs text-amber-800 font-medium"></span>
+                    </div>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl min-h-[48px]">ยกเลิก</button>
+                    <button type="submit" class="flex-1 bg-amber-500 active:bg-amber-600 text-white font-bold py-3 rounded-xl min-h-[48px]">บันทึกคำศัพท์</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- API Key & Cloud Settings Modal -->
+    <div id="key-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-lg font-extrabold text-amber-900 flex items-center gap-2">
+                    <i data-lucide="key" class="w-5 h-5"></i> ตั้งค่า Cloud & AI
+                </h3>
+                <button onclick="closeKeyModal()" class="text-slate-400 hover:text-slate-600 p-1 min-w-[48px] min-h-[48px] flex items-center justify-center">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <button onclick="openLevelAvatarModal()" class="w-full bg-purple-100 hover:bg-purple-200 border-2 border-purple-300 text-purple-950 font-bold p-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm">
+                    <span>🎮</span> ตั้งค่า Level & รูปตัวละคร (พูน/เพลิน)
+                </button>
+
+                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200">
+                    <label class="block text-xs font-bold text-amber-900 mb-1">🛑 จำกัดสิทธิ์ท่องศัพท์ต่อวัน (รอบ/วัน)</label>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="input-enable-daily-limit" class="w-4 h-4 text-amber-600 rounded">
+                        <span class="text-xs font-bold text-slate-700">เปิดใช้งานจำกัดรอบ</span>
+                        <input type="number" id="input-daily-limit-rounds" min="1" max="50" placeholder="3" class="w-16 border-2 border-amber-200 rounded-xl p-1 text-center font-bold text-sm">
+                        <span class="text-xs text-slate-600 font-bold">รอบ/วัน</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-amber-900 mb-1">Firebase Config (JSON)</label>
+                    <textarea id="input-firebase-config" rows="3" placeholder='{"apiKey": "...", "databaseURL": "...", ...}' class="w-full border-2 border-amber-200 rounded-xl p-2.5 text-xs font-mono focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Gemini API Key</label>
+                    <input type="password" id="input-api-key" placeholder="AIzaSy..." class="w-full border-2 border-amber-200 rounded-xl p-3 focus:outline-none focus:border-amber-500 text-sm font-mono">
+                </div>
+                <div class="border-t border-amber-100 pt-3">
+                    <label class="block text-xs font-bold text-amber-900 mb-1">รหัสผ่าน PIN ผู้ปกครอง</label>
+                    <input type="password" id="input-parent-pin" maxlength="4" placeholder="1234" class="w-full border-2 border-amber-200 rounded-xl p-3 focus:outline-none focus:border-amber-500 text-sm font-mono tracking-widest text-center">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="saveApiKey()" class="w-full bg-amber-500 active:bg-amber-600 text-white font-bold py-3 rounded-xl min-h-[48px]">บันทึกการตั้งค่า</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((reg) => console.log('PWA Service Worker Registered!', reg))
+                    .catch((err) => console.log('Service Worker Registration Failed:', err));
+            });
+        }
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('ios-splash-screen');
+                if (splash) splash.classList.add('fade-out');
+            }, 1200);
+        });
+
+        // 🔥 ฝัง Firebase Config (แก้ไข URL เป็น asia-southeast1 เรียบร้อย)
+        const embeddedFirebaseConfig = {
+            apiKey: "AIzaSyAvubrOsRF8MHOs2XiRg3JaRjOF1tUk4uY",
+            authDomain: "han-vocab.firebaseapp.com",
+            databaseURL: "https://han-vocab-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "han-vocab",
+            storageBucket: "han-vocab.firebasestorage.app",
+            messagingSenderId: "461536815804",
+            appId: "1:461536815804:web:16e6286e8bc13350c0beb9",
+            measurementId: "G-8N7Y0Z8BFR"
+        };
+
+        const defaultVocabEN = [
+            { en: "Apple", th: "แอปเปิ้ล", phonetic: "แอบ-เปิ้ล", emoji: "🍎", image: null, assignees: ["พูน", "เพลิน"] },
+            { en: "Dog", th: "สุนัข", phonetic: "ด็อก", emoji: "🐶", image: null, assignees: ["พูน", "เพลิน"] },
+            { en: "Cat", th: "แมว", phonetic: "แคท", emoji: "🐱", image: null, assignees: ["พูน", "เพลิน"] },
+            { en: "Bird", th: "นก", phonetic: "เบิร์ด", emoji: "🐦", image: null, assignees: ["พูน", "เพลิน"] },
+            { en: "Fish", th: "ปลา", phonetic: "ฟิช", emoji: "🐟", image: null, assignees: ["พูน", "เพลิน"] }
+        ];
+
+        const defaultVocabTH = [
+            { en: "Banana", th: "กล้วย", phonetic: "กล้วย", emoji: "🍌", image: null, assignees: ["พูน", "เพลิน"] },
+            { en: "Elephant", th: "ช้าง", phonetic: "ช้าง", emoji: "🐘", image: null, assignees: ["พูน", "เพลิน"] },
+            { en: "House", th: "บ้าน", phonetic: "บ้าน", emoji: "🏠", image: null, assignees: ["พูน", "เพลิน"] },
+            { en: "Car", th: "รถยนต์", phonetic: "รถ-ยนต์", emoji: "🚗", image: null, assignees: ["พูน", "เพลิน"] },
+            { en: "Sun", th: "พระอาทิตย์", phonetic: "พระ-อา-ทิตย์", emoji: "☀️", image: null, assignees: ["พูน", "เพลิน"] }
+        ];
+
+        const defaultRewards = [
+            { id: "1", name: "🍦 ไอศกรีม 1 ถ้วย", stars: 2 },
+            { id: "2", name: "🎮 เล่นเกม 15 นาที", stars: 3 },
+            { id: "3", name: "🧸 ของขวัญพิเศษ 1 ชิ้น", stars: 5 }
+        ];
+
+        const defaultParentQuests = [
+            { id: "1", title: "🧹 ช่วยเก็บของเล่นใส่กล่อง", stars: 2, assignees: ["พูน", "เพลิน"] },
+            { id: "2", title: "📚 ทำการบ้านประจำวันเสร็จตรงเวลา", stars: 3, assignees: ["พูน", "เพลิน"] }
+        ];
+
+        let parentQuestsList = [];
+        let rewardsList = [];
+        let userInventoryList = []; 
+        let subjectMode = "EN"; 
+        let rawVocabList = []; 
+        let filteredVocabList = []; 
+        let notificationsList = [];
+        let currentIndex = 0;
+        let setCorrectAnswers = 0; 
+        let totalStars = 0;
+        let isFlipped = false;
+        let currentResizedBase64 = null;
+
+        let currentUser = null; 
+        let pendingProfile = null;
+        let isParentUser = false;
+        let currentMainTab = 'quest';
+
+        let isDailyLimitEnabled = true;
+        let dailyLimitRounds = 3;
+        let todayPlayedRounds = 0;
+
+        // Level & Avatar System State
+        let maxLevel = 10;
+        let currentChildEXP = 0;
+        let currentChildLevel = 1;
+        let levelAvatarsConfig = {
+            'พูน': {},
+            'เพลิน': {}
+        };
+        let selectedLvlConfigChild = 'พูน';
+
+        let dbRefVocabEN = null;
+        let dbRefVocabTH = null;
+        let dbRefNotify = null;
+        let dbRefRewards = null;
+        let dbRefParentQuests = null;
+        let dbRefDailyConfig = null;
+        let dbRefLevelConfig = null;
+        let isFirebaseActive = false;
+
+        function getTodayDateString() {
+            const today = new Date();
+            return `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+        }
+
+        function initData() {
+            const savedKey = localStorage.getItem("gemini_api_key");
+            if (savedKey) document.getElementById("input-api-key").value = savedKey;
+
+            const savedPin = localStorage.getItem("parent_pin") || "1234";
+            document.getElementById("input-parent-pin").value = savedPin;
+
+            const fbConfigStr = localStorage.getItem("firebase_config");
+            if (fbConfigStr) {
+                document.getElementById("input-firebase-config").value = fbConfigStr;
+            } else if (embeddedFirebaseConfig) {
+                document.getElementById("input-firebase-config").value = JSON.stringify(embeddedFirebaseConfig, null, 2);
+            }
+
+            isDailyLimitEnabled = localStorage.getItem("enable_daily_limit") !== "false";
+            dailyLimitRounds = parseInt(localStorage.getItem("daily_limit_rounds") || "3", 10);
+            maxLevel = parseInt(localStorage.getItem("max_level") || "10", 10);
+            document.getElementById("input-max-level").value = maxLevel;
+
+            const savedAvatars = localStorage.getItem("level_avatars_config");
+            if (savedAvatars) levelAvatarsConfig = JSON.parse(savedAvatars);
+            
+            document.getElementById("input-enable-daily-limit").checked = isDailyLimitEnabled;
+            document.getElementById("input-daily-limit-rounds").value = dailyLimitRounds;
+
+            setTimeout(initFirebase, 300);
+            openProfileModal();
+        }
+
+        function switchMainTab(tab) {
+            currentMainTab = tab;
+            const vocabBtn = document.getElementById("tab-vocab-btn");
+            const questBtn = document.getElementById("tab-quest-btn");
+            const vocabSec = document.getElementById("main-vocab-tab");
+            const questSec = document.getElementById("main-quest-tab");
+            const footerNav = document.getElementById("footer-nav");
+            const langSwitchBox = document.getElementById("lang-switch-box");
+
+            if (tab === 'quest') {
+                questBtn.className = "flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition";
+                vocabBtn.className = "flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition";
+                questSec.classList.remove("hidden");
+                questSec.classList.add("flex");
+                vocabSec.classList.add("hidden");
+                vocabSec.classList.remove("flex");
+                footerNav.classList.add("hidden");
+                langSwitchBox.classList.add("hidden");
+                renderParentQuestsList();
+            } else {
+                vocabBtn.className = "flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition";
+                questBtn.className = "flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition";
+                vocabSec.classList.remove("hidden");
+                vocabSec.classList.add("flex");
+                questSec.classList.add("hidden");
+                questSec.classList.remove("flex");
+                footerNav.classList.remove("hidden");
+                langSwitchBox.classList.remove("hidden");
+            }
+        }
+
+        function getUserStarsKey() { return `total_stars_${currentUser || 'guest'}`; }
+        function getUserEXPKey() { return `user_exp_${currentUser || 'guest'}`; }
+
+        function calculateLevelFromEXP(exp) {
+            let lvl = 1;
+            let req = 200;
+            let currentExpAcc = exp;
+
+            while (currentExpAcc >= req && lvl < maxLevel) {
+                currentExpAcc -= req;
+                lvl++;
+                req = lvl * 200;
+            }
+
+            return {
+                level: lvl,
+                currentLevelEXP: currentExpAcc,
+                nextLevelReqEXP: req
+            };
+        }
+
+        function loadUserStars() {
+            if (isFirebaseActive && currentUser) {
+                const { ref, onValue } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                
+                onValue(ref(db, `user_stars/${currentUser}`), (snapshot) => {
+                    const val = snapshot.val();
+                    totalStars = val !== null ? val : 0;
+                    document.getElementById("score").innerText = totalStars;
+                });
+
+                onValue(ref(db, `user_exp/${currentUser}`), (snapshot) => {
+                    const val = snapshot.val();
+                    currentChildEXP = val !== null ? val : 0;
+                    updateUserLevelAndAvatarDisplay();
+                });
+
+                const todayStr = getTodayDateString();
+                onValue(ref(db, `user_daily_rounds/${currentUser}/${todayStr}`), (snapshot) => {
+                    const val = snapshot.val();
+                    todayPlayedRounds = val !== null ? val : 0;
+                    checkDailyLimitStatus();
+                });
+
+                onValue(ref(db, `user_inventory/${currentUser}`), (snapshot) => {
+                    const val = snapshot.val();
+                    userInventoryList = [];
+                    if (val) {
+                        Object.keys(val).forEach(k => userInventoryList.push({ invId: k, ...val[k] }));
+                    }
+                    renderUserInventory();
+                });
+
+            } else {
+                totalStars = parseInt(localStorage.getItem(getUserStarsKey()) || "0", 10);
+                document.getElementById("score").innerText = totalStars;
+
+                currentChildEXP = parseInt(localStorage.getItem(getUserEXPKey()) || "0", 10);
+                updateUserLevelAndAvatarDisplay();
+
+                const todayStr = getTodayDateString();
+                todayPlayedRounds = parseInt(localStorage.getItem(`daily_rounds_${currentUser}_${todayStr}`) || "0", 10);
+                
+                const localInv = localStorage.getItem(`user_inventory_${currentUser}`);
+                userInventoryList = localInv ? JSON.parse(localInv) : [];
+                renderUserInventory();
+
+                checkDailyLimitStatus();
+            }
+        }
+
+        function updateUserLevelAndAvatarDisplay() {
+            const lvlData = calculateLevelFromEXP(currentChildEXP);
+            currentChildLevel = lvlData.level;
+
+            // 1. Header Display
+            if (isParentUser || !currentUser) {
+                document.getElementById("exp-bar-container").classList.add("hidden");
+                document.getElementById("user-level-tag").classList.add("hidden");
+                document.getElementById("user-avatar-img").classList.add("hidden");
+                document.getElementById("user-avatar").classList.remove("hidden");
+            } else {
+                document.getElementById("user-level-tag").innerText = `Lv.${currentChildLevel}`;
+                document.getElementById("user-level-tag").classList.remove("hidden");
+
+                document.getElementById("exp-bar-container").classList.remove("hidden");
+                document.getElementById("exp-level-text").innerText = `Lv.${currentChildLevel}`;
+                
+                const pct = Math.min(100, Math.round((lvlData.currentLevelEXP / lvlData.nextLevelReqEXP) * 100));
+                document.getElementById("exp-progress").style.width = `${pct}%`;
+                document.getElementById("exp-val-text").innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
+
+                const avatarImg = document.getElementById("user-avatar-img");
+                const avatarEmoji = document.getElementById("user-avatar");
+
+                const childAvatars = levelAvatarsConfig[currentUser] || {};
+                const customAvatarUrl = childAvatars[currentChildLevel];
+
+                if (customAvatarUrl) {
+                    avatarImg.src = customAvatarUrl;
+                    avatarImg.classList.remove("hidden");
+                    avatarEmoji.classList.add("hidden");
+                } else {
+                    avatarImg.classList.add("hidden");
+                    avatarEmoji.classList.remove("hidden");
+                }
+            }
+
+            // 2. Hero Big Avatar Display (หน้าภารกิจ)
+            const heroNameEl = document.getElementById("hero-user-name");
+            const heroImgEl = document.getElementById("hero-avatar-img");
+            const heroEmojiEl = document.getElementById("hero-avatar-emoji");
+            const heroLvlBadgeEl = document.getElementById("hero-level-badge");
+            const heroExpBar = document.getElementById("hero-exp-progress");
+            const heroExpText = document.getElementById("hero-exp-text");
+
+            if (heroNameEl) {
+                if (isParentUser) {
+                    heroNameEl.innerText = `${currentUser || 'ผู้ปกครอง'} (โหมดผู้ปกครอง)`;
+                    heroLvlBadgeEl.innerText = `พ่อนะ / แม่พัด`;
+                    heroImgEl.classList.add("hidden");
+                    heroEmojiEl.classList.remove("hidden");
+                    heroEmojiEl.innerText = currentUser === 'แม่พัด' ? '👩‍💼' : '👨‍💼';
+                    document.getElementById("hero-exp-container").classList.add("hidden");
+                } else {
+                    heroNameEl.innerText = `น้อง${currentUser || 'เด็กๆ'}`;
+                    heroLvlBadgeEl.innerText = `Level ${currentChildLevel}`;
+                    
+                    document.getElementById("hero-exp-container").classList.remove("hidden");
+                    const pct = Math.min(100, Math.round((lvlData.currentLevelEXP / lvlData.nextLevelReqEXP) * 100));
+                    heroExpBar.style.width = `${pct}%`;
+                    heroExpText.innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
+
+                    const childAvatars = levelAvatarsConfig[currentUser] || {};
+                    const customAvatarUrl = childAvatars[currentChildLevel];
+
+                    if (customAvatarUrl) {
+                        heroImgEl.src = customAvatarUrl;
+                        heroImgEl.classList.remove("hidden");
+                        heroEmojiEl.classList.add("hidden");
+                    } else {
+                        heroImgEl.classList.add("hidden");
+                        heroEmojiEl.classList.remove("hidden");
+                        heroEmojiEl.innerText = currentUser === 'เพลิน' ? '👧' : '👦';
+                    }
+                }
+            }
+        }
+
+        function addEXPToUser(amount) {
+            if (isParentUser || !currentUser) return;
+
+            currentChildEXP += amount;
+
+            if (isFirebaseActive) {
+                const { ref, set } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                set(ref(db, `user_exp/${currentUser}`), currentChildEXP);
+            } else {
+                localStorage.setItem(getUserEXPKey(), currentChildEXP.toString());
+            }
+
+            updateUserLevelAndAvatarDisplay();
+        }
+
+        function saveUserStars() {
+            if (isFirebaseActive && currentUser) {
+                const { ref, set } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                set(ref(db, `user_stars/${currentUser}`), totalStars);
+            } else {
+                localStorage.setItem(getUserStarsKey(), totalStars.toString());
+            }
+            document.getElementById("score").innerText = totalStars;
+        }
+
+        function adjustChildStars(isAdding) {
+            const targetChild = document.getElementById("manage-star-child").value;
+            const starCount = parseInt(document.getElementById("manage-star-count").value, 10);
+            const reason = document.getElementById("manage-star-reason").value.trim() || (isAdding ? "รางวัลพิเศษ" : "ถูกหักดาว");
+
+            if (isNaN(starCount) || starCount <= 0) {
+                alert("กรุณากรอกจำนวนดาวให้ถูกต้องครับ");
+                return;
+            }
+
+            const changeAmount = isAdding ? starCount : -starCount;
+
+            if (isFirebaseActive) {
+                const { ref, get, set } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                const starRef = ref(db, `user_stars/${targetChild}`);
+
+                get(starRef).then(snapshot => {
+                    const currentStars = snapshot.val() || 0;
+                    const newStars = Math.max(0, currentStars + changeAmount);
+                    set(starRef, newStars);
+
+                    sendInAppNotification('MANUAL_STAR_ADJUST', {
+                        childName: targetChild,
+                        change: changeAmount,
+                        reason: reason
+                    });
+
+                    alert(`${isAdding ? 'เพิ่ม' : 'ลด'}ดาวให้น้อง ${targetChild} จำนวน ${starCount} ดวง เรียบร้อยแล้ว! (ดาวคงเหลือ: ${newStars})`);
+                });
+            } else {
+                const localKey = `total_stars_${targetChild}`;
+                const currentStars = parseInt(localStorage.getItem(localKey) || "0", 10);
+                const newStars = Math.max(0, currentStars + changeAmount);
+                localStorage.setItem(localKey, newStars.toString());
+
+                if (targetChild === currentUser) {
+                    totalStars = newStars;
+                    document.getElementById("score").innerText = totalStars;
+                }
+
+                sendInAppNotification('MANUAL_STAR_ADJUST', {
+                    childName: targetChild,
+                    change: changeAmount,
+                    reason: reason
+                });
+
+                alert(`${isAdding ? 'เพิ่ม' : 'ลด'}ดาวให้น้อง ${targetChild} จำนวน ${starCount} ดวง เรียบร้อยแล้ว! (ดาวคงเหลือ: ${newStars})`);
+            }
+
+            document.getElementById("manage-star-count").value = "";
+            document.getElementById("manage-star-reason").value = "";
+        }
+
+        function incrementTodayRounds() {
+            todayPlayedRounds += 1;
+            const todayStr = getTodayDateString();
+
+            if (isFirebaseActive && currentUser) {
+                const { ref, set } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                set(ref(db, `user_daily_rounds/${currentUser}/${todayStr}`), todayPlayedRounds);
+            } else {
+                localStorage.setItem(`daily_rounds_${currentUser}_${todayStr}`, todayPlayedRounds.toString());
+            }
+
+            checkDailyLimitStatus();
+        }
+
+        function checkDailyLimitStatus() {
+            const limitBanner = document.getElementById("daily-limit-banner");
+            const checkBtn = document.getElementById("btn-check-answer");
+            const quotaText = document.getElementById("daily-quota-text");
+            const limitRoundsText = document.getElementById("limit-rounds-text");
+
+            if (limitRoundsText) limitRoundsText.innerText = dailyLimitRounds;
+
+            if (!isParentUser && isDailyLimitEnabled) {
+                quotaText.innerText = `วันนี้ ${todayPlayedRounds}/${dailyLimitRounds} รอบ`;
+                quotaText.classList.remove("hidden");
+
+                if (todayPlayedRounds >= dailyLimitRounds) {
+                    limitBanner.classList.remove("hidden");
+                    checkBtn.disabled = true;
+                    checkBtn.classList.add("opacity-50", "cursor-not-allowed");
+                } else {
+                    limitBanner.classList.add("hidden");
+                    checkBtn.disabled = false;
+                    checkBtn.classList.remove("opacity-50", "cursor-not-allowed");
+                }
+            } else {
+                limitBanner.classList.add("hidden");
+                quotaText.classList.add("hidden");
+                checkBtn.disabled = false;
+                checkBtn.classList.remove("opacity-50", "cursor-not-allowed");
+            }
+        }
+
+        function switchSubjectMode(mode) {
+            subjectMode = mode;
+            const enBtn = document.getElementById("mode-en-btn");
+            const thBtn = document.getElementById("mode-th-btn");
+
+            if (mode === 'EN') {
+                enBtn.className = "px-2.5 py-1 rounded-xl text-xs font-black bg-white text-amber-900 shadow transition";
+                thBtn.className = "px-2.5 py-1 rounded-xl text-xs font-black text-amber-950 hover:bg-amber-300/50 transition";
+            } else {
+                thBtn.className = "px-2.5 py-1 rounded-xl text-xs font-black bg-white text-amber-900 shadow transition";
+                enBtn.className = "px-2.5 py-1 rounded-xl text-xs font-black text-amber-950 hover:bg-amber-300/50 transition";
+            }
+
+            currentIndex = 0;
+            setCorrectAnswers = 0;
+            if (isFirebaseActive) {
+                initFirebase();
+            } else {
+                const localData = localStorage.getItem(`kids_vocab_${mode.toLowerCase()}_data`);
+                rawVocabList = localData ? JSON.parse(localData) : (mode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH]);
+                filterVocabForUser();
+                updateCard();
+            }
+        }
+
+        function initFirebase() {
+            const configStr = localStorage.getItem("firebase_config");
+            let firebaseConfig = embeddedFirebaseConfig;
+
+            if (configStr) {
+                try {
+                    firebaseConfig = JSON.parse(configStr);
+                } catch(e) {
+                    console.error("Local config parse error, using embedded config", e);
+                }
+            }
+
+            if (!firebaseConfig || !firebaseConfig.apiKey) {
+                const localData = localStorage.getItem(`kids_vocab_${subjectMode.toLowerCase()}_data`);
+                rawVocabList = localData ? JSON.parse(localData) : (subjectMode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH]);
+                
+                const localRewards = localStorage.getItem("kids_rewards_list");
+                rewardsList = localRewards ? JSON.parse(localRewards) : [...defaultRewards];
+
+                const localQuests = localStorage.getItem("kids_parent_quests");
+                parentQuestsList = localQuests ? JSON.parse(localQuests) : [...defaultParentQuests];
+
+                filterVocabForUser();
+                updateCard();
+                renderRewardsList();
+                renderParentQuestsList();
+                return;
+            }
+
+            try {
+                const { initializeApp, getDatabase, ref, onValue, set } = window.firebaseModules;
+                
+                const app = initializeApp(firebaseConfig);
+                const db = getDatabase(app);
+                
+                dbRefVocabEN = ref(db, 'kids_vocab_en_shared');
+                dbRefVocabTH = ref(db, 'kids_vocab_th_shared');
+                dbRefNotify = ref(db, 'kids_notifications');
+                dbRefRewards = ref(db, 'kids_rewards');
+                dbRefParentQuests = ref(db, 'kids_parent_quests');
+                dbRefDailyConfig = ref(db, 'kids_daily_config');
+                dbRefLevelConfig = ref(db, 'kids_level_config');
+
+                onValue(dbRefDailyConfig, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        isDailyLimitEnabled = data.enabled;
+                        dailyLimitRounds = data.rounds;
+                        document.getElementById("input-enable-daily-limit").checked = isDailyLimitEnabled;
+                        document.getElementById("input-daily-limit-rounds").value = dailyLimitRounds;
+                        checkDailyLimitStatus();
+                    }
+                });
+
+                onValue(dbRefLevelConfig, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        maxLevel = data.maxLevel || 10;
+                        levelAvatarsConfig = data.levelAvatars || { 'พูน': {}, 'เพลิน': {} };
+                        document.getElementById("input-max-level").value = maxLevel;
+                        updateUserLevelAndAvatarDisplay();
+                    }
+                });
+
+                const currentDbRef = subjectMode === 'EN' ? dbRefVocabEN : dbRefVocabTH;
+
+                onValue(currentDbRef, (snapshot) => {
+                    const data = snapshot.val();
+                    let parsedData = [];
+                    if (data) {
+                        parsedData = Array.isArray(data) ? data : Object.values(data);
+                    }
+                    if (parsedData.length > 0) {
+                        rawVocabList = parsedData;
+                    } else {
+                        rawVocabList = subjectMode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH];
+                        set(currentDbRef, rawVocabList);
+                    }
+                    isFirebaseActive = true;
+                    filterVocabForUser();
+                    updateCard();
+                });
+
+                onValue(dbRefRewards, (snapshot) => {
+                    const data = snapshot.val();
+                    let parsedRewards = [];
+                    if (data) {
+                        parsedRewards = Array.isArray(data) ? data : Object.values(data);
+                    }
+                    if (parsedRewards.length > 0) {
+                        rewardsList = parsedRewards;
+                    } else {
+                        rewardsList = [...defaultRewards];
+                        set(dbRefRewards, rewardsList);
+                    }
+                    renderRewardsList();
+                });
+
+                onValue(dbRefParentQuests, (snapshot) => {
+                    const data = snapshot.val();
+                    let parsedQuests = [];
+                    if (data) {
+                        parsedQuests = Array.isArray(data) ? data : Object.values(data);
+                    }
+                    if (parsedQuests.length > 0) {
+                        parentQuestsList = parsedQuests;
+                    } else {
+                        parentQuestsList = [...defaultParentQuests];
+                        set(dbRefParentQuests, parentQuestsList);
+                    }
+                    renderParentQuestsList();
+                });
+
+                onValue(dbRefNotify, (snapshot) => {
+                    const data = snapshot.val();
+                    notificationsList = [];
+                    if (data) {
+                        Object.keys(data).forEach(key => {
+                            notificationsList.push({ id: key, ...data[key] });
+                        });
+                        notificationsList.sort((a, b) => b.timestamp - a.timestamp);
+                        document.getElementById("notify-badge").classList.remove("hidden");
+                        document.getElementById("notify-dot").classList.remove("hidden");
+                    }
+                    renderNotifications();
+                    renderParentQuestsList();
+                });
+
+                if (currentUser) loadUserStars();
+
+            } catch (e) {
+                console.error("Firebase Error:", e);
+                const localData = localStorage.getItem(`kids_vocab_${subjectMode.toLowerCase()}_data`);
+                rawVocabList = localData ? JSON.parse(localData) : (subjectMode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH]);
+                filterVocabForUser();
+                updateCard();
+            }
+        }
+
+        function filterVocabForUser() {
+            if (isParentUser || !currentUser) {
+                filteredVocabList = [...rawVocabList];
+            } else {
+                filteredVocabList = rawVocabList.filter(item => {
+                    if (!item.assignees || item.assignees.length === 0) return true;
+                    return item.assignees.includes(currentUser);
+                });
+            }
+        }
+
+        function saveToStorage() { 
+            if (isFirebaseActive) {
+                const { set } = window.firebaseModules;
+                const currentDbRef = subjectMode === 'EN' ? dbRefVocabEN : dbRefVocabTH;
+                if (currentDbRef) set(currentDbRef, rawVocabList);
+            } else {
+                localStorage.setItem(`kids_vocab_${subjectMode.toLowerCase()}_data`, JSON.stringify(rawVocabList)); 
+            }
+        }
+
+        function saveLevelConfigToStorage() {
+            if (isFirebaseActive && dbRefLevelConfig) {
+                const { set } = window.firebaseModules;
+                set(dbRefLevelConfig, { maxLevel: maxLevel, levelAvatars: levelAvatarsConfig });
+            } else {
+                localStorage.setItem("max_level", maxLevel.toString());
+                localStorage.setItem("level_avatars_config", JSON.stringify(levelAvatarsConfig));
+            }
+            updateUserLevelAndAvatarDisplay();
+        }
+
+        function saveParentQuestsToStorage() {
+            if (isFirebaseActive && dbRefParentQuests) {
+                const { set } = window.firebaseModules;
+                set(dbRefParentQuests, parentQuestsList);
+            } else {
+                localStorage.setItem("kids_parent_quests", JSON.stringify(parentQuestsList));
+            }
+            renderParentQuestsList();
+        }
+
+        function createNewParentQuest() {
+            const title = document.getElementById("new-quest-title").value.trim();
+            const stars = parseInt(document.getElementById("new-quest-stars").value, 10);
+            const assignPoon = document.getElementById("quest-assign-poon").checked;
+            const assignPloern = document.getElementById("quest-assign-ploern").checked;
+
+            if (!title || isNaN(stars) || stars <= 0) {
+                alert("กรุณากรอกชื่อภารกิจและจำนวนดาวให้ถูกต้องครับ");
+                return;
+            }
+
+            const assignees = [];
+            if (assignPoon) assignees.push("พูน");
+            if (assignPloern) assignees.push("เพลิน");
+
+            const newQuest = {
+                id: Date.now().toString(),
+                title: title,
+                stars: stars,
+                assignees: assignees
+            };
+
+            parentQuestsList.push(newQuest);
+            saveParentQuestsToStorage();
+
+            document.getElementById("new-quest-title").value = "";
+            document.getElementById("new-quest-stars").value = "";
+            alert(`สร้างภารกิจ "${title}" สำเร็จ!`);
+        }
+
+        function deleteParentQuest(id) {
+            if (confirm("คุณต้องการลบภารกิจนี้ใช่หรือไม่?")) {
+                parentQuestsList = parentQuestsList.filter(q => q.id !== id);
+                saveParentQuestsToStorage();
+            }
+        }
+
+        function openAssignModal(questId) {
+            const quest = parentQuestsList.find(q => q.id === questId);
+            if (!quest) return;
+
+            document.getElementById("assign-quest-id").value = quest.id;
+            document.getElementById("assign-quest-title").innerText = quest.title;
+
+            const assignees = quest.assignees || ["พูน", "เพลิน"];
+            document.getElementById("reassign-poon").checked = assignees.includes("พูน");
+            document.getElementById("reassign-ploern").checked = assignees.includes("เพลิน");
+
+            document.getElementById("assign-quest-modal").classList.remove("hidden");
+        }
+
+        function closeAssignModal() {
+            document.getElementById("assign-quest-modal").classList.add("hidden");
+        }
+
+        function saveQuestAssignment() {
+            const id = document.getElementById("assign-quest-id").value;
+            const quest = parentQuestsList.find(q => q.id === id);
+            if (!quest) return;
+
+            const assignPoon = document.getElementById("reassign-poon").checked;
+            const assignPloern = document.getElementById("reassign-ploern").checked;
+
+            const newAssignees = [];
+            if (assignPoon) newAssignees.push("พูน");
+            if (assignPloern) newAssignees.push("เพลิน");
+
+            quest.assignees = newAssignees;
+            saveParentQuestsToStorage();
+            closeAssignModal();
+            alert(`อัปเดตผู้รับภารกิจ "${quest.title}" เรียบร้อยแล้ว!`);
+        }
+
+        function renderParentQuestsList() {
+            const container = document.getElementById("parent-quests-list");
+            if (!container) return;
+
+            let filteredQuests = parentQuestsList;
+            if (!isParentUser && currentUser) {
+                filteredQuests = parentQuestsList.filter(q => {
+                    const isForUser = !q.assignees || q.assignees.includes(currentUser);
+                    if (!isForUser) return false;
+
+                    const existingNotify = notificationsList.find(n => 
+                        n.type === 'SUBMIT_QUEST' && 
+                        n.user === currentUser && 
+                        n.details.questTitle === q.title
+                    );
+
+                    if (existingNotify && existingNotify.status === 'approved') {
+                        return false;
+                    }
+                    return true;
+                });
+            }
+
+            if (!filteredQuests || filteredQuests.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">ยังไม่มีภารกิจค้างส่ง</div>`;
+                return;
+            }
+
+            container.innerHTML = filteredQuests.map(q => {
+                let actionButtonHtml = '';
+                if (isParentUser) {
+                    actionButtonHtml = `
+                        <button onclick="openAssignModal('${q.id}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 p-2 rounded-xl text-xs font-bold border border-amber-300 flex items-center gap-1">
+                            🎯 Assign
+                        </button>
+                        <button onclick="deleteParentQuest('${q.id}')" class="bg-red-100 text-red-700 hover:bg-red-200 p-2 rounded-xl text-xs font-bold border border-red-300">
+                            🗑️ ลบ
+                        </button>
+                    `;
+                } else {
+                    const existingNotify = notificationsList.find(n => 
+                        n.type === 'SUBMIT_QUEST' && 
+                        n.user === currentUser && 
+                        n.details.questTitle === q.title &&
+                        n.status === 'pending'
+                    );
+
+                    if (existingNotify) {
+                        actionButtonHtml = `
+                            <span class="bg-amber-200/80 text-amber-900 font-bold py-2 px-3 rounded-xl text-xs border border-amber-300">
+                                ⏳ รอพ่อนะ/แม่พัด ตรวจ
+                            </span>
+                        `;
+                    } else {
+                        actionButtonHtml = `
+                            <button onclick="submitParentQuestForCheck('${q.title}', ${q.stars})" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-2 px-3 rounded-xl text-xs shadow">
+                                กดส่งภารกิจ ✨
+                            </button>
+                        `;
+                    }
+                }
+
+                return `
+                    <div class="bg-amber-50 p-3.5 rounded-2xl border-2 border-amber-200 flex justify-between items-center shadow-sm">
+                        <div>
+                            <div class="font-extrabold text-amber-900 text-sm mb-1">${q.title}</div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">รางวัล 🌟 ${q.stars} ดวง</span>
+                                <span class="text-[10px] text-slate-500 font-bold">🎯 ${q.assignees && q.assignees.length > 0 ? q.assignees.join(', ') : 'ไม่มีผู้รับมอบหมาย'}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            ${actionButtonHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function submitParentQuestForCheck(questTitle, stars) {
+            if (confirm(`คุณได้ทำภารกิจ "${questTitle}" เรียบร้อยแล้ว และต้องการส่งให้ พ่อนะ / แม่พัด ตรวจใช่ไหมครับ?`)) {
+                sendInAppNotification('SUBMIT_QUEST', {
+                    questTitle: questTitle,
+                    starsReward: stars
+                });
+                renderParentQuestsList();
+                alert(`ส่งภารกิจ "${questTitle}" ถึงพ่อนะและแม่พัดเพื่อตรวจเรียบร้อยแล้วครับ! ✨`);
+            }
+        }
+
+        function saveRewardsToStorage() {
+            if (isFirebaseActive && dbRefRewards) {
+                const { set } = window.firebaseModules;
+                set(dbRefRewards, rewardsList);
+            } else {
+                localStorage.setItem("kids_rewards_list", JSON.stringify(rewardsList));
+            }
+            renderRewardsList();
+        }
+
+        function addNewRewardItem() {
+            const name = document.getElementById("new-reward-name").value.trim();
+            const stars = parseInt(document.getElementById("new-reward-stars").value, 10);
+
+            if (!name || isNaN(stars) || stars <= 0) {
+                alert("กรุณากรอกชื่อรางวัลและจำนวนดาวให้ถูกต้องครับ");
+                return;
+            }
+
+            const newItem = {
+                id: Date.now().toString(),
+                name: name,
+                stars: stars
+            };
+
+            rewardsList.push(newItem);
+            saveRewardsToStorage();
+
+            document.getElementById("new-reward-name").value = "";
+            document.getElementById("new-reward-stars").value = "";
+            alert(`เพิ่มรางวัล "${name}" เรียบร้อยแล้ว!`);
+        }
+
+        function deleteRewardItem(id) {
+            if (confirm("คุณต้องการลบของรางวัลนี้ใช่หรือไม่?")) {
+                rewardsList = rewardsList.filter(r => r.id !== id);
+                saveRewardsToStorage();
+            }
+        }
+
+        function switchRewardTab(tab) {
+            const shopBtn = document.getElementById("shop-tab-btn");
+            const invBtn = document.getElementById("inventory-tab-btn");
+            const shopView = document.getElementById("reward-shop-view");
+            const invView = document.getElementById("reward-inventory-view");
+
+            if (tab === 'shop') {
+                shopBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition";
+                invBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition";
+                shopView.classList.remove("hidden");
+                invView.classList.add("hidden");
+            } else {
+                invBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition";
+                shopBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition";
+                invView.classList.remove("hidden");
+                shopView.classList.add("hidden");
+                renderUserInventory();
+            }
+        }
+
+        function renderRewardsList() {
+            const container = document.getElementById("rewards-list-container");
+            if (!rewardsList || rewardsList.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">ยังไม่มีรายการของรางวัล</div>`;
+                return;
+            }
+
+            container.innerHTML = rewardsList.map(r => `
+                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 flex justify-between items-center">
+                    <div>
+                        <div class="font-extrabold text-amber-900 text-sm">${r.name}</div>
+                        <div class="text-xs text-amber-700 font-bold">ใช้ ${r.stars} ดาว 🌟</div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        ${isParentUser ? `
+                            <button onclick="deleteRewardItem('${r.id}')" class="bg-red-100 hover:bg-red-200 text-red-700 p-2 rounded-xl text-xs font-bold border border-red-300">
+                                🗑️ ลบ
+                            </button>
+                        ` : `
+                            <button onclick="requestReward('${r.name}', ${r.stars})" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-bold py-2 px-3 rounded-xl shadow">
+                                กดส่งคำขอแลก ✨
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addRewardToUserInventory(userName, rewardName) {
+            const item = {
+                invId: Date.now().toString(),
+                name: rewardName,
+                date: new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
+            };
+
+            if (isFirebaseActive) {
+                const { push, ref } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                push(ref(db, `user_inventory/${userName}`), item);
+            } else {
+                const localKey = `user_inventory_${userName}`;
+                const currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
+                currentInv.unshift(item);
+                localStorage.setItem(localKey, JSON.stringify(currentInv));
+                if (userName === currentUser) {
+                    userInventoryList = currentInv;
+                    renderUserInventory();
+                }
+            }
+        }
+
+        function useInventoryItem(invId) {
+            if (confirm("คุณใช้งานรางวัลนี้แล้วใช่ไหมครับ?")) {
+                if (isFirebaseActive) {
+                    const { ref, set } = window.firebaseModules;
+                    const db = window.firebaseModules.getDatabase();
+                    set(ref(db, `user_inventory/${currentUser}/${invId}`), null);
+                } else {
+                    userInventoryList = userInventoryList.filter(x => x.invId !== invId);
+                    localStorage.setItem(`user_inventory_${currentUser}`, JSON.stringify(userInventoryList));
+                    renderUserInventory();
+                }
+            }
+        }
+
+        function renderUserInventory() {
+            const container = document.getElementById("inventory-list-container");
+            if (!container) return;
+
+            if (!userInventoryList || userInventoryList.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-8">ยังไม่มีของรางวัลในกระเป๋า</div>`;
+                return;
+            }
+
+            container.innerHTML = userInventoryList.map(item => `
+                <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-3 flex justify-between items-center shadow-sm">
+                    <div>
+                        <div class="font-black text-emerald-950 text-sm">${item.name}</div>
+                        <div class="text-[10px] font-bold text-emerald-700">อนุมัติแล้วเมื่อ ${item.date}</div>
+                    </div>
+                    <button onclick="useInventoryItem('${item.invId}')" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-1.5 px-3 rounded-xl text-xs shadow">
+                        ✨ ใช้รางวัลนี้แล้ว
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function sendInAppNotification(type, details) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+            const dateStr = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+
+            const newNotify = {
+                type: type, 
+                user: currentUser || 'ผู้ปกครอง',
+                subject: subjectMode === 'EN' ? 'ภาษาอังกฤษ 🇬🇧' : 'ภาษาไทย 🇹🇭',
+                details: details,
+                status: 'pending',
+                time: `${dateStr} • ${timeStr}`,
+                timestamp: Date.now()
+            };
+
+            if (isFirebaseActive && dbRefNotify) {
+                const { push } = window.firebaseModules;
+                push(dbRefNotify, newNotify);
+            } else {
+                notificationsList.unshift(newNotify);
+                renderNotifications();
+            }
+        }
+
+        function renderNotifications() {
+            const listEl = document.getElementById("notify-list");
+            if (!listEl) return;
+            
+            if (notificationsList.length === 0) {
+                listEl.innerHTML = `<div class="text-center text-xs text-slate-400 py-8">ยังไม่มีรายการแจ้งเตือนล่าสุด</div>`;
+                return;
+            }
+
+            const avatars = { 'พ่อนะ': '👨‍💼', 'แม่พัด': '👩‍💼', 'พูน': '👦', 'เพลิน': '👧' };
+
+            listEl.innerHTML = notificationsList.map(n => {
+                const isPending = n.status === 'pending';
+
+                if (n.type === 'MANUAL_STAR_ADJUST') {
+                    const isPos = n.details.change > 0;
+                    return `
+                        <div class="p-3.5 ${isPos ? 'bg-emerald-50 border-emerald-300' : 'bg-red-50 border-red-300'} rounded-2xl border-2 flex items-start gap-3 shadow-sm">
+                            <span class="text-3xl bg-white p-2 rounded-xl border border-amber-200">${avatars[n.user] || '👨‍💼'}</span>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center mb-0.5">
+                                    <span class="font-extrabold text-sm ${isPos ? 'text-emerald-950' : 'text-red-950'}">${isPos ? '🌟 ปรับเพิ่มดาว!' : '🔻 ถูกลดดาว!'}</span>
+                                    <span class="text-[10px] font-bold text-slate-500">${n.time}</span>
+                                </div>
+                                <p class="text-xs font-bold text-slate-800">
+                                    ${n.user} ได้${isPos ? 'เพิ่มดาวให้' : 'ลดดาว'} น้อง <span class="text-amber-800 font-black">${n.details.childName}</span> จำนวน <span class="font-black ${isPos ? 'text-emerald-600' : 'text-red-600'}">${Math.abs(n.details.change)} ดาว</span>
+                                </p>
+                                <p class="text-[11px] text-slate-600 font-medium mt-0.5">เหตุผล: "${n.details.reason}"</p>
+                            </div>
+                        </div>
+                    `;
+                } else if (n.type === 'REQUEST_REWARD') {
+                    return `
+                        <div class="p-3.5 bg-amber-100 rounded-2xl border-2 border-amber-300 flex flex-col gap-2 shadow-sm">
+                            <div class="flex items-start gap-3">
+                                <span class="text-3xl bg-white p-2 rounded-xl border border-amber-200">${avatars[n.user] || '👦'}</span>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-center mb-0.5">
+                                        <span class="font-extrabold text-sm text-amber-950">🎁 คำขอแลกรางวัล!</span>
+                                        <span class="text-[10px] font-bold text-amber-700/60">${n.time}</span>
+                                    </div>
+                                    <p class="text-xs text-amber-900 font-bold">
+                                        น้อง <span class="text-amber-700 font-extrabold">${n.user}</span> ขอแลก: <span class="text-emerald-700 font-black">${n.details.rewardName}</span> (ใช้ ${n.details.starsUsed} ดาว)
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            ${isParentUser && isPending ? `
+                                <div class="flex gap-2 mt-1 border-t border-amber-200/60 pt-2">
+                                    <button onclick="approveReward('${n.id || n.timestamp}', '${n.user}', '${n.details.rewardName}', ${n.details.starsUsed}, true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1.5 rounded-xl text-xs shadow">
+                                        ✅ อนุมัติรางวัล
+                                    </button>
+                                    <button onclick="approveReward('${n.id || n.timestamp}', '${n.user}', '${n.details.rewardName}', ${n.details.starsUsed}, false)" class="bg-red-100 text-red-700 hover:bg-red-200 active:scale-95 font-bold py-1.5 px-3 rounded-xl text-xs border border-red-300">
+                                        ❌ ปฏิเสธ
+                                    </button>
+                                </div>
+                            ` : `
+                                <div class="text-[11px] font-bold text-center bg-white/60 py-1 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-red-600' : 'text-amber-800'}">
+                                    Status: ${n.status === 'approved' ? '✅ อนุมัติและย้ายไปกระเป๋าแล้ว' : n.status === 'rejected' ? '❌ คำขอถูกปฏิเสธ' : '⏳ รอพ่อนะ/แม่พัด อนุมัติ'}
+                                </div>
+                            `}
+                        </div>
+                    `;
+                } else if (n.type === 'SUBMIT_QUEST') {
+                    return `
+                        <div class="p-3.5 bg-amber-100 rounded-2xl border-2 border-amber-300 flex flex-col gap-2 shadow-sm">
+                            <div class="flex items-start gap-3">
+                                <span class="text-3xl bg-white p-2 rounded-xl border border-amber-200">${avatars[n.user] || '👦'}</span>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-center mb-0.5">
+                                        <span class="font-extrabold text-sm text-amber-950">📋 ส่งตรวจภารกิจ!</span>
+                                        <span class="text-[10px] font-bold text-amber-700/60">${n.time}</span>
+                                    </div>
+                                    <p class="text-xs text-amber-900 font-bold">
+                                        น้อง <span class="text-amber-700 font-extrabold">${n.user}</span> ส่งภารกิจ: <span class="text-emerald-700 font-black">${n.details.questTitle}</span> (รับ 🌟 ${n.details.starsReward} ดาว)
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            ${isParentUser && isPending ? `
+                                <div class="flex gap-2 mt-1 border-t border-amber-200/60 pt-2">
+                                    <button onclick="approveParentQuest('${n.id || n.timestamp}', '${n.user}', ${n.details.starsReward}, true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1.5 rounded-xl text-xs shadow">
+                                        ✅ ตรวจผ่าน (แจก 🌟 ${n.details.starsReward} ดาว)
+                                    </button>
+                                    <button onclick="approveParentQuest('${n.id || n.timestamp}', '${n.user}', ${n.details.starsReward}, false)" class="bg-red-100 text-red-700 hover:bg-red-200 active:scale-95 font-bold py-1.5 px-3 rounded-xl text-xs border border-red-300">
+                                        ❌ ไม่ผ่าน
+                                    </button>
+                                </div>
+                            ` : `
+                                <div class="text-[11px] font-bold text-center bg-white/60 py-1 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-red-600' : 'text-amber-800'}">
+                                    Status: ${n.status === 'approved' ? '✅ ตรวจผ่านแล้ว! ได้รับดาวเรียบร้อย' : n.status === 'rejected' ? '❌ ไม่ผ่าน' : '⏳ รอพ่อนะ/แม่พัด ตรวจ'}
+                                </div>
+                            `}
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 flex items-start gap-3 shadow-sm">
+                            <span class="text-3xl bg-white p-2 rounded-xl border border-amber-200">${avatars[n.user] || '👦'}</span>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center mb-0.5">
+                                    <span class="font-extrabold text-sm text-amber-950">${n.user} ท่องศัพท์ครบชุด! 🎉</span>
+                                    <span class="text-[10px] font-bold text-amber-700/60">${n.time}</span>
+                                </div>
+                                <p class="text-xs text-amber-900/80 font-medium">
+                                    หมวด <span class="font-bold text-amber-700">${n.subject}</span> | ถูกครบ <span class="font-bold text-emerald-600">5/5 คำ</span> | ได้รับดาว <span class="font-bold text-amber-600">🌟 1 ดวง</span>
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function approveParentQuest(notifyId, userName, starsReward, isApproved) {
+            if (isApproved) {
+                if (isFirebaseActive) {
+                    const { ref, get, set } = window.firebaseModules;
+                    const db = window.firebaseModules.getDatabase();
+                    
+                    const userStarRef = ref(db, `user_stars/${userName}`);
+                    get(userStarRef).then(snapshot => {
+                        const currentStars = snapshot.val() || 0;
+                        set(userStarRef, currentStars + starsReward);
+                    });
+
+                    const userExpRef = ref(db, `user_exp/${userName}`);
+                    get(userExpRef).then(snapshot => {
+                        const currentExp = snapshot.val() || 0;
+                        set(userExpRef, currentExp + (starsReward * 100));
+                    });
+
+                } else {
+                    const localStarKey = `total_stars_${userName}`;
+                    const currentStars = parseInt(localStorage.getItem(localStarKey) || "0", 10);
+                    localStorage.setItem(localStarKey, (currentStars + starsReward).toString());
+
+                    const localExpKey = `user_exp_${userName}`;
+                    const currentExp = parseInt(localStorage.getItem(localExpKey) || "0", 10);
+                    localStorage.setItem(localExpKey, (currentExp + (starsReward * 100)).toString());
+
+                    if (userName === currentUser) {
+                        totalStars += starsReward;
+                        document.getElementById("score").innerText = totalStars;
+                        currentChildEXP += (starsReward * 100);
+                        updateUserLevelAndAvatarDisplay();
+                    }
+                }
+                alert(`ตรวจผ่านแล้ว! เพิ่ม 🌟 ${starsReward} ดาว และ +${starsReward * 100} EXP ให้น้อง ${userName} เรียบร้อยครับ`);
+            } else {
+                alert(`ปฏิเสธภารกิจเรียบร้อยแล้ว`);
+            }
+
+            if (isFirebaseActive && dbRefNotify) {
+                const { ref, update } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                update(ref(db, `kids_notifications/${notifyId}`), { status: isApproved ? 'approved' : 'rejected' });
+            } else {
+                const item = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
+                if (item) item.status = isApproved ? 'approved' : 'rejected';
+                renderNotifications();
+                renderParentQuestsList();
+            }
+        }
+
+        function approveReward(notifyId, userName, rewardName, starsUsed, isApproved) {
+            if (isApproved) {
+                addRewardToUserInventory(userName, rewardName);
+                alert(`อนุมัติรางวัล "${rewardName}" ให้น้อง ${userName} เรียบร้อยแล้ว! (ย้ายเข้ากระเป๋าของน้องแล้ว)`);
+            } else {
+                alert(`ปฏิเสธคำขอเรียบร้อยแล้ว`);
+            }
+
+            if (isFirebaseActive && dbRefNotify) {
+                const { ref, update } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                update(ref(db, `kids_notifications/${notifyId}`), { status: isApproved ? 'approved' : 'rejected' });
+            } else {
+                const item = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
+                if (item) item.status = isApproved ? 'approved' : 'rejected';
+                renderNotifications();
+            }
+        }
+
+        function openNotifyModal() {
+            document.getElementById("notify-badge").classList.add("hidden");
+            document.getElementById("notify-dot").classList.add("hidden");
+            renderNotifications();
+            document.getElementById("notify-modal").classList.remove("hidden");
+        }
+
+        function closeNotifyModal() { document.getElementById("notify-modal").classList.add("hidden"); }
+
+        function openQuestModal() {
+            document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
+            
+            const parentAddSec = document.getElementById("parent-add-reward-section");
+            if (isParentUser) {
+                parentAddSec.classList.remove("hidden");
+            } else {
+                parentAddSec.classList.add("hidden");
+            }
+
+            switchRewardTab('shop');
+            renderRewardsList();
+            document.getElementById("quest-modal").classList.remove("hidden");
+        }
+
+        function closeQuestModal() { document.getElementById("quest-modal").classList.add("hidden"); }
+
+        function requestReward(rewardName, starsReq) {
+            if (totalStars < starsReq) {
+                alert(`ดาวสะสมไม่พอครับ! ต้องการ ${starsReq} ดาว (ตอนนี้มี ${totalStars} ดาว)`);
+                return;
+            }
+
+            if (confirm(`คุณต้องการใช้ ${starsReq} ดาว เพื่อส่งคำขอแลก "${rewardName}" ถึงพ่อนะ และ แม่พัด ใช่ไหมครับ?`)) {
+                totalStars -= starsReq;
+                saveUserStars();
+
+                sendInAppNotification('REQUEST_REWARD', {
+                    rewardName: rewardName,
+                    starsUsed: starsReq
+                });
+
+                alert(`ส่งคำขอแลก "${rewardName}" ถึงพ่อนะและแม่พัดแล้วครับ! รอคุณพ่อคุณแม่ออนุมัตินะครับ ✨`);
+                closeQuestModal();
+            }
+        }
+
+        function openProfileModal() { document.getElementById("profile-modal").classList.remove("hidden"); }
+
+        function selectProfile(name, requiresPin) {
+            if (requiresPin) {
+                pendingProfile = name;
+                document.getElementById("pin-target-name").innerText = `เข้าสู่ระบบสำหรับ ${name}`;
+                document.getElementById("pin-input").value = "";
+                document.getElementById("pin-modal").classList.remove("hidden");
+            } else {
+                setProfile(name, false);
+                document.getElementById("profile-modal").classList.add("hidden");
+            }
+        }
+
+        function verifyPin() {
+            const pin = document.getElementById("pin-input").value.trim();
+            const currentSavedPin = localStorage.getItem("parent_pin") || "1234";
+
+            if (pin === currentSavedPin) {
+                setProfile(pendingProfile, true);
+                closePinModal();
+                document.getElementById("profile-modal").classList.add("hidden");
+            } else {
+                alert(`รหัสผ่านไม่ถูกต้อง!`);
+            }
+        }
+
+        function closePinModal() {
+            document.getElementById("pin-modal").classList.add("hidden");
+            pendingProfile = null;
+        }
+
+        function setProfile(name, isParent) {
+            currentUser = name;
+            isParentUser = isParent;
+            document.getElementById("user-name").innerText = name;
+            
+            const avatars = { 'พ่อนะ': '👨‍💼', 'แม่พัด': '👩‍💼', 'พูน': '👦', 'เพลิน': '👧' };
+            document.getElementById("user-avatar").innerText = avatars[name] || '👤';
+
+            const addBtn = document.getElementById("btn-add-vocab");
+            const flashcardSec = document.getElementById("flashcard-section");
+            const spellingSec = document.getElementById("spelling-section");
+            const parentControls = document.getElementById("parent-controls");
+            const parentCreateQuestBox = document.getElementById("parent-create-quest-box");
+            const parentManageStarsBox = document.getElementById("parent-manage-stars-box");
+
+            if (isParent) {
+                addBtn.classList.remove("hidden");
+                addBtn.classList.add("flex");
+                flashcardSec.classList.remove("hidden");
+                spellingSec.classList.add("hidden");
+                parentControls.classList.remove("hidden");
+                if (parentCreateQuestBox) parentCreateQuestBox.classList.remove("hidden");
+                if (parentManageStarsBox) parentManageStarsBox.classList.remove("hidden");
+            } else {
+                addBtn.classList.add("hidden");
+                addBtn.classList.remove("flex");
+                flashcardSec.classList.add("hidden");
+                spellingSec.classList.remove("hidden");
+                spellingSec.classList.add("flex");
+                parentControls.classList.add("hidden");
+                if (parentCreateQuestBox) parentCreateQuestBox.classList.add("hidden");
+                if (parentManageStarsBox) parentManageStarsBox.classList.add("hidden");
+            }
+
+            filterVocabForUser();
+            currentIndex = 0;
+            setCorrectAnswers = 0;
+            loadUserStars();
+            updateCard();
+            renderParentQuestsList();
+            renderNotifications();
+        }
+
+        function updateCard() {
+            if (!filteredVocabList || filteredVocabList.length === 0) {
+                document.getElementById("card-word-main").innerText = "ไม่มีคำศัพท์";
+                document.getElementById("card-word-sub").innerText = "กรุณาเพิ่มคำศัพท์ใหม่";
+                document.getElementById("card-progress").innerText = "0 / 0";
+                return;
+            }
+
+            if (currentIndex >= filteredVocabList.length) currentIndex = 0;
+
+            const item = filteredVocabList[currentIndex];
+            isFlipped = false;
+            document.getElementById("card-inner").classList.remove("card-flipped");
+
+            const emojiEl = document.getElementById("card-emoji");
+            const imgEl = document.getElementById("card-img");
+            const emojiBackEl = document.getElementById("card-emoji-back");
+            const imgBackEl = document.getElementById("card-img-back");
+
+            if (item.image) {
+                [emojiEl, emojiBackEl].forEach(el => el.classList.add("hidden"));
+                [imgEl, imgBackEl].forEach(el => { el.classList.remove("hidden"); el.src = item.image; });
+            } else {
+                [imgEl, imgBackEl].forEach(el => el.classList.add("hidden"));
+                [emojiEl, emojiBackEl].forEach(el => { el.classList.remove("hidden"); el.innerText = item.emoji || "💡"; });
+            }
+
+            if (subjectMode === 'EN') {
+                document.getElementById("card-word-main").innerText = item.en;
+                document.getElementById("card-word-sub").innerText = item.th;
+                document.getElementById("card-phonetic").innerText = `[ ${item.phonetic || item.th} ]`;
+            } else {
+                document.getElementById("card-word-main").innerText = item.th;
+                document.getElementById("card-word-sub").innerText = item.en !== item.th ? item.en : "คำภาษาไทย";
+                document.getElementById("card-phonetic").innerText = `[ ${item.phonetic || item.th} ]`;
+            }
+
+            const spellEmoji = document.getElementById("spell-card-emoji");
+            const spellImg = document.getElementById("spell-card-img");
+            if (item.image) {
+                spellEmoji.classList.add("hidden");
+                spellImg.classList.remove("hidden");
+                spellImg.src = item.image;
+            } else {
+                spellImg.classList.add("hidden");
+                spellEmoji.classList.remove("hidden");
+                spellEmoji.innerText = item.emoji || "💡";
+            }
+
+            if (subjectMode === 'EN') {
+                document.getElementById("spell-card-title").innerText = item.th;
+                document.getElementById("spell-card-subtitle").innerText = `สะกดคำภาษาอังกฤษ`;
+                document.getElementById("spell-input").placeholder = "พิมพ์คำศัพท์ภาษาอังกฤษ...";
+            } else {
+                document.getElementById("spell-card-title").innerText = item.en;
+                document.getElementById("spell-card-subtitle").innerText = `สะกดคำภาษาไทย [ ${item.phonetic || item.th} ]`;
+                document.getElementById("spell-input").placeholder = "พิมพ์คำภาษาไทย...";
+            }
+
+            const posInSet = (currentIndex % 5) + 1;
+            const currentSetNum = Math.floor(currentIndex / 5) + 1;
+            document.getElementById("set-progress-text").innerText = `ชุดที่ ${currentSetNum} (คำที่ ${posInSet}/5)`;
+
+            document.getElementById("spell-input").value = "";
+            document.getElementById("speech-status").innerText = "";
+            document.getElementById("card-progress").innerText = `${currentIndex + 1} / ${filteredVocabList.length}`;
+            
+            checkDailyLimitStatus();
+        }
+
+        function triggerCompletionModal() {
+            totalStars += 1;
+            saveUserStars();
+            addEXPToUser(100);
+            incrementTodayRounds();
+
+            document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} ท่องถูกครบชุด 5 คำแล้ว!`;
+            document.getElementById("completion-modal").classList.remove("hidden");
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(`เก่งมากเลยครับ ${currentUser || ''} ตอบถูกครบ 5 คำ รับไปเลย 1 ดาว และ 100 EXP`);
+                utterance.lang = 'th-TH';
+                window.speechSynthesis.speak(utterance);
+            }
+
+            sendInAppNotification('COMPLETED_SET', { setNum: Math.floor(currentIndex / 5) + 1 });
+        }
+
+        function restartSession() {
+            document.getElementById("completion-modal").classList.add("hidden");
+            setCorrectAnswers = 0;
+            currentIndex = (currentIndex + 1) % filteredVocabList.length;
+            updateCard();
+        }
+
+        function checkSpellingAnswer() {
+            if (filteredVocabList.length === 0) return;
+
+            if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
+                alert(`🛑 หนูเล่นครบ ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
+                return;
+            }
+
+            const inputVal = document.getElementById("spell-input").value.trim().toLowerCase();
+            const currentItem = filteredVocabList[currentIndex];
+            const targetVal = (subjectMode === 'EN' ? currentItem.en : currentItem.th).trim().toLowerCase();
+
+            if (!inputVal) { alert("กรุณาพิมพ์หรือพูดสะกดคำก่อนนะครับ!"); return; }
+
+            const cleanedInput = inputVal.replace(/[\s\-]/g, '');
+            const cleanedTarget = targetVal.replace(/[\s\-]/g, '');
+
+            if (cleanedInput === cleanedTarget) {
+                alert(`🎉 ถูกต้องแล้วครับเก่งมาก! ${currentItem.en} = ${currentItem.th}`);
+                setCorrectAnswers += 1;
+
+                const isEndOfSet = ((currentIndex + 1) % 5 === 0) || (currentIndex === filteredVocabList.length - 1);
+
+                if (isEndOfSet) {
+                    if (setCorrectAnswers >= 5 || setCorrectAnswers === (filteredVocabList.length % 5)) {
+                        triggerCompletionModal();
+                    } else {
+                        alert(`จบชุดแล้ว! ท่องถูกไป ${setCorrectAnswers}/5 คำ (พยายามอีกนิดเพื่อเก็บ 1 ดาวนะครับ)`);
+                        setCorrectAnswers = 0;
+                        nextCard();
+                    }
+                } else {
+                    nextCard();
+                }
+            } else {
+                alert(`❌ ยังไม่ถูกต้องลองอีกทีนะ! (คำตอบที่ถูกคือ: ${targetVal})`);
+            }
+        }
+
+        function startSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) { alert("เบราว์เซอร์นี้ยังไม่รองรับระบบสั่งงานด้วยเสียงครับ"); return; }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = subjectMode === 'EN' ? 'en-US' : 'th-TH';
+            recognition.interimResults = false;
+
+            const micBtn = document.getElementById("mic-btn");
+            const speechStatus = document.getElementById("speech-status");
+
+            micBtn.classList.add("listening-pulse", "bg-red-500", "text-white");
+            speechStatus.innerText = "🎙️ กำลังฟังอยู่ พูดคำตอบได้เลย...";
+
+            recognition.start();
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById("spell-input").value = transcript;
+                speechStatus.innerText = `ฟังได้ว่า: "${transcript}"`;
+            };
+
+            recognition.onerror = function() { speechStatus.innerText = "ไม่ได้ยินเสียง ลองใหม่อีกครั้งนะครับ"; };
+            recognition.onend = function() { micBtn.classList.remove("listening-pulse", "bg-red-500", "text-white"); };
+        }
+
+        function flipCard() { 
+            if (filteredVocabList.length === 0) return;
+            isFlipped = !isFlipped; 
+            document.getElementById("card-inner").classList.toggle("card-flipped", isFlipped); 
+        }
+
+        function nextCard() { 
+            if (filteredVocabList.length === 0) return;
+            currentIndex = (currentIndex + 1) % filteredVocabList.length; 
+            updateCard(); 
+        }
+
+        function prevCard() { 
+            if (filteredVocabList.length === 0) return;
+            currentIndex = (currentIndex - 1 + filteredVocabList.length) % filteredVocabList.length; 
+            updateCard(); 
+        }
+
+        function addStar() { 
+            if (filteredVocabList.length === 0) return;
+            nextCard(); 
+        }
+
+        function speakCurrentWord() {
+            if (filteredVocabList.length === 0) return;
+            const item = filteredVocabList[currentIndex];
+            
+            let text = isFlipped ? item.th : item.en;
+            let lang = isFlipped ? 'th-TH' : 'en-US';
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang; 
+                utterance.rate = 0.8;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakCurrentWordPrompt() {
+            if (!filteredVocabList || filteredVocabList.length === 0) return;
+            const item = filteredVocabList[currentIndex];
+            
+            let text = subjectMode === 'EN' ? item.en : item.th;
+            let lang = subjectMode === 'EN' ? 'en-US' : 'th-TH';
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang; 
+                utterance.rate = 0.75;
+                utterance.pitch = 1.1;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("เบราว์เซอร์นี้ยังไม่รองรับระบบอ่านออกเสียงครับ");
+            }
+        }
+
+        function openKeyModal() { document.getElementById("key-modal").classList.remove("hidden"); }
+        function closeKeyModal() { document.getElementById("key-modal").classList.add("hidden"); }
+
+        function saveApiKey() {
+            const key = document.getElementById("input-api-key").value.trim();
+            const newPin = document.getElementById("input-parent-pin").value.trim();
+            const fbConfig = document.getElementById("input-firebase-config").value.trim();
+
+            isDailyLimitEnabled = document.getElementById("input-enable-daily-limit").checked;
+            dailyLimitRounds = parseInt(document.getElementById("input-daily-limit-rounds").value || "3", 10);
+
+            localStorage.setItem("enable_daily_limit", isDailyLimitEnabled ? "true" : "false");
+            localStorage.setItem("daily_limit_rounds", dailyLimitRounds.toString());
+
+            if (isFirebaseActive && dbRefDailyConfig) {
+                const { set } = window.firebaseModules;
+                set(dbRefDailyConfig, { enabled: isDailyLimitEnabled, rounds: dailyLimitRounds });
+            }
+
+            if (key) localStorage.setItem("gemini_api_key", key); else localStorage.removeItem("gemini_api_key");
+            
+            if (newPin) {
+                if (newPin.length === 4 && /^\d+$/.test(newPin)) {
+                    localStorage.setItem("parent_pin", newPin);
+                } else {
+                    alert("กรุณากรอกรหัส PIN เป็นตัวเลข 4 หลักเท่านั้นครับ");
+                    return;
+                }
+            }
+
+            if (fbConfig) {
+                localStorage.setItem("firebase_config", fbConfig);
+                initFirebase();
+            }
+
+            alert("บันทึกการตั้งค่าเรียบร้อยแล้ว!");
+            checkDailyLimitStatus();
+            closeKeyModal();
+        }
+
+        // LEVEL & AVATAR CONFIG FUNCTIONS
+        function openLevelAvatarModal() {
+            closeKeyModal();
+            renderLevelAvatarList();
+            document.getElementById("level-avatar-modal").classList.remove("hidden");
+        }
+
+        function closeLevelAvatarModal() {
+            document.getElementById("level-avatar-modal").classList.add("hidden");
+        }
+
+        function updateMaxLevelSetting() {
+            const val = parseInt(document.getElementById("input-max-level").value, 10);
+            if (!isNaN(val) && val >= 1 && val <= 50) {
+                maxLevel = val;
+                saveLevelConfigToStorage();
+                renderLevelAvatarList();
+            }
+        }
+
+        function switchLevelConfigChild(child) {
+            selectedLvlConfigChild = child;
+            const btnPoon = document.getElementById("lvl-btn-poon");
+            const btnPloern = document.getElementById("lvl-btn-ploern");
+
+            if (child === 'พูน') {
+                btnPoon.className = "flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white shadow";
+                btnPloern.className = "flex-1 py-1.5 rounded-xl text-xs font-black text-amber-900";
+            } else {
+                btnPloern.className = "flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white shadow";
+                btnPoon.className = "flex-1 py-1.5 rounded-xl text-xs font-black text-amber-900";
+            }
+
+            renderLevelAvatarList();
+        }
+
+        function renderLevelAvatarList() {
+            const container = document.getElementById("level-avatar-list");
+            const childAvatars = levelAvatarsConfig[selectedLvlConfigChild] || {};
+
+            let html = '';
+            for (let i = 1; i <= maxLevel; i++) {
+                const currentImg = childAvatars[i] || null;
+                html += `
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-10 h-10 rounded-xl overflow-hidden bg-white border border-amber-300 flex items-center justify-center">
+                                ${currentImg ? `<img src="${currentImg}" class="w-full h-full object-cover">` : `<span class="text-xs text-amber-500 font-bold">No Img</span>`}
+                            </div>
+                            <span class="font-extrabold text-amber-900 text-xs">Level ${i}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <label class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold px-2.5 py-1.5 rounded-xl text-[11px] shadow cursor-pointer">
+                                📷 อัปโหลด
+                                <input type="file" accept="image/*" class="hidden" onchange="handleLevelAvatarUpload(event, '${selectedLvlConfigChild}', ${i})">
+                            </label>
+                            ${currentImg ? `
+                                <button onclick="deleteLevelAvatar('${selectedLvlConfigChild}', ${i})" class="bg-red-100 hover:bg-red-200 text-red-700 p-1.5 rounded-xl text-[11px] border border-red-300 font-bold">
+                                    🗑️
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function handleLevelAvatarUpload(event, child, lvl) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement("canvas");
+                    const maxDim = 250;
+                    let width = img.width, height = img.height;
+
+                    if (width > height) {
+                        if (width > maxDim) { height = Math.round((height * maxDim) / width); width = maxDim; }
+                    } else {
+                        if (height > maxDim) { width = Math.round((width * maxDim) / height); height = maxDim; }
+                    }
+
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const resizedBase64 = canvas.toDataURL("image/jpeg", 0.75);
+
+                    if (!levelAvatarsConfig[child]) levelAvatarsConfig[child] = {};
+                    levelAvatarsConfig[child][lvl] = resizedBase64;
+
+                    saveLevelConfigToStorage();
+                    renderLevelAvatarList();
+                    alert(`อัปโหลดรูปตัวละครของน้อง ${child} สำหรับ Level ${lvl} เรียบร้อยแล้ว!`);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function deleteLevelAvatar(child, lvl) {
+            if (confirm(`ลบรูปตัวละคร Level ${lvl} ของน้อง ${child} ใช่ไหม?`)) {
+                if (levelAvatarsConfig[child] && levelAvatarsConfig[child][lvl]) {
+                    delete levelAvatarsConfig[child][lvl];
+                    saveLevelConfigToStorage();
+                    renderLevelAvatarList();
+                }
+            }
+        }
+
+        function openAddModal() {
+            document.getElementById("modal-title").innerText = `เพิ่มคำศัพท์ใหม่ (${subjectMode}) 📝`;
+            document.getElementById("edit-index").value = "-1";
+            document.getElementById("vocab-form").reset();
+            document.getElementById("assign-poon").checked = true;
+            document.getElementById("assign-ploern").checked = true;
+            document.getElementById("img-preview-container").classList.add("hidden");
+            currentResizedBase64 = null;
+            document.getElementById("add-modal").classList.remove("hidden");
+        }
+
+        function editCurrentCard() {
+            if (filteredVocabList.length === 0) return;
+            const item = filteredVocabList[currentIndex];
+            const rawIndex = rawVocabList.findIndex(x => x.en === item.en && x.th === item.th);
+
+            if (rawIndex === -1) return;
+
+            document.getElementById("modal-title").innerText = "แก้ไขคำศัพท์ ✏️";
+            document.getElementById("edit-index").value = rawIndex;
+            document.getElementById("input-en").value = item.en;
+            document.getElementById("input-th").value = item.th;
+            document.getElementById("input-phonetic").value = item.phonetic || item.th;
+
+            const assignees = item.assignees || ["พูน", "เพลิน"];
+            document.getElementById("assign-poon").checked = assignees.includes("พูน");
+            document.getElementById("assign-ploern").checked = assignees.includes("เพลิน");
+
+            if (item.image) {
+                currentResizedBase64 = item.image;
+                document.getElementById("img-preview").src = item.image;
+                document.getElementById("img-preview-container").classList.remove("hidden");
+                document.getElementById("img-size-info").innerText = "รูปภาพเดิม";
+            } else {
+                currentResizedBase64 = null;
+                document.getElementById("img-preview-container").classList.add("hidden");
+            }
+
+            document.getElementById("add-modal").classList.remove("hidden");
+        }
+
+        function deleteCurrentCard() {
+            if (filteredVocabList.length === 0) return;
+            const item = filteredVocabList[currentIndex];
+            const rawIndex = rawVocabList.findIndex(x => x.en === item.en && x.th === item.th);
+
+            if (rawIndex === -1) return;
+
+            if (confirm(`คุณต้องการลบคำศัพท์ "${item.en}" (${item.th}) ใช่หรือไม่?`)) {
+                rawVocabList.splice(rawIndex, 1);
+                saveToStorage();
+                filterVocabForUser();
+                if (currentIndex >= filteredVocabList.length) currentIndex = Math.max(0, filteredVocabList.length - 1);
+                updateCard();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById("add-modal").classList.add("hidden");
+            document.getElementById("vocab-form").reset();
+            document.getElementById("img-preview-container").classList.add("hidden");
+            currentResizedBase64 = null;
+            stopAILoading();
+        }
+
+        function startAILoading(msg) {
+            const btn = document.getElementById("ai-btn");
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner"></span> ${msg || 'AI กำลังทำงาน...'}`;
+            btn.classList.add('opacity-70');
+        }
+
+        function stopAILoading() {
+            const btn = document.getElementById("ai-btn");
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="sparkles" class="w-3.5 h-3.5"></i> ใช้ Gemini แปลคำศัพท์ ✨`;
+            btn.classList.remove('opacity-70');
+            lucide.createIcons();
+        }
+
+        async function askGeminiAI() {
+            const enInput = document.getElementById("input-en").value.trim();
+            const thInput = document.getElementById("input-th").value.trim();
+            const apiKey = localStorage.getItem("gemini_api_key");
+
+            if (!apiKey) { 
+                alert("กรุณากดปุ่มลูกกุญแจ 🔑 ด้านบนขวาเพื่อตั้งค่า Gemini API Key ก่อนครับ"); 
+                openKeyModal();
+                return; 
+            }
+
+            let prompt = "";
+
+            if (subjectMode === 'EN') {
+                if (!enInput) { alert("กรุณาใส่คำศัพท์ภาษาอังกฤษก่อนครับ"); return; }
+                prompt = `แปลคำศัพท์ภาษาอังกฤษสำหรับเด็ก คำว่า "${enInput}" เป็นภาษาไทย และขอ "คำอ่านทับศัพท์เสียงอ่านภาษาอังกฤษเป็นภาษาไทย" (เช่น Spoon -> สปูน, Apple -> แอบ-เปิ้ล) ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น: {"th": "คำแปลไทย", "phonetic": "คำอ่านทับศัพท์ไทย"}`;
+            } else {
+                if (!thInput) { alert("กรุณาใส่คำศัพท์ภาษาไทยก่อนครับ"); return; }
+                prompt = `แปลคำศัพท์ภาษาไทยสำหรับเด็ก คำว่า "${thInput}" เป็นภาษาอังกฤษ และขอ "คำอ่านภาษาไทยแบบเว้นวรรคให้อ่านง่ายสำหรับเด็ก" (เช่น โรงเรียน -> โรง-เรียน, สุนัข -> สุ-นัก) ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น: {"en": "English Word", "phonetic": "คำ-อ่าน-ไทย"}`;
+            }
+
+            startAILoading("Gemini กำลังสร้าง...");
+
+            const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(textUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1 } })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+
+                const responseText = data.candidates[0].content.parts[0].text;
+                const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+                const result = JSON.parse(cleanJson);
+
+                if (subjectMode === 'EN') {
+                    if (result.th) document.getElementById("input-th").value = result.th;
+                    if (result.phonetic) document.getElementById("input-phonetic").value = result.phonetic;
+                } else {
+                    if (result.en) document.getElementById("input-en").value = result.en;
+                    if (result.phonetic) document.getElementById("input-phonetic").value = result.phonetic;
+                }
+
+            } catch (error) {
+                console.error("Gemini Error:", error);
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อ AI: " + (error.message || "กรุณาตรวจสอบ API Key"));
+            } finally {
+                stopAILoading();
+            }
+        }
+
+        function openGeminiForImage() {
+            const enWord = document.getElementById("input-en").value.trim();
+            const thWord = document.getElementById("input-th").value.trim();
+            const targetWord = enWord || thWord;
+
+            if (!targetWord) {
+                alert("กรุณาพิมพ์คำศัพท์ภาษาอังกฤษหรือภาษาไทยก่อนครับ");
+                return;
+            }
+
+            const imagePrompt = `วาดรูปภาพการ์ตูนน่ารักๆ สำหรับเด็ก ของคำว่า "${targetWord}" ลายเส้นคลีนๆ 2D vector clipart พื้นหลังสีขาว isolated`;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(imagePrompt).then(() => {
+                    alert(`ก๊อปปี้คำสั่งเจนรูปแล้ว!\n\nกำลังเปิด Gemini... เมื่อถึงหน้าเว็บ ให้กด "วาง (Paste)" เพื่อเจนรูปได้เลยครับ`);
+                    window.open("https://gemini.google.com/app", "_blank");
+                }).catch(() => {
+                    window.open("https://gemini.google.com/app", "_blank");
+                });
+            } else {
+                window.open("https://gemini.google.com/app", "_blank");
+            }
+        }
+
+        function processResizedBase64(base64Src) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement("canvas");
+                const maxDim = 300;
+                let width = img.width, height = img.height;
+
+                if (width > height) {
+                    if (width > maxDim) { height = Math.round((height * maxDim) / width); width = maxDim; }
+                } else {
+                    if (height > maxDim) { width = Math.round((width * maxDim) / height); height = maxDim; }
+                }
+
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+
+                currentResizedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+
+                const previewImg = document.getElementById("img-preview");
+                previewImg.src = currentResizedBase64;
+                document.getElementById("img-preview-container").classList.remove("hidden");
+                
+                const kb = Math.round((currentResizedBase64.length * (3/4)) / 1024);
+                document.getElementById("img-size-info").innerText = `เตรียมรูปเรียบร้อย ✨ (${width}x${height}px, ~${kb}KB)`;
+            };
+            img.src = base64Src;
+        }
+
+        function previewAndResizeImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) { processResizedBase64(e.target.result); };
+            reader.readAsDataURL(file);
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const editIndex = parseInt(document.getElementById("edit-index").value, 10);
+            const en = document.getElementById("input-en").value.trim();
+            const th = document.getElementById("input-th").value.trim();
+            const phonetic = document.getElementById("input-phonetic").value.trim() || th;
+
+            const assignPoon = document.getElementById("assign-poon").checked;
+            const assignPloern = document.getElementById("assign-ploern").checked;
+
+            const assignees = [];
+            if (assignPoon) assignees.push("พูน");
+            if (assignPloern) assignees.push("เพลิน");
+
+            if (!en || !th) return;
+
+            const vocabItem = { 
+                en, 
+                th, 
+                phonetic, 
+                emoji: "✨", 
+                image: currentResizedBase64,
+                assignees: assignees
+            };
+
+            if (editIndex >= 0 && editIndex < rawVocabList.length) {
+                rawVocabList[editIndex] = vocabItem;
+            } else {
+                rawVocabList.push(vocabItem);
+            }
+
+            saveToStorage();
+            filterVocabForUser();
+            closeModal();
+            
+            currentIndex = filteredVocabList.findIndex(x => x.en === en && x.th === th);
+            if (currentIndex === -1) currentIndex = 0;
+            updateCard();
+        }
+
+        lucide.createIcons();
+        initData();
+    </script>
+</body>
+</html>
