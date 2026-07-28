@@ -41,7 +41,6 @@
         @keyframes bounce-gentle { 0%, 100% { transform: translateY(-5%); } 50% { transform: translateY(0); } }
         .bounce-anim { animation: bounce-gentle 2s infinite; }
 
-        /* Style สำหรับกล่องแสดงตัวอักษรแยกช่องบน Flashcard */
         .letter-box {
             display: inline-flex;
             align-items: center;
@@ -59,7 +58,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        /* Style สำหรับกล่องเส้นขีดช่องว่าง (Blank Fill) ในหน้าแบบฝึกหัด */
         .blank-box {
             display: inline-flex;
             align-items: center;
@@ -78,7 +76,6 @@
             display: inline-block;
         }
 
-        /* iOS Splash Screen Overlay */
         #ios-splash-screen {
             position: fixed;
             inset: 0;
@@ -128,7 +125,6 @@
             </div>
         </div>
 
-        <!-- ปุ่มสลับหมวดหมู่ภาษา EN / TH -->
         <div id="lang-switch-box" class="flex bg-amber-500/40 p-1 rounded-2xl border border-amber-600/30 hidden">
             <button id="mode-en-btn" onclick="switchSubjectMode('EN')" class="px-2.5 py-1 rounded-xl text-xs font-black bg-white text-amber-900 shadow transition">🇬🇧 EN</button>
             <button id="mode-th-btn" onclick="switchSubjectMode('TH')" class="px-2.5 py-1 rounded-xl text-xs font-black text-amber-950 hover:bg-amber-300/50 transition">🇹🇭 TH</button>
@@ -151,7 +147,7 @@
         </div>
     </header>
 
-    <!-- EXP Progress Bar (สำหรับแสดงในหน้าท่องศัพท์) -->
+    <!-- EXP Progress Bar -->
     <div id="exp-bar-container" class="w-full px-4 pt-2 hidden">
         <div class="bg-white/80 p-2 rounded-2xl border border-amber-200 shadow-sm flex items-center gap-2">
             <span id="exp-level-text" class="text-xs font-black text-amber-900 whitespace-nowrap">Lv.1</span>
@@ -162,7 +158,7 @@
         </div>
     </div>
 
-    <!-- Navigation Tabs หน้าหลัก -->
+    <!-- Navigation Tabs -->
     <div class="flex justify-center gap-2 mt-3 px-4">
         <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 max-w-[170px] py-2 px-3 rounded-2xl font-black text-xs shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition">
             📋 ภารกิจจากพ่อแม่
@@ -178,7 +174,6 @@
         <!-- SECTION 1: PARENT QUESTS TAB -->
         <div id="main-quest-tab" class="w-full max-w-sm flex flex-col items-center">
             
-            <!-- ⭐ รูปตัวละครขนาดใหญ่ตรงกลางหน้าภารกิจ ⭐ -->
             <div id="hero-avatar-box" class="flex flex-col items-center justify-center my-2 text-center w-full">
                 <div class="relative group">
                     <div class="w-36 h-36 sm:w-40 sm:h-40 rounded-full border-4 border-amber-400 bg-gradient-to-b from-amber-100 to-amber-200 shadow-xl flex items-center justify-center overflow-hidden relative">
@@ -192,7 +187,6 @@
                 <h2 id="hero-user-name" class="text-xl font-extrabold text-amber-950 mt-3 flex items-center gap-1.5">
                     น้องพูน
                 </h2>
-                <!-- EXP Bar เล็กกำกับใต้รูป -->
                 <div id="hero-exp-container" class="w-48 bg-white/90 p-1.5 rounded-full border border-amber-300 shadow-sm mt-1 flex items-center gap-2">
                     <div class="flex-1 bg-slate-200 h-2.5 rounded-full overflow-hidden">
                         <div id="hero-exp-progress" class="bg-gradient-to-r from-amber-400 to-amber-500 h-full w-0 transition-all duration-500"></div>
@@ -201,7 +195,6 @@
                 </div>
             </div>
 
-            <!-- ผู้ปกครอง: กล่องจัดการเพิ่ม/ลดดาวให้ลูก -->
             <div id="parent-manage-stars-box" class="bg-amber-100 border-4 border-amber-300 rounded-3xl p-4 shadow-xl w-full mb-4 hidden">
                 <div class="font-extrabold text-sm text-amber-950 mb-2 flex items-center gap-1">
                     🌟 จัดการดาวสะสมให้ลูกๆ (พ่อนะ / แม่พัด)
@@ -237,7 +230,6 @@
                     </span>
                 </div>
 
-                <!-- ผู้ปกครอง: ฟอร์มเพิ่มภารกิจ -->
                 <div id="parent-create-quest-box" class="bg-amber-50 p-3 rounded-2xl border border-amber-200 mb-4 hidden">
                     <div class="font-extrabold text-xs text-amber-900 mb-2">➕ สร้างภารกิจใหม่ (สำหรับ พ่อนะ / แม่พัด)</div>
                     <div class="space-y-2">
@@ -255,7 +247,6 @@
                     </div>
                 </div>
 
-                <!-- รายการภารกิจ -->
                 <div id="parent-quests-list" class="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
                 </div>
             </div>
@@ -327,22 +318,21 @@
                     </div>
                     
                     <h3 id="spell-card-title" class="text-2xl font-extrabold text-amber-900 mb-1">Apple</h3>
-                    <!-- แสดงเส้นขีดช่องว่างสำหรับเติมคำ -->
                     <div id="spell-card-subtitle" class="flex flex-wrap justify-center items-center gap-1 mb-4 w-full"></div>
 
                     <div class="w-full space-y-3">
                         <div class="relative">
                             <input type="text" id="spell-input" placeholder="พิมพ์คำตอบ..." class="w-full border-2 border-amber-300 rounded-2xl p-3 text-center text-xl font-bold tracking-widest focus:outline-none focus:border-amber-500">
-                            <button onclick="startSpeechRecognition()" id="mic-btn" title="กดเพื่อพูดคำตอบ" class="absolute right-2 top-1.5 bg-amber-400 text-amber-900 p-2.5 rounded-xl shadow active:bg-amber-500 min-w-[44px] min-h-[44px] flex items-center justify-center">
-                                <i data-lucide="mic" class="w-5 h-5"></i>
-                            </button>
                         </div>
 
-                        <div id="speech-status" class="text-xs text-amber-700 h-4 font-medium"></div>
+                        <div id="speech-status" class="text-xs text-amber-700 h-1 font-medium"></div>
 
-                        <!-- ปรับปรุง: ตัดปุ่มฟังเสียงออก เหลือเพียงปุ่มตรวจคำตอบขนาดใหญ่เต็มแถว -->
                         <div class="flex gap-2">
-                            <button id="btn-check-answer" onclick="checkSpellingAnswer()" class="w-full bg-emerald-500 active:bg-emerald-600 text-white font-bold py-3.5 rounded-2xl min-h-[52px] text-lg shadow">
+                            <button onclick="speakCurrentWordPrompt()" class="bg-sky-100 active:bg-sky-200 text-sky-800 font-bold py-3.5 px-4 rounded-2xl min-h-[50px] flex items-center justify-center gap-1.5 border border-sky-300 shadow-sm transition">
+                                <i data-lucide="volume-2" class="w-5 h-5"></i>
+                                <span>ฟังเสียงอ่าน 🔊</span>
+                            </button>
+                            <button id="btn-check-answer" onclick="checkSpellingAnswer()" class="flex-1 bg-emerald-500 active:bg-emerald-600 text-white font-bold py-3.5 rounded-2xl min-h-[50px] text-lg shadow">
                                 ตรวจคำตอบ ✨
                             </button>
                         </div>
@@ -351,7 +341,7 @@
             </div>
         </div>
 
-        <!-- Floating Action Button (FAB) -->
+        <!-- Floating Action Button -->
         <button id="btn-add-vocab" onclick="openAddModal()" class="fixed bottom-20 right-5 bg-gradient-to-r from-amber-500 to-amber-600 text-white p-4 rounded-full shadow-2xl z-40 border-2 border-white active:scale-95 transition-all flex items-center justify-center hidden">
             <i data-lucide="plus" class="w-7 h-7"></i>
         </button>
@@ -369,7 +359,7 @@
         </button>
     </footer>
 
-    <!-- Modal 🎯 มอบหมาย (Assign) ภารกิจย้อนหลัง -->
+    <!-- Modal Assign Quest -->
     <div id="assign-quest-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white w-full max-w-xs rounded-3xl p-5 shadow-2xl relative border-4 border-amber-300">
             <h3 class="text-base font-extrabold text-amber-900 mb-2 text-center">🎯 มอบหมายภารกิจ</h3>
@@ -395,7 +385,7 @@
         </div>
     </div>
 
-    <!-- Modal 🎯 ร้านค้าแลกรางวัล & กระเป๋าของฉัน -->
+    <!-- Modal Rewards -->
     <div id="quest-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative border-4 border-amber-300 max-h-[85vh] flex flex-col">
             <button onclick="closeQuestModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1">
@@ -443,7 +433,7 @@
         </div>
     </div>
 
-    <!-- In-App Notification Feed Modal -->
+    <!-- Notification Feed Modal -->
     <div id="notify-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative border-4 border-amber-300 max-h-[80vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
@@ -535,7 +525,7 @@
         </div>
     </div>
 
-    <!-- Modal 🎮 ตั้งค่า Level & Avatar (สำหรับผู้ปกครอง) -->
+    <!-- Modal Level & Avatar Settings -->
     <div id="level-avatar-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative border-4 border-amber-300 max-h-[85vh] flex flex-col">
             <div class="flex justify-between items-center mb-3">
@@ -677,7 +667,6 @@
     </div>
 
     <script>
-        // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
@@ -693,7 +682,6 @@
             }, 1200);
         });
 
-        // 🔥 ฝัง Firebase Config
         const embeddedFirebaseConfig = {
             apiKey: "AIzaSyAvubrOsRF8MHOs2XiRg3JaRjOF1tUk4uY",
             authDomain: "han-vocab.firebaseapp.com",
@@ -754,7 +742,6 @@
         let dailyLimitRounds = 3;
         let todayPlayedRounds = 0;
 
-        // Level & Avatar System State
         let maxLevel = 10;
         let currentChildEXP = 0;
         let currentChildLevel = 1;
@@ -778,7 +765,6 @@
             return `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
         }
 
-        // ฟังก์ชันสำหรับสุ่มลำดับอาร์เรย์ (Fisher-Yates Shuffle Algorithm)
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -787,7 +773,6 @@
             return array;
         }
 
-        // ฟังก์ชันเรนเดอร์คำศัพท์แบบครบตัวอักษร (ใช้ใน Flashcard)
         function renderSpelledLetters(word) {
             if (!word) return '';
             return word.split('').map(char => {
@@ -796,7 +781,6 @@
             }).join('');
         }
 
-        // ฟังก์ชันเรนเดอร์เป็นเส้นขีดช่องว่างสำหรับเติมคำ (ใช้ในหน้าแบบฝึกหัดสะกดคำ)
         function renderBlankLetters(word) {
             if (!word) return '';
             return word.split('').map(char => {
@@ -860,8 +844,13 @@
                 vocabSec.classList.add("flex");
                 questSec.classList.add("hidden");
                 questSec.classList.remove("flex");
-                footerNav.classList.remove("hidden");
                 langSwitchBox.classList.remove("hidden");
+
+                if (isParentUser) {
+                    footerNav.classList.remove("hidden");
+                } else {
+                    footerNav.classList.add("hidden");
+                }
             }
         }
 
@@ -941,7 +930,6 @@
             const lvlData = calculateLevelFromEXP(currentChildEXP);
             currentChildLevel = lvlData.level;
 
-            // 1. Header Display
             if (isParentUser || !currentUser) {
                 document.getElementById("exp-bar-container").classList.add("hidden");
                 document.getElementById("user-level-tag").classList.add("hidden");
@@ -974,7 +962,6 @@
                 }
             }
 
-            // 2. Hero Big Avatar Display (หน้าภารกิจ)
             const heroNameEl = document.getElementById("hero-user-name");
             const heroImgEl = document.getElementById("hero-avatar-img");
             const heroEmojiEl = document.getElementById("hero-avatar-emoji");
@@ -1313,7 +1300,6 @@
                     return item.assignees.includes(currentUser);
                 });
             }
-            // สุ่มคำศัพท์ทันทีหลังจากคัดกรองข้อมูลสำหรับผู้ใช้
             shuffleArray(filteredVocabList);
         }
 
@@ -1615,10 +1601,13 @@
                 const currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
                 currentInv.unshift(item);
                 localStorage.setItem(localKey, JSON.stringify(currentInv));
-                if (userName === currentUser) {
-                    userInventoryList = currentInv;
-                    renderUserInventory();
+            }
+
+            if (userName === currentUser) {
+                if (!isFirebaseActive) {
+                    userInventoryList = JSON.parse(localStorage.getItem(`user_inventory_${currentUser}`) || "[]");
                 }
+                renderUserInventory();
             }
         }
 
@@ -1958,6 +1947,7 @@
             const parentControls = document.getElementById("parent-controls");
             const parentCreateQuestBox = document.getElementById("parent-create-quest-box");
             const parentManageStarsBox = document.getElementById("parent-manage-stars-box");
+            const footerNav = document.getElementById("footer-nav");
 
             if (isParent) {
                 addBtn.classList.remove("hidden");
@@ -1967,6 +1957,7 @@
                 parentControls.classList.remove("hidden");
                 if (parentCreateQuestBox) parentCreateQuestBox.classList.remove("hidden");
                 if (parentManageStarsBox) parentManageStarsBox.classList.remove("hidden");
+                if (footerNav && currentMainTab === 'vocab') footerNav.classList.remove("hidden");
             } else {
                 addBtn.classList.add("hidden");
                 addBtn.classList.remove("flex");
@@ -1976,6 +1967,7 @@
                 parentControls.classList.add("hidden");
                 if (parentCreateQuestBox) parentCreateQuestBox.classList.add("hidden");
                 if (parentManageStarsBox) parentManageStarsBox.classList.add("hidden");
+                if (footerNav) footerNav.classList.add("hidden");
             }
 
             filterVocabForUser();
@@ -2014,7 +2006,6 @@
                 [emojiEl, emojiBackEl].forEach(el => { el.classList.remove("hidden"); el.innerText = item.emoji || "💡"; });
             }
 
-            // 1. หน้า Flashcard: แสดงตัวอักษรครบทุกช่องให้เด็กท่องจำ
             if (subjectMode === 'EN') {
                 document.getElementById("card-word-main").innerHTML = renderSpelledLetters(item.en);
                 document.getElementById("card-word-sub").innerText = item.th;
@@ -2037,7 +2028,6 @@
                 spellEmoji.innerText = item.emoji || "💡";
             }
 
-            // 2. หน้าแบบฝึกหัดสะกดคำ: แสดงคำแปล และทำเป็นเส้นขีดช่องว่าง (Blank Fill) ให้เด็กๆ เติมคำตอบ
             if (subjectMode === 'EN') {
                 document.getElementById("spell-card-title").innerText = item.th;
                 document.getElementById("spell-card-subtitle").innerHTML = renderBlankLetters(item.en);
@@ -2081,7 +2071,6 @@
         function restartSession() {
             document.getElementById("completion-modal").classList.add("hidden");
             setCorrectAnswers = 0;
-            // สุ่มลำดับคำศัพท์ใหม่สำหรับชุดถัดไป
             shuffleArray(filteredVocabList);
             currentIndex = 0;
             updateCard();
@@ -2099,7 +2088,7 @@
             const currentItem = filteredVocabList[currentIndex];
             const targetVal = (subjectMode === 'EN' ? currentItem.en : currentItem.th).trim().toLowerCase();
 
-            if (!inputVal) { alert("กรุณาพิมพ์หรือพูดสะกดคำก่อนนะครับ!"); return; }
+            if (!inputVal) { alert("กรุณาพิมพ์สะกดคำก่อนนะครับ!"); return; }
 
             const cleanedInput = inputVal.replace(/[\s\-]/g, '');
             const cleanedTarget = targetVal.replace(/[\s\-]/g, '');
@@ -2122,34 +2111,8 @@
                     nextCard();
                 }
             } else {
-                alert(`❌ ยังไม่ถูกต้องลองอีกทีนะ! (คำตอบที่ถูกคือ: ${targetVal})`);
+                alert(`❌ ยังไม่ถูกต้อง ลองใหม่อีกครั้งนะครับ!`);
             }
-        }
-
-        function startSpeechRecognition() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) { alert("เบราว์เซอร์นี้ยังไม่รองรับระบบสั่งงานด้วยเสียงครับ"); return; }
-
-            const recognition = new SpeechRecognition();
-            recognition.lang = subjectMode === 'EN' ? 'en-US' : 'th-TH';
-            recognition.interimResults = false;
-
-            const micBtn = document.getElementById("mic-btn");
-            const speechStatus = document.getElementById("speech-status");
-
-            micBtn.classList.add("listening-pulse", "bg-red-500", "text-white");
-            speechStatus.innerText = "🎙️ กำลังฟังอยู่ พูดคำตอบได้เลย...";
-
-            recognition.start();
-
-            recognition.onresult = function(event) {
-                const transcript = event.results[0][0].transcript;
-                document.getElementById("spell-input").value = transcript;
-                speechStatus.innerText = `ฟังได้ว่า: "${transcript}"`;
-            };
-
-            recognition.onerror = function() { speechStatus.innerText = "ไม่ได้ยินเสียง ลองใหม่อีกครั้งนะครับ"; };
-            recognition.onend = function() { micBtn.classList.remove("listening-pulse", "bg-red-500", "text-white"); };
         }
 
         function flipCard() { 
@@ -2175,7 +2138,6 @@
             nextCard(); 
         }
 
-        // ฟังเสียงอ่านออกเสียงคำเต็มบน Flashcard (สำหรับคุณพ่อคุณแม่)
         function speakCurrentWord() {
             if (filteredVocabList.length === 0) return;
             const item = filteredVocabList[currentIndex];
@@ -2189,6 +2151,25 @@
                 utterance.lang = lang; 
                 utterance.rate = 0.85;
                 window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakCurrentWordPrompt() {
+            if (!filteredVocabList || filteredVocabList.length === 0) return;
+            const item = filteredVocabList[currentIndex];
+            
+            let rawText = subjectMode === 'EN' ? item.en : item.th;
+            let lang = subjectMode === 'EN' ? 'en-US' : 'th-TH';
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(rawText);
+                utterance.lang = lang; 
+                utterance.rate = 0.85;
+                utterance.pitch = 1.1;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("เบราว์เซอร์นี้ยังไม่รองรับระบบอ่านออกเสียงครับ");
             }
         }
 
@@ -2232,7 +2213,6 @@
             closeKeyModal();
         }
 
-        // LEVEL & AVATAR CONFIG FUNCTIONS
         function openLevelAvatarModal() {
             closeKeyModal();
             renderLevelAvatarList();
@@ -2481,6 +2461,7 @@
             }
         }
 
+        // 🟢 ฟังก์ชันเจนรูปที่ปรับ Prompt เพิ่มข้อบังคับไม่ให้มีตัวอักษร/คำศัพท์ในภาพ
         function openGeminiForImage() {
             const enWord = document.getElementById("input-en").value.trim();
             const thWord = document.getElementById("input-th").value.trim();
@@ -2491,7 +2472,7 @@
                 return;
             }
 
-            const imagePrompt = `วาดรูปภาพการ์ตูนน่ารักๆ สำหรับเด็ก ของคำว่า "${targetWord}" ลายเส้นคลีนๆ 2D vector clipart พื้นหลังสีขาว isolated`;
+            const imagePrompt = `วาดรูปภาพการ์ตูนน่ารักๆ สำหรับเด็ก ของคำว่า "${targetWord}" ลายเส้นคลีนๆ 2D vector clipart พื้นหลังสีขาว isolated **ข้อสำคัญ: ห้ามใส่ตัวอักษร ข้อความ หรือคำศัพท์ใดๆ ลงในภาพเด็ดขาด (No text, no letters, no words)**`;
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(imagePrompt).then(() => {
