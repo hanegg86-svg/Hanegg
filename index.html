@@ -1259,11 +1259,19 @@
                     checkDailyLimitStatus();
                 });
 
+                // ปรับปรุงการโหลดไอเทมในกระเป๋าจาก Firebase
                 onValue(ref(db, `user_inventory/${currentUser}`), (snapshot) => {
                     const val = snapshot.val();
                     userInventoryList = [];
                     if (val) {
-                        Object.keys(val).forEach(k => userInventoryList.push({ invId: k, ...val[k] }));
+                        Object.keys(val).forEach(k => {
+                            if (val[k]) {
+                                userInventoryList.push({
+                                    invId: val[k].invId || k,
+                                    ...val[k]
+                                });
+                            }
+                        });
                     }
                     renderUserInventory();
                 });
@@ -1975,13 +1983,33 @@
             }
         }
 
-        // --- ปรับปรุงฟังก์ชันใช้งานของรางวัล (ลบออกจากกระเป๋าทันที) ---
+        // --- ปรับปรุงฟังก์ชันใช้งานของรางวัล (ค้นหา Firebase Auto-Key เพื่อลบให้ตรงจุด) ---
         function useInventoryItem(invId) {
             if (confirm("คุณใช้งานรางวัลนี้แล้วใช่ไหมครับ? (รายการนี้จะหายออกจากกระเป๋า)")) {
-                if (isFirebaseActive) {
-                    const { ref, set } = window.firebaseModules;
+                if (isFirebaseActive && currentUser) {
+                    const { ref, get, set } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
-                    set(ref(db, `user_inventory/${currentUser}/${invId}`), null);
+                    const invRef = ref(db, `user_inventory/${currentUser}`);
+
+                    get(invRef).then(snapshot => {
+                        const data = snapshot.val();
+                        if (data) {
+                            // ค้นหา Key จริงใน Firebase ที่มี invId หรือ Key ตรงกับที่ส่งมา
+                            const fbKey = Object.keys(data).find(k => k === invId || (data[k] && data[k].invId === invId));
+                            if (fbKey) {
+                                set(ref(db, `user_inventory/${currentUser}/${fbKey}`), null).then(() => {
+                                    userInventoryList = userInventoryList.filter(x => x.invId !== invId && x.invId !== fbKey);
+                                    renderUserInventory();
+                                });
+                            } else {
+                                // ถ้าหาไม่เจอให้ลองสั่งลบตรงๆ
+                                set(ref(db, `user_inventory/${currentUser}/${invId}`), null).then(() => {
+                                    userInventoryList = userInventoryList.filter(x => x.invId !== invId);
+                                    renderUserInventory();
+                                });
+                            }
+                        }
+                    });
                 } else {
                     userInventoryList = userInventoryList.filter(x => x.invId !== invId);
                     localStorage.setItem(`user_inventory_${currentUser}`, JSON.stringify(userInventoryList));
