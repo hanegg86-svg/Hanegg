@@ -132,7 +132,7 @@
                 </div>
             </button>
             
-            <div class="flex items-center gap-1 bg-white px-2 py-1 rounded-full shadow border border-amber-200 min-h-[40px]">
+            <div class="flex items-center gap-1 bg-white px-2.5 py-1 rounded-full shadow border border-amber-200 min-h-[40px]">
                 <span class="text-base">🌟</span>
                 <span id="score" class="text-base font-bold text-amber-900">0</span>
             </div>
@@ -144,10 +144,6 @@
         </div>
 
         <div class="flex items-center gap-1.5">
-            <button onclick="openQuestModal()" title="ร้านค้าแลกรางวัล" class="bg-amber-100 p-2 rounded-full shadow border border-amber-300 text-amber-900 min-w-[40px] min-h-[40px] flex items-center justify-center">
-                <span class="text-base">🎁</span>
-            </button>
-
             <button onclick="openNotifyModal()" class="bg-amber-100 text-amber-900 p-2 rounded-full shadow border border-amber-300 min-w-[40px] min-h-[40px] flex items-center justify-center relative">
                 <i data-lucide="bell" class="w-4 h-4"></i>
                 <span id="notify-badge" class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-ping"></span>
@@ -171,23 +167,26 @@
         </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="flex justify-center gap-1.5 mt-3 px-3">
-        <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition">
+    <!-- Navigation Tabs (4 Tabs) -->
+    <div class="flex justify-center gap-1 mt-3 px-2">
+        <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-xs shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition">
             📋 ภารกิจ
         </button>
-        <button id="tab-vocab-btn" onclick="switchMainTab('vocab')" class="flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
+        <button id="tab-vocab-btn" onclick="switchMainTab('vocab')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
             🎴 ท่องศัพท์
         </button>
-        <button id="tab-math-btn" onclick="switchMainTab('math')" class="flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
+        <button id="tab-math-btn" onclick="switchMainTab('math')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
             🔢 คิดเลขไว
+        </button>
+        <button id="tab-reward-btn" onclick="switchMainTab('reward')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
+            🎁 รางวัล
         </button>
     </div>
 
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col justify-center items-center p-4 relative">
         
-        <!-- SECTION 1: PARENT QUESTS TAB -->
+        <!-- TAB 1: PARENT QUESTS -->
         <div id="main-quest-tab" class="w-full max-w-sm flex flex-col items-center">
             
             <div id="hero-avatar-box" class="flex flex-col items-center justify-center my-2 text-center w-full">
@@ -268,7 +267,7 @@
             </div>
         </div>
 
-        <!-- SECTION 2: VOCABULARY TAB -->
+        <!-- TAB 2: VOCABULARY -->
         <div id="main-vocab-tab" class="w-full hidden flex-col items-center">
             <div id="flashcard-section" class="w-full flex flex-col items-center">
                 <div id="parent-controls" class="w-full max-w-sm flex justify-between items-center mb-2 px-1 hidden">
@@ -357,10 +356,9 @@
             </div>
         </div>
 
-        <!-- SECTION 3: MATH MINIGAME TAB -->
+        <!-- TAB 3: MATH MINIGAME -->
         <div id="main-math-tab" class="w-full max-w-sm hidden flex-col items-center">
             
-            <!-- Controls & Levels -->
             <div class="w-full flex justify-between items-center mb-3">
                 <div class="flex bg-amber-100 p-1 rounded-2xl border border-amber-300 gap-1 flex-1 mr-2">
                     <button id="math-diff-easy" onclick="setMathDifficulty('easy')" class="flex-1 py-1 rounded-xl text-[11px] font-black bg-emerald-500 text-white shadow transition">🟢 ง่าย</button>
@@ -372,7 +370,6 @@
                 </button>
             </div>
 
-            <!-- Card Board -->
             <div class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full text-center flex flex-col items-center">
                 
                 <div class="w-full flex justify-between items-center mb-3 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-200">
@@ -380,7 +377,6 @@
                     <span id="math-diff-tag" class="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">บวกลบ (4 ตัว)</span>
                 </div>
 
-                <!-- Target Circle -->
                 <div class="text-center mb-3">
                     <p class="text-[11px] font-extrabold text-amber-800 mb-1">เป้าหมายที่ต้องผสมให้ได้</p>
                     <div class="w-24 h-24 bg-gradient-to-tr from-amber-400 to-yellow-300 rounded-full shadow-lg flex items-center justify-center border-4 border-white mx-auto">
@@ -388,12 +384,10 @@
                     </div>
                 </div>
 
-                <!-- Formula Text Display -->
                 <div class="w-full bg-amber-50 border-2 border-dashed border-amber-200 rounded-2xl p-2.5 min-h-[48px] flex items-center justify-center text-center mb-3 shadow-inner">
                     <span id="math-formula-text" class="text-amber-800/60 font-bold text-xs">แตะตัวเลขและเครื่องหมายเพื่อผสม</span>
                 </div>
 
-                <!-- Number Bubbles Container -->
                 <div class="w-full mb-3">
                     <div class="flex justify-between items-center mb-1.5 px-1">
                         <span class="text-xs font-extrabold text-amber-900">ตัวเลขของคุณ:</span>
@@ -403,7 +397,6 @@
                     </div>
                 </div>
 
-                <!-- Operators Container -->
                 <div class="w-full mb-4">
                     <p class="text-[11px] font-extrabold text-amber-900 text-center mb-1.5">เครื่องหมาย:</p>
                     <div class="flex justify-center gap-2">
@@ -414,7 +407,6 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="w-full flex gap-2">
                     <button onclick="resetCurrentMathQuestion()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold py-3 rounded-2xl text-xs bubble-btn">
                         ล้างใหม่ 🔄
@@ -422,6 +414,54 @@
                     <button onclick="executeMathCombination()" class="flex-1 bg-emerald-500 active:bg-emerald-600 text-white font-extrabold py-3 rounded-2xl text-xs shadow-lg bubble-btn">
                         ผสมเลขเลย! ✨
                     </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TAB 4: REWARD SHOP & INVENTORY -->
+        <div id="main-reward-tab" class="w-full max-w-sm hidden flex-col items-center">
+            <div class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full flex flex-col">
+                
+                <div class="flex bg-amber-100 p-1 rounded-2xl mb-4 border border-amber-300">
+                    <button id="tab-sub-shop-btn" onclick="switchRewardTab('shop')" class="flex-1 py-2 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition">🎁 ร้านค้าแลกรางวัล</button>
+                    <button id="tab-sub-inv-btn" onclick="switchRewardTab('inventory')" class="flex-1 py-2 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition">🎒 กระเป๋าของฉัน</button>
+                </div>
+
+                <!-- View 1: Reward Shop -->
+                <div id="reward-shop-view">
+                    <div class="text-center mb-3">
+                        <p class="text-xs text-amber-700 font-medium">สะสมดาวจากการท่องศัพท์และภารกิจเพื่อแลกรางวัล!</p>
+                        <div class="mt-2 bg-amber-100 py-1.5 px-4 rounded-full inline-block border border-amber-300 font-bold text-amber-900 text-xs shadow-sm">
+                            ดาวสะสมของหนู: <span id="quest-user-stars" class="text-amber-600 text-base font-black">🌟 0</span>
+                        </div>
+                    </div>
+
+                    <div id="parent-add-reward-section" class="mb-4 bg-amber-50 p-3 rounded-2xl border border-amber-200 hidden">
+                        <div class="font-extrabold text-xs text-amber-900 mb-2">➕ เพิ่มรางวัลใหม่ (สำหรับ พ่อนะ / แม่พัด)</div>
+                        <div class="space-y-2">
+                            <input type="text" id="new-reward-name" placeholder="ชื่อของรางวัล (เช่น ไอศกรีม 1 ถ้วย)" class="w-full border border-amber-300 rounded-xl p-2 text-xs focus:outline-none focus:border-amber-500">
+                            <div class="flex gap-2">
+                                <input type="number" id="new-reward-stars" min="1" placeholder="จำนวนดาว" class="w-1/2 border border-amber-300 rounded-xl p-2 text-xs text-center font-bold focus:outline-none focus:border-amber-500">
+                                <button onclick="addNewRewardItem()" class="w-1/2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow">
+                                    บันทึกรางวัล 💾
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="rewards-list-container" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                    </div>
+                </div>
+
+                <!-- View 2: User Inventory -->
+                <div id="reward-inventory-view" class="hidden">
+                    <div class="text-center mb-3">
+                        <h4 class="text-sm font-extrabold text-amber-900">🎒 ของรางวัลที่ได้รับแล้ว</h4>
+                        <p class="text-[11px] text-slate-500 font-medium">นำรางวัลนี้ไปขอพ่อนะและแม่พัดเพื่อรับจริงได้เลย!</p>
+                    </div>
+                    <div id="inventory-list-container" class="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
+                    </div>
                 </div>
 
             </div>
@@ -467,54 +507,6 @@
             <div class="flex gap-2">
                 <button onclick="closeAssignModal()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs">ยกเลิก</button>
                 <button onclick="saveQuestAssignment()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-xs shadow">บันทึก 💾</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Rewards -->
-    <div id="quest-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative border-4 border-amber-300 max-h-[85vh] flex flex-col">
-            <button onclick="closeQuestModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1">
-                <i data-lucide="x"></i>
-            </button>
-            
-            <div class="flex bg-amber-100 p-1 rounded-2xl mb-3 border border-amber-300">
-                <button id="shop-tab-btn" onclick="switchRewardTab('shop')" class="flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition">🎁 ร้านค้าแลกรางวัล</button>
-                <button id="inventory-tab-btn" onclick="switchRewardTab('inventory')" class="flex-1 py-1.5 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition">🎒 กระเป๋าของฉัน</button>
-            </div>
-
-            <div id="reward-shop-view">
-                <div class="text-center mb-3">
-                    <p class="text-xs text-amber-700">สะสมดาวจากการท่องศัพท์และภารกิจเพื่อแลกรางวัล!</p>
-                    <div class="mt-1 bg-amber-100 py-1 px-4 rounded-full inline-block border border-amber-300 font-bold text-amber-900 text-xs">
-                        ดาวสะสม: <span id="quest-user-stars" class="text-amber-600 text-base">🌟 0</span>
-                    </div>
-                </div>
-
-                <div id="parent-add-reward-section" class="mb-3 bg-amber-50 p-3 rounded-2xl border border-amber-200 hidden">
-                    <div class="font-extrabold text-xs text-amber-900 mb-2">➕ เพิ่มรางวัลใหม่ (สำหรับ พ่อนะ / แม่พัด)</div>
-                    <div class="space-y-2">
-                        <input type="text" id="new-reward-name" placeholder="ชื่อของรางวัล (เช่น ไอศกรีม 1 ถ้วย)" class="w-full border border-amber-300 rounded-xl p-2 text-xs focus:outline-none focus:border-amber-500">
-                        <div class="flex gap-2">
-                            <input type="number" id="new-reward-stars" min="1" placeholder="จำนวนดาว" class="w-1/2 border border-amber-300 rounded-xl p-2 text-xs text-center font-bold focus:outline-none focus:border-amber-500">
-                            <button onclick="addNewRewardItem()" class="w-1/2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow">
-                                บันทึกรางวัล 💾
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="rewards-list-container" class="flex-1 overflow-y-auto space-y-3 max-h-[45vh] pr-1">
-                </div>
-            </div>
-
-            <div id="reward-inventory-view" class="hidden flex-1 overflow-y-auto max-h-[55vh]">
-                <div class="text-center mb-3">
-                    <h4 class="text-sm font-extrabold text-amber-900">🎒 ของรางวัลที่ได้รับแล้ว</h4>
-                    <p class="text-[11px] text-slate-500">นำรางวัลนี้ไปขอพ่อนะและแม่พัดเพื่อรับจริงได้เลย!</p>
-                </div>
-                <div id="inventory-list-container" class="space-y-2.5 pr-1">
-                </div>
             </div>
         </div>
     </div>
@@ -767,7 +759,6 @@
                 if (splash) splash.classList.add('fade-out');
             }, 1200);
             
-            // Check initial network status
             updateNetworkStatusUI();
         });
 
@@ -945,7 +936,6 @@
                 }
             });
 
-            // Clear Queue after sync
             localStorage.removeItem("kids_offline_queue");
             console.log("Offline sync completed successfully!");
         }
@@ -979,29 +969,35 @@
             openProfileModal();
         }
 
+        // --- MAIN TABS SWITCHER (4 TABS) ---
         function switchMainTab(tab) {
             currentMainTab = tab;
             const vocabBtn = document.getElementById("tab-vocab-btn");
             const questBtn = document.getElementById("tab-quest-btn");
             const mathBtn = document.getElementById("tab-math-btn");
+            const rewardBtn = document.getElementById("tab-reward-btn");
 
             const vocabSec = document.getElementById("main-vocab-tab");
             const questSec = document.getElementById("main-quest-tab");
             const mathSec = document.getElementById("main-math-tab");
+            const rewardSec = document.getElementById("main-reward-tab");
 
             const footerNav = document.getElementById("footer-nav");
             const langSwitchBox = document.getElementById("lang-switch-box");
 
-            const activeBtnClass = "flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition";
-            const inactiveBtnClass = "flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition";
+            const activeBtnClass = "flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-xs shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition";
+            const inactiveBtnClass = "flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition";
 
             questBtn.className = inactiveBtnClass;
             vocabBtn.className = inactiveBtnClass;
             mathBtn.className = inactiveBtnClass;
+            rewardBtn.className = inactiveBtnClass;
 
             questSec.classList.add("hidden"); questSec.classList.remove("flex");
             vocabSec.classList.add("hidden"); vocabSec.classList.remove("flex");
             mathSec.classList.add("hidden"); mathSec.classList.remove("flex");
+            rewardSec.classList.add("hidden"); rewardSec.classList.remove("flex");
+
             footerNav.classList.add("hidden");
             langSwitchBox.classList.add("hidden");
 
@@ -1018,6 +1014,19 @@
                 mathBtn.className = activeBtnClass;
                 mathSec.classList.remove("hidden"); mathSec.classList.add("flex");
                 generateMathPuzzle();
+            } else if (tab === 'reward') {
+                rewardBtn.className = activeBtnClass;
+                rewardSec.classList.remove("hidden"); rewardSec.classList.add("flex");
+                
+                document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
+                const parentAddSec = document.getElementById("parent-add-reward-section");
+                if (isParentUser) {
+                    parentAddSec.classList.remove("hidden");
+                } else {
+                    parentAddSec.classList.add("hidden");
+                }
+
+                switchRewardTab('shop');
             }
         }
 
@@ -1304,6 +1313,7 @@
                         totalStars = val;
                         localStorage.setItem(getUserStarsKey(), totalStars.toString());
                         document.getElementById("score").innerText = totalStars;
+                        document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
                     }
                 });
 
@@ -1339,6 +1349,7 @@
             } else {
                 totalStars = parseInt(localStorage.getItem(getUserStarsKey()) || "0", 10);
                 document.getElementById("score").innerText = totalStars;
+                document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
 
                 currentChildEXP = parseInt(localStorage.getItem(getUserEXPKey()) || "0", 10);
                 updateUserLevelAndAvatarDisplay();
@@ -1358,25 +1369,32 @@
             const lvlData = calculateLevelFromEXP(currentChildEXP);
             currentChildLevel = lvlData.level;
 
+            const heroExpContainer = document.getElementById("hero-exp-container");
+            const topExpContainer = document.getElementById("exp-bar-container");
+            const userLevelTag = document.getElementById("user-level-tag");
+
             if (isParentUser || !currentUser) {
-                document.getElementById("exp-bar-container").classList.add("hidden");
-                document.getElementById("user-level-tag").classList.add("hidden");
+                if (topExpContainer) topExpContainer.classList.add("hidden");
+                if (userLevelTag) userLevelTag.classList.add("hidden");
+                if (heroExpContainer) heroExpContainer.classList.add("hidden");
+                
                 document.getElementById("user-avatar-img").classList.add("hidden");
                 document.getElementById("user-avatar").classList.remove("hidden");
             } else {
-                document.getElementById("user-level-tag").innerText = `Lv.${currentChildLevel}`;
-                document.getElementById("user-level-tag").classList.remove("hidden");
-
-                document.getElementById("exp-bar-container").classList.remove("hidden");
-                document.getElementById("exp-level-text").innerText = `Lv.${currentChildLevel}`;
-                
-                const pct = Math.min(100, Math.round((lvlData.currentLevelEXP / lvlData.nextLevelReqEXP) * 100));
-                document.getElementById("exp-progress").style.width = `${pct}%`;
-                document.getElementById("exp-val-text").innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
+                if (userLevelTag) {
+                    userLevelTag.innerText = `Lv.${currentChildLevel}`;
+                    userLevelTag.classList.remove("hidden");
+                }
+                if (topExpContainer) {
+                    topExpContainer.classList.remove("hidden");
+                    document.getElementById("exp-level-text").innerText = `Lv.${currentChildLevel}`;
+                    const pct = Math.min(100, Math.round((lvlData.currentLevelEXP / lvlData.nextLevelReqEXP) * 100));
+                    document.getElementById("exp-progress").style.width = `${pct}%`;
+                    document.getElementById("exp-val-text").innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
+                }
 
                 const avatarImg = document.getElementById("user-avatar-img");
                 const avatarEmoji = document.getElementById("user-avatar");
-
                 const childAvatars = levelAvatarsConfig[currentUser] || {};
                 const customAvatarUrl = childAvatars[currentChildLevel];
 
@@ -1399,32 +1417,35 @@
 
             if (heroNameEl) {
                 if (isParentUser) {
-                    heroNameEl.innerText = `${currentUser || 'ผู้ปกครอง'} (โหมดผู้ปกครอง)`;
-                    heroLvlBadgeEl.innerText = `พ่อนะ / แม่พัด`;
-                    heroImgEl.classList.add("hidden");
-                    heroEmojiEl.classList.remove("hidden");
-                    heroEmojiEl.innerText = currentUser === 'แม่พัด' ? '👩‍💼' : '👨‍💼';
-                    document.getElementById("hero-exp-container").classList.add("hidden");
+                    heroNameEl.innerText = `${currentUser || 'ผู้ปกครอง'} (ผู้ปกครอง)`;
+                    if (heroLvlBadgeEl) heroLvlBadgeEl.innerText = `พ่อนะ / แม่พัด`;
+                    if (heroImgEl) heroImgEl.classList.add("hidden");
+                    if (heroEmojiEl) {
+                        heroEmojiEl.classList.remove("hidden");
+                        heroEmojiEl.innerText = currentUser === 'แม่พัด' ? '👩‍💼' : '👨‍💼';
+                    }
+                    if (heroExpContainer) heroExpContainer.classList.add("hidden");
                 } else {
                     heroNameEl.innerText = `น้อง${currentUser || 'เด็กๆ'}`;
-                    heroLvlBadgeEl.innerText = `Level ${currentChildLevel}`;
+                    if (heroLvlBadgeEl) heroLvlBadgeEl.innerText = `Level ${currentChildLevel}`;
                     
-                    document.getElementById("hero-exp-container").classList.remove("hidden");
+                    if (heroExpContainer) heroExpContainer.classList.remove("hidden");
                     const pct = Math.min(100, Math.round((lvlData.currentLevelEXP / lvlData.nextLevelReqEXP) * 100));
-                    heroExpBar.style.width = `${pct}%`;
-                    heroExpText.innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
+                    if (heroExpBar) heroExpBar.style.width = `${pct}%`;
+                    if (heroExpText) heroExpText.innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
 
                     const childAvatars = levelAvatarsConfig[currentUser] || {};
                     const customAvatarUrl = childAvatars[currentChildLevel];
 
                     if (customAvatarUrl) {
-                        heroImgEl.src = customAvatarUrl;
-                        heroImgEl.classList.remove("hidden");
-                        heroEmojiEl.classList.add("hidden");
+                        if (heroImgEl) { heroImgEl.src = customAvatarUrl; heroImgEl.classList.remove("hidden"); }
+                        if (heroEmojiEl) heroEmojiEl.classList.add("hidden");
                     } else {
-                        heroImgEl.classList.add("hidden");
-                        heroEmojiEl.classList.remove("hidden");
-                        heroEmojiEl.innerText = currentUser === 'เพลิน' ? '👧' : '👦';
+                        if (heroImgEl) heroImgEl.classList.add("hidden");
+                        if (heroEmojiEl) {
+                            heroEmojiEl.classList.remove("hidden");
+                            heroEmojiEl.innerText = currentUser === 'เพลิน' ? '👧' : '👦';
+                        }
                     }
                 }
             }
@@ -1450,6 +1471,7 @@
         function saveUserStars() {
             localStorage.setItem(getUserStarsKey(), totalStars.toString());
             document.getElementById("score").innerText = totalStars;
+            document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
 
             if (isFirebaseActive && currentUser && navigator.onLine) {
                 const { ref, set } = window.firebaseModules;
@@ -1499,6 +1521,7 @@
                 if (targetChild === currentUser) {
                     totalStars = newStars;
                     document.getElementById("score").innerText = totalStars;
+                    document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
                 }
 
                 enqueueOfflineAction({ type: 'UPDATE_STARS', user: targetChild, stars: newStars });
@@ -1716,8 +1739,6 @@
                 });
 
                 if (currentUser) loadUserStars();
-
-                // Trigger sync offline queue when initializing Firebase online
                 syncOfflineQueueToFirebase();
 
             } catch (e) {
@@ -1974,19 +1995,20 @@
         }
 
         function switchRewardTab(tab) {
-            const shopBtn = document.getElementById("shop-tab-btn");
-            const invBtn = document.getElementById("inventory-tab-btn");
+            const shopBtn = document.getElementById("tab-sub-shop-btn");
+            const invBtn = document.getElementById("tab-sub-inv-btn");
             const shopView = document.getElementById("reward-shop-view");
             const invView = document.getElementById("reward-inventory-view");
 
             if (tab === 'shop') {
-                shopBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition";
-                invBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition";
+                shopBtn.className = "flex-1 py-2 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition";
+                invBtn.className = "flex-1 py-2 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition";
                 shopView.classList.remove("hidden");
                 invView.classList.add("hidden");
+                renderRewardsList();
             } else {
-                invBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition";
-                shopBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition";
+                invBtn.className = "flex-1 py-2 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition";
+                shopBtn.className = "flex-1 py-2 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition";
                 invView.classList.remove("hidden");
                 shopView.classList.add("hidden");
                 renderUserInventory();
@@ -1995,13 +2017,15 @@
 
         function renderRewardsList() {
             const container = document.getElementById("rewards-list-container");
+            if (!container) return;
+
             if (!rewardsList || rewardsList.length === 0) {
                 container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">ยังไม่มีรายการของรางวัล</div>`;
                 return;
             }
 
             container.innerHTML = rewardsList.map(r => `
-                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 flex justify-between items-center">
+                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 flex justify-between items-center shadow-sm">
                     <div>
                         <div class="font-extrabold text-amber-900 text-sm">${r.name}</div>
                         <div class="text-xs text-amber-700 font-bold">ใช้ ${r.stars} ดาว 🌟</div>
@@ -2286,6 +2310,7 @@
                 if (userName === currentUser) {
                     totalStars = newStars;
                     document.getElementById("score").innerText = totalStars;
+                    document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
                     currentChildEXP = newExp;
                     updateUserLevelAndAvatarDisplay();
                 }
@@ -2335,23 +2360,6 @@
 
         function closeNotifyModal() { document.getElementById("notify-modal").classList.add("hidden"); }
 
-        function openQuestModal() {
-            document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
-            
-            const parentAddSec = document.getElementById("parent-add-reward-section");
-            if (isParentUser) {
-                parentAddSec.classList.remove("hidden");
-            } else {
-                parentAddSec.classList.add("hidden");
-            }
-
-            switchRewardTab('shop');
-            renderRewardsList();
-            document.getElementById("quest-modal").classList.remove("hidden");
-        }
-
-        function closeQuestModal() { document.getElementById("quest-modal").classList.add("hidden"); }
-
         function requestReward(rewardName, starsReq) {
             if (totalStars < starsReq) {
                 alert(`ดาวสะสมไม่พอครับ! ต้องการ ${starsReq} ดาว (ตอนนี้มี ${totalStars} ดาว)`);
@@ -2368,7 +2376,6 @@
                 });
 
                 alert(`ส่งคำขอแลก "${rewardName}" ถึงพ่อนะและแม่พัดแล้วครับ! รอคุณพ่อคุณแม่ออนุมัตินะครับ ✨`);
-                closeQuestModal();
             }
         }
 
@@ -2421,21 +2428,18 @@
             const footerNav = document.getElementById("footer-nav");
 
             if (isParent) {
-                addBtn.classList.remove("hidden");
-                addBtn.classList.add("flex");
-                flashcardSec.classList.remove("hidden");
-                spellingSec.classList.add("hidden");
-                parentControls.classList.remove("hidden");
+                if (addBtn) { addBtn.classList.remove("hidden"); addBtn.classList.add("flex"); }
+                if (flashcardSec) flashcardSec.classList.remove("hidden");
+                if (spellingSec) spellingSec.classList.add("hidden");
+                if (parentControls) parentControls.classList.remove("hidden");
                 if (parentCreateQuestBox) parentCreateQuestBox.classList.remove("hidden");
                 if (parentManageStarsBox) parentManageStarsBox.classList.remove("hidden");
                 if (footerNav && currentMainTab === 'vocab') footerNav.classList.remove("hidden");
             } else {
-                addBtn.classList.add("hidden");
-                addBtn.classList.remove("flex");
-                flashcardSec.classList.add("hidden");
-                spellingSec.classList.remove("hidden");
-                spellingSec.classList.add("flex");
-                parentControls.classList.add("hidden");
+                if (addBtn) { addBtn.classList.add("hidden"); addBtn.classList.remove("flex"); }
+                if (flashcardSec) flashcardSec.classList.add("hidden");
+                if (spellingSec) { spellingSec.classList.remove("hidden"); spellingSec.classList.add("flex"); }
+                if (parentControls) parentControls.classList.add("hidden");
                 if (parentCreateQuestBox) parentCreateQuestBox.classList.add("hidden");
                 if (parentManageStarsBox) parentManageStarsBox.classList.add("hidden");
                 if (footerNav) footerNav.classList.add("hidden");
@@ -2444,7 +2448,9 @@
             filterVocabForUser();
             currentIndex = 0;
             setCorrectAnswers = 0;
+            
             loadUserStars();
+            updateUserLevelAndAvatarDisplay();
             updateCard();
             renderParentQuestsList();
             renderNotifications();
