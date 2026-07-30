@@ -23,8 +23,8 @@
     <!-- Firebase SDKs (Modular via CDN) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, set, push, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        window.firebaseModules = { initializeApp, getDatabase, ref, onValue, set, push, update, get };
+        import { getDatabase, ref, onValue, set, push, update, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        window.firebaseModules = { initializeApp, getDatabase, ref, onValue, set, push, update, get, remove };
     </script>
 
     <style>
@@ -103,11 +103,6 @@
 </head>
 <body class="bg-amber-50 font-sans min-h-screen flex flex-col justify-between select-none touch-btn relative">
 
-    <!-- Offline Notification Banner -->
-    <div id="offline-banner" class="bg-slate-800 text-amber-300 text-xs text-center py-1.5 px-3 font-bold hidden flex justify-center items-center gap-1.5 z-50">
-        <span>📡 กำลังทำงานในโหมด Offline (ข้อมูลจะถูกซิงค์อัตโนมัติเมื่อต่อเน็ต)</span>
-    </div>
-
     <!-- iOS Splash Screen Overlay -->
     <div id="ios-splash-screen">
         <div id="splash-icon-container" class="w-48 h-48 rounded-3xl shadow-2xl mb-4 bg-amber-400 flex items-center justify-center animate-pulse overflow-hidden">
@@ -132,7 +127,7 @@
                 </div>
             </button>
             
-            <div class="flex items-center gap-1 bg-white px-2.5 py-1 rounded-full shadow border border-amber-200 min-h-[40px]">
+            <div class="flex items-center gap-1 bg-white px-2 py-1 rounded-full shadow border border-amber-200 min-h-[40px]">
                 <span class="text-base">🌟</span>
                 <span id="score" class="text-base font-bold text-amber-900">0</span>
             </div>
@@ -144,6 +139,10 @@
         </div>
 
         <div class="flex items-center gap-1.5">
+            <button onclick="openQuestModal()" title="ร้านค้าแลกรางวัล" class="bg-amber-100 p-2 rounded-full shadow border border-amber-300 text-amber-900 min-w-[40px] min-h-[40px] flex items-center justify-center">
+                <span class="text-base">🎁</span>
+            </button>
+
             <button onclick="openNotifyModal()" class="bg-amber-100 text-amber-900 p-2 rounded-full shadow border border-amber-300 min-w-[40px] min-h-[40px] flex items-center justify-center relative">
                 <i data-lucide="bell" class="w-4 h-4"></i>
                 <span id="notify-badge" class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-ping"></span>
@@ -167,26 +166,23 @@
         </div>
     </div>
 
-    <!-- Navigation Tabs (4 Tabs) -->
-    <div class="flex justify-center gap-1 mt-3 px-2">
-        <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-xs shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition">
+    <!-- Navigation Tabs -->
+    <div class="flex justify-center gap-1.5 mt-3 px-3">
+        <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition">
             📋 ภารกิจ
         </button>
-        <button id="tab-vocab-btn" onclick="switchMainTab('vocab')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
+        <button id="tab-vocab-btn" onclick="switchMainTab('vocab')" class="flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
             🎴 ท่องศัพท์
         </button>
-        <button id="tab-math-btn" onclick="switchMainTab('math')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
+        <button id="tab-math-btn" onclick="switchMainTab('math')" class="flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
             🔢 คิดเลขไว
-        </button>
-        <button id="tab-reward-btn" onclick="switchMainTab('reward')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
-            🎁 รางวัล
         </button>
     </div>
 
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col justify-center items-center p-4 relative">
         
-        <!-- TAB 1: PARENT QUESTS -->
+        <!-- SECTION 1: PARENT QUESTS TAB -->
         <div id="main-quest-tab" class="w-full max-w-sm flex flex-col items-center">
             
             <div id="hero-avatar-box" class="flex flex-col items-center justify-center my-2 text-center w-full">
@@ -267,7 +263,7 @@
             </div>
         </div>
 
-        <!-- TAB 2: VOCABULARY -->
+        <!-- SECTION 2: VOCABULARY TAB -->
         <div id="main-vocab-tab" class="w-full hidden flex-col items-center">
             <div id="flashcard-section" class="w-full flex flex-col items-center">
                 <div id="parent-controls" class="w-full max-w-sm flex justify-between items-center mb-2 px-1 hidden">
@@ -356,9 +352,10 @@
             </div>
         </div>
 
-        <!-- TAB 3: MATH MINIGAME -->
+        <!-- SECTION 3: MATH MINIGAME TAB -->
         <div id="main-math-tab" class="w-full max-w-sm hidden flex-col items-center">
             
+            <!-- Controls & Levels -->
             <div class="w-full flex justify-between items-center mb-3">
                 <div class="flex bg-amber-100 p-1 rounded-2xl border border-amber-300 gap-1 flex-1 mr-2">
                     <button id="math-diff-easy" onclick="setMathDifficulty('easy')" class="flex-1 py-1 rounded-xl text-[11px] font-black bg-emerald-500 text-white shadow transition">🟢 ง่าย</button>
@@ -370,6 +367,7 @@
                 </button>
             </div>
 
+            <!-- Card Board -->
             <div class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full text-center flex flex-col items-center">
                 
                 <div class="w-full flex justify-between items-center mb-3 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-200">
@@ -377,6 +375,7 @@
                     <span id="math-diff-tag" class="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">บวกลบ (4 ตัว)</span>
                 </div>
 
+                <!-- Target Circle -->
                 <div class="text-center mb-3">
                     <p class="text-[11px] font-extrabold text-amber-800 mb-1">เป้าหมายที่ต้องผสมให้ได้</p>
                     <div class="w-24 h-24 bg-gradient-to-tr from-amber-400 to-yellow-300 rounded-full shadow-lg flex items-center justify-center border-4 border-white mx-auto">
@@ -384,10 +383,12 @@
                     </div>
                 </div>
 
+                <!-- Formula Text Display -->
                 <div class="w-full bg-amber-50 border-2 border-dashed border-amber-200 rounded-2xl p-2.5 min-h-[48px] flex items-center justify-center text-center mb-3 shadow-inner">
                     <span id="math-formula-text" class="text-amber-800/60 font-bold text-xs">แตะตัวเลขและเครื่องหมายเพื่อผสม</span>
                 </div>
 
+                <!-- Number Bubbles Container -->
                 <div class="w-full mb-3">
                     <div class="flex justify-between items-center mb-1.5 px-1">
                         <span class="text-xs font-extrabold text-amber-900">ตัวเลขของคุณ:</span>
@@ -397,6 +398,7 @@
                     </div>
                 </div>
 
+                <!-- Operators Container -->
                 <div class="w-full mb-4">
                     <p class="text-[11px] font-extrabold text-amber-900 text-center mb-1.5">เครื่องหมาย:</p>
                     <div class="flex justify-center gap-2">
@@ -407,6 +409,7 @@
                     </div>
                 </div>
 
+                <!-- Action Buttons -->
                 <div class="w-full flex gap-2">
                     <button onclick="resetCurrentMathQuestion()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold py-3 rounded-2xl text-xs bubble-btn">
                         ล้างใหม่ 🔄
@@ -414,54 +417,6 @@
                     <button onclick="executeMathCombination()" class="flex-1 bg-emerald-500 active:bg-emerald-600 text-white font-extrabold py-3 rounded-2xl text-xs shadow-lg bubble-btn">
                         ผสมเลขเลย! ✨
                     </button>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- TAB 4: REWARD SHOP & INVENTORY -->
-        <div id="main-reward-tab" class="w-full max-w-sm hidden flex-col items-center">
-            <div class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full flex flex-col">
-                
-                <div class="flex bg-amber-100 p-1 rounded-2xl mb-4 border border-amber-300">
-                    <button id="tab-sub-shop-btn" onclick="switchRewardTab('shop')" class="flex-1 py-2 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition">🎁 ร้านค้าแลกรางวัล</button>
-                    <button id="tab-sub-inv-btn" onclick="switchRewardTab('inventory')" class="flex-1 py-2 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition">🎒 กระเป๋าของฉัน</button>
-                </div>
-
-                <!-- View 1: Reward Shop -->
-                <div id="reward-shop-view">
-                    <div class="text-center mb-3">
-                        <p class="text-xs text-amber-700 font-medium">สะสมดาวจากการท่องศัพท์และภารกิจเพื่อแลกรางวัล!</p>
-                        <div class="mt-2 bg-amber-100 py-1.5 px-4 rounded-full inline-block border border-amber-300 font-bold text-amber-900 text-xs shadow-sm">
-                            ดาวสะสมของหนู: <span id="quest-user-stars" class="text-amber-600 text-base font-black">🌟 0</span>
-                        </div>
-                    </div>
-
-                    <div id="parent-add-reward-section" class="mb-4 bg-amber-50 p-3 rounded-2xl border border-amber-200 hidden">
-                        <div class="font-extrabold text-xs text-amber-900 mb-2">➕ เพิ่มรางวัลใหม่ (สำหรับ พ่อนะ / แม่พัด)</div>
-                        <div class="space-y-2">
-                            <input type="text" id="new-reward-name" placeholder="ชื่อของรางวัล (เช่น ไอศกรีม 1 ถ้วย)" class="w-full border border-amber-300 rounded-xl p-2 text-xs focus:outline-none focus:border-amber-500">
-                            <div class="flex gap-2">
-                                <input type="number" id="new-reward-stars" min="1" placeholder="จำนวนดาว" class="w-1/2 border border-amber-300 rounded-xl p-2 text-xs text-center font-bold focus:outline-none focus:border-amber-500">
-                                <button onclick="addNewRewardItem()" class="w-1/2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow">
-                                    บันทึกรางวัล 💾
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="rewards-list-container" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
-                    </div>
-                </div>
-
-                <!-- View 2: User Inventory -->
-                <div id="reward-inventory-view" class="hidden">
-                    <div class="text-center mb-3">
-                        <h4 class="text-sm font-extrabold text-amber-900">🎒 ของรางวัลที่ได้รับแล้ว</h4>
-                        <p class="text-[11px] text-slate-500 font-medium">นำรางวัลนี้ไปขอพ่อนะและแม่พัดเพื่อรับจริงได้เลย!</p>
-                    </div>
-                    <div id="inventory-list-container" class="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
-                    </div>
                 </div>
 
             </div>
@@ -507,6 +462,54 @@
             <div class="flex gap-2">
                 <button onclick="closeAssignModal()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs">ยกเลิก</button>
                 <button onclick="saveQuestAssignment()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-xs shadow">บันทึก 💾</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Rewards -->
+    <div id="quest-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative border-4 border-amber-300 max-h-[85vh] flex flex-col">
+            <button onclick="closeQuestModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1">
+                <i data-lucide="x"></i>
+            </button>
+            
+            <div class="flex bg-amber-100 p-1 rounded-2xl mb-3 border border-amber-300">
+                <button id="shop-tab-btn" onclick="switchRewardTab('shop')" class="flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition">🎁 ร้านค้าแลกรางวัล</button>
+                <button id="inventory-tab-btn" onclick="switchRewardTab('inventory')" class="flex-1 py-1.5 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition">🎒 กระเป๋าของฉัน</button>
+            </div>
+
+            <div id="reward-shop-view">
+                <div class="text-center mb-3">
+                    <p class="text-xs text-amber-700">สะสมดาวจากการท่องศัพท์และภารกิจเพื่อแลกรางวัล!</p>
+                    <div class="mt-1 bg-amber-100 py-1 px-4 rounded-full inline-block border border-amber-300 font-bold text-amber-900 text-xs">
+                        ดาวสะสม: <span id="quest-user-stars" class="text-amber-600 text-base">🌟 0</span>
+                    </div>
+                </div>
+
+                <div id="parent-add-reward-section" class="mb-3 bg-amber-50 p-3 rounded-2xl border border-amber-200 hidden">
+                    <div class="font-extrabold text-xs text-amber-900 mb-2">➕ เพิ่มรางวัลใหม่ (สำหรับ พ่อนะ / แม่พัด)</div>
+                    <div class="space-y-2">
+                        <input type="text" id="new-reward-name" placeholder="ชื่อของรางวัล (เช่น ไอศกรีม 1 ถ้วย)" class="w-full border border-amber-300 rounded-xl p-2 text-xs focus:outline-none focus:border-amber-500">
+                        <div class="flex gap-2">
+                            <input type="number" id="new-reward-stars" min="1" placeholder="จำนวนดาว" class="w-1/2 border border-amber-300 rounded-xl p-2 text-xs text-center font-bold focus:outline-none focus:border-amber-500">
+                            <button onclick="addNewRewardItem()" class="w-1/2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow">
+                                บันทึกรางวัล 💾
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="rewards-list-container" class="flex-1 overflow-y-auto space-y-3 max-h-[45vh] pr-1">
+                </div>
+            </div>
+
+            <div id="reward-inventory-view" class="hidden flex-1 overflow-y-auto max-h-[55vh]">
+                <div class="text-center mb-3">
+                    <h4 class="text-sm font-extrabold text-amber-900">🎒 ของรางวัลที่ได้รับแล้ว</h4>
+                    <p class="text-[11px] text-slate-500">นำรางวัลนี้ไปขอพ่อนะและแม่พัดเพื่อรับจริงได้เลย!</p>
+                </div>
+                <div id="inventory-list-container" class="space-y-2.5 pr-1">
+                </div>
             </div>
         </div>
     </div>
@@ -758,29 +761,7 @@
                 const splash = document.getElementById('ios-splash-screen');
                 if (splash) splash.classList.add('fade-out');
             }, 1200);
-            
-            updateNetworkStatusUI();
         });
-
-        // Track Online / Offline Status
-        window.addEventListener('online', () => {
-            updateNetworkStatusUI();
-            syncOfflineQueueToFirebase();
-        });
-        window.addEventListener('offline', () => {
-            updateNetworkStatusUI();
-        });
-
-        function updateNetworkStatusUI() {
-            const offlineBanner = document.getElementById('offline-banner');
-            if (offlineBanner) {
-                if (navigator.onLine) {
-                    offlineBanner.classList.add('hidden');
-                } else {
-                    offlineBanner.classList.remove('hidden');
-                }
-            }
-        }
 
         const embeddedFirebaseConfig = {
             apiKey: "AIzaSyAvubrOsRF8MHOs2XiRg3JaRjOF1tUk4uY",
@@ -900,46 +881,6 @@
             }).join('');
         }
 
-        // --- OFFLINE QUEUE MANAGER ---
-        function enqueueOfflineAction(action) {
-            let queue = JSON.parse(localStorage.getItem("kids_offline_queue") || "[]");
-            queue.push(action);
-            localStorage.setItem("kids_offline_queue", JSON.stringify(queue));
-        }
-
-        function syncOfflineQueueToFirebase() {
-            if (!isFirebaseActive || !navigator.onLine) return;
-
-            let queue = JSON.parse(localStorage.getItem("kids_offline_queue") || "[]");
-            if (queue.length === 0) return;
-
-            const { ref, set, push } = window.firebaseModules;
-            const db = window.firebaseModules.getDatabase();
-
-            console.log(`Syncing ${queue.length} offline actions to Firebase...`);
-
-            queue.forEach(action => {
-                try {
-                    if (action.type === 'UPDATE_STARS') {
-                        set(ref(db, `user_stars/${action.user}`), action.stars);
-                    } else if (action.type === 'UPDATE_EXP') {
-                        set(ref(db, `user_exp/${action.user}`), action.exp);
-                    } else if (action.type === 'UPDATE_ROUNDS') {
-                        set(ref(db, `user_daily_rounds/${action.user}/${action.date}`), action.rounds);
-                    } else if (action.type === 'ADD_NOTIFICATION') {
-                        push(ref(db, 'kids_notifications'), action.notification);
-                    } else if (action.type === 'ADD_INVENTORY') {
-                        push(ref(db, `user_inventory/${action.user}`), action.item);
-                    }
-                } catch (e) {
-                    console.error("Queue sync item failed:", action, e);
-                }
-            });
-
-            localStorage.removeItem("kids_offline_queue");
-            console.log("Offline sync completed successfully!");
-        }
-
         function initData() {
             const savedKey = localStorage.getItem("gemini_api_key");
             if (savedKey) document.getElementById("input-api-key").value = savedKey;
@@ -969,35 +910,29 @@
             openProfileModal();
         }
 
-        // --- MAIN TABS SWITCHER (4 TABS) ---
         function switchMainTab(tab) {
             currentMainTab = tab;
             const vocabBtn = document.getElementById("tab-vocab-btn");
             const questBtn = document.getElementById("tab-quest-btn");
             const mathBtn = document.getElementById("tab-math-btn");
-            const rewardBtn = document.getElementById("tab-reward-btn");
 
             const vocabSec = document.getElementById("main-vocab-tab");
             const questSec = document.getElementById("main-quest-tab");
             const mathSec = document.getElementById("main-math-tab");
-            const rewardSec = document.getElementById("main-reward-tab");
 
             const footerNav = document.getElementById("footer-nav");
             const langSwitchBox = document.getElementById("lang-switch-box");
 
-            const activeBtnClass = "flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-xs shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition";
-            const inactiveBtnClass = "flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-xs shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition";
+            const activeBtnClass = "flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition";
+            const inactiveBtnClass = "flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition";
 
             questBtn.className = inactiveBtnClass;
             vocabBtn.className = inactiveBtnClass;
             mathBtn.className = inactiveBtnClass;
-            rewardBtn.className = inactiveBtnClass;
 
             questSec.classList.add("hidden"); questSec.classList.remove("flex");
             vocabSec.classList.add("hidden"); vocabSec.classList.remove("flex");
             mathSec.classList.add("hidden"); mathSec.classList.remove("flex");
-            rewardSec.classList.add("hidden"); rewardSec.classList.remove("flex");
-
             footerNav.classList.add("hidden");
             langSwitchBox.classList.add("hidden");
 
@@ -1014,19 +949,6 @@
                 mathBtn.className = activeBtnClass;
                 mathSec.classList.remove("hidden"); mathSec.classList.add("flex");
                 generateMathPuzzle();
-            } else if (tab === 'reward') {
-                rewardBtn.className = activeBtnClass;
-                rewardSec.classList.remove("hidden"); rewardSec.classList.add("flex");
-                
-                document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
-                const parentAddSec = document.getElementById("parent-add-reward-section");
-                if (isParentUser) {
-                    parentAddSec.classList.remove("hidden");
-                } else {
-                    parentAddSec.classList.add("hidden");
-                }
-
-                switchRewardTab('shop');
             }
         }
 
@@ -1309,31 +1231,21 @@
                 
                 onValue(ref(db, `user_stars/${currentUser}`), (snapshot) => {
                     const val = snapshot.val();
-                    if (val !== null) {
-                        totalStars = val;
-                        localStorage.setItem(getUserStarsKey(), totalStars.toString());
-                        document.getElementById("score").innerText = totalStars;
-                        document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
-                    }
+                    totalStars = val !== null ? val : 0;
+                    document.getElementById("score").innerText = totalStars;
                 });
 
                 onValue(ref(db, `user_exp/${currentUser}`), (snapshot) => {
                     const val = snapshot.val();
-                    if (val !== null) {
-                        currentChildEXP = val;
-                        localStorage.setItem(getUserEXPKey(), currentChildEXP.toString());
-                        updateUserLevelAndAvatarDisplay();
-                    }
+                    currentChildEXP = val !== null ? val : 0;
+                    updateUserLevelAndAvatarDisplay();
                 });
 
                 const todayStr = getTodayDateString();
                 onValue(ref(db, `user_daily_rounds/${currentUser}/${todayStr}`), (snapshot) => {
                     const val = snapshot.val();
-                    if (val !== null) {
-                        todayPlayedRounds = val;
-                        localStorage.setItem(`daily_rounds_${currentUser}_${todayStr}`, todayPlayedRounds.toString());
-                        checkDailyLimitStatus();
-                    }
+                    todayPlayedRounds = val !== null ? val : 0;
+                    checkDailyLimitStatus();
                 });
 
                 onValue(ref(db, `user_inventory/${currentUser}`), (snapshot) => {
@@ -1342,14 +1254,12 @@
                     if (val) {
                         Object.keys(val).forEach(k => userInventoryList.push({ invId: k, ...val[k] }));
                     }
-                    localStorage.setItem(`user_inventory_${currentUser}`, JSON.stringify(userInventoryList));
                     renderUserInventory();
                 });
 
             } else {
                 totalStars = parseInt(localStorage.getItem(getUserStarsKey()) || "0", 10);
                 document.getElementById("score").innerText = totalStars;
-                document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
 
                 currentChildEXP = parseInt(localStorage.getItem(getUserEXPKey()) || "0", 10);
                 updateUserLevelAndAvatarDisplay();
@@ -1369,32 +1279,25 @@
             const lvlData = calculateLevelFromEXP(currentChildEXP);
             currentChildLevel = lvlData.level;
 
-            const heroExpContainer = document.getElementById("hero-exp-container");
-            const topExpContainer = document.getElementById("exp-bar-container");
-            const userLevelTag = document.getElementById("user-level-tag");
-
             if (isParentUser || !currentUser) {
-                if (topExpContainer) topExpContainer.classList.add("hidden");
-                if (userLevelTag) userLevelTag.classList.add("hidden");
-                if (heroExpContainer) heroExpContainer.classList.add("hidden");
-                
+                document.getElementById("exp-bar-container").classList.add("hidden");
+                document.getElementById("user-level-tag").classList.add("hidden");
                 document.getElementById("user-avatar-img").classList.add("hidden");
                 document.getElementById("user-avatar").classList.remove("hidden");
             } else {
-                if (userLevelTag) {
-                    userLevelTag.innerText = `Lv.${currentChildLevel}`;
-                    userLevelTag.classList.remove("hidden");
-                }
-                if (topExpContainer) {
-                    topExpContainer.classList.remove("hidden");
-                    document.getElementById("exp-level-text").innerText = `Lv.${currentChildLevel}`;
-                    const pct = Math.min(100, Math.round((lvlData.currentLevelEXP / lvlData.nextLevelReqEXP) * 100));
-                    document.getElementById("exp-progress").style.width = `${pct}%`;
-                    document.getElementById("exp-val-text").innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
-                }
+                document.getElementById("user-level-tag").innerText = `Lv.${currentChildLevel}`;
+                document.getElementById("user-level-tag").classList.remove("hidden");
+
+                document.getElementById("exp-bar-container").classList.remove("hidden");
+                document.getElementById("exp-level-text").innerText = `Lv.${currentChildLevel}`;
+                
+                const pct = Math.min(100, Math.round((lvlData.currentLevelEXP / lvlData.nextLevelReqEXP) * 100));
+                document.getElementById("exp-progress").style.width = `${pct}%`;
+                document.getElementById("exp-val-text").innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
 
                 const avatarImg = document.getElementById("user-avatar-img");
                 const avatarEmoji = document.getElementById("user-avatar");
+
                 const childAvatars = levelAvatarsConfig[currentUser] || {};
                 const customAvatarUrl = childAvatars[currentChildLevel];
 
@@ -1417,35 +1320,32 @@
 
             if (heroNameEl) {
                 if (isParentUser) {
-                    heroNameEl.innerText = `${currentUser || 'ผู้ปกครอง'} (ผู้ปกครอง)`;
-                    if (heroLvlBadgeEl) heroLvlBadgeEl.innerText = `พ่อนะ / แม่พัด`;
-                    if (heroImgEl) heroImgEl.classList.add("hidden");
-                    if (heroEmojiEl) {
-                        heroEmojiEl.classList.remove("hidden");
-                        heroEmojiEl.innerText = currentUser === 'แม่พัด' ? '👩‍💼' : '👨‍💼';
-                    }
-                    if (heroExpContainer) heroExpContainer.classList.add("hidden");
+                    heroNameEl.innerText = `${currentUser || 'ผู้ปกครอง'} (โหมดผู้ปกครอง)`;
+                    heroLvlBadgeEl.innerText = `พ่อนะ / แม่พัด`;
+                    heroImgEl.classList.add("hidden");
+                    heroEmojiEl.classList.remove("hidden");
+                    heroEmojiEl.innerText = currentUser === 'แม่พัด' ? '👩‍💼' : '👨‍💼';
+                    document.getElementById("hero-exp-container").classList.add("hidden");
                 } else {
                     heroNameEl.innerText = `น้อง${currentUser || 'เด็กๆ'}`;
-                    if (heroLvlBadgeEl) heroLvlBadgeEl.innerText = `Level ${currentChildLevel}`;
+                    heroLvlBadgeEl.innerText = `Level ${currentChildLevel}`;
                     
-                    if (heroExpContainer) heroExpContainer.classList.remove("hidden");
+                    document.getElementById("hero-exp-container").classList.remove("hidden");
                     const pct = Math.min(100, Math.round((lvlData.currentLevelEXP / lvlData.nextLevelReqEXP) * 100));
-                    if (heroExpBar) heroExpBar.style.width = `${pct}%`;
-                    if (heroExpText) heroExpText.innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
+                    heroExpBar.style.width = `${pct}%`;
+                    heroExpText.innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
 
                     const childAvatars = levelAvatarsConfig[currentUser] || {};
                     const customAvatarUrl = childAvatars[currentChildLevel];
 
                     if (customAvatarUrl) {
-                        if (heroImgEl) { heroImgEl.src = customAvatarUrl; heroImgEl.classList.remove("hidden"); }
-                        if (heroEmojiEl) heroEmojiEl.classList.add("hidden");
+                        heroImgEl.src = customAvatarUrl;
+                        heroImgEl.classList.remove("hidden");
+                        heroEmojiEl.classList.add("hidden");
                     } else {
-                        if (heroImgEl) heroImgEl.classList.add("hidden");
-                        if (heroEmojiEl) {
-                            heroEmojiEl.classList.remove("hidden");
-                            heroEmojiEl.innerText = currentUser === 'เพลิน' ? '👧' : '👦';
-                        }
+                        heroImgEl.classList.add("hidden");
+                        heroEmojiEl.classList.remove("hidden");
+                        heroEmojiEl.innerText = currentUser === 'เพลิน' ? '👧' : '👦';
                     }
                 }
             }
@@ -1455,31 +1355,27 @@
             if (isParentUser || !currentUser) return;
 
             currentChildEXP += amount;
-            localStorage.setItem(getUserEXPKey(), currentChildEXP.toString());
 
-            if (isFirebaseActive && navigator.onLine) {
+            if (isFirebaseActive) {
                 const { ref, set } = window.firebaseModules;
                 const db = window.firebaseModules.getDatabase();
                 set(ref(db, `user_exp/${currentUser}`), currentChildEXP);
             } else {
-                enqueueOfflineAction({ type: 'UPDATE_EXP', user: currentUser, exp: currentChildEXP });
+                localStorage.setItem(getUserEXPKey(), currentChildEXP.toString());
             }
 
             updateUserLevelAndAvatarDisplay();
         }
 
         function saveUserStars() {
-            localStorage.setItem(getUserStarsKey(), totalStars.toString());
-            document.getElementById("score").innerText = totalStars;
-            document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
-
-            if (isFirebaseActive && currentUser && navigator.onLine) {
+            if (isFirebaseActive && currentUser) {
                 const { ref, set } = window.firebaseModules;
                 const db = window.firebaseModules.getDatabase();
                 set(ref(db, `user_stars/${currentUser}`), totalStars);
-            } else if (currentUser) {
-                enqueueOfflineAction({ type: 'UPDATE_STARS', user: currentUser, stars: totalStars });
+            } else {
+                localStorage.setItem(getUserStarsKey(), totalStars.toString());
             }
+            document.getElementById("score").innerText = totalStars;
         }
 
         function adjustChildStars(isAdding) {
@@ -1494,7 +1390,7 @@
 
             const changeAmount = isAdding ? starCount : -starCount;
 
-            if (isFirebaseActive && navigator.onLine) {
+            if (isFirebaseActive) {
                 const { ref, get, set } = window.firebaseModules;
                 const db = window.firebaseModules.getDatabase();
                 const starRef = ref(db, `user_stars/${targetChild}`);
@@ -1521,10 +1417,7 @@
                 if (targetChild === currentUser) {
                     totalStars = newStars;
                     document.getElementById("score").innerText = totalStars;
-                    document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
                 }
-
-                enqueueOfflineAction({ type: 'UPDATE_STARS', user: targetChild, stars: newStars });
 
                 sendInAppNotification('MANUAL_STAR_ADJUST', {
                     childName: targetChild,
@@ -1543,14 +1436,12 @@
             todayPlayedRounds += 1;
             const todayStr = getTodayDateString();
 
-            localStorage.setItem(`daily_rounds_${currentUser}_${todayStr}`, todayPlayedRounds.toString());
-
-            if (isFirebaseActive && currentUser && navigator.onLine) {
+            if (isFirebaseActive && currentUser) {
                 const { ref, set } = window.firebaseModules;
                 const db = window.firebaseModules.getDatabase();
                 set(ref(db, `user_daily_rounds/${currentUser}/${todayStr}`), todayPlayedRounds);
-            } else if (currentUser) {
-                enqueueOfflineAction({ type: 'UPDATE_ROUNDS', user: currentUser, date: todayStr, rounds: todayPlayedRounds });
+            } else {
+                localStorage.setItem(`daily_rounds_${currentUser}_${todayStr}`, todayPlayedRounds.toString());
             }
 
             checkDailyLimitStatus();
@@ -1600,7 +1491,7 @@
             if (isFirebaseActive) {
                 initFirebase();
             } else {
-                const localData = localStorage.getItem(`kids_vocab_${subjectMode.toLowerCase()}_data`);
+                const localData = localStorage.getItem(`kids_vocab_${mode.toLowerCase()}_data`);
                 rawVocabList = localData ? JSON.parse(localData) : (mode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH]);
                 filterVocabForUser();
                 updateCard();
@@ -1681,7 +1572,6 @@
                     }
                     if (parsedData.length > 0) {
                         rawVocabList = parsedData;
-                        localStorage.setItem(`kids_vocab_${subjectMode.toLowerCase()}_data`, JSON.stringify(rawVocabList));
                     } else {
                         rawVocabList = subjectMode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH];
                         set(currentDbRef, rawVocabList);
@@ -1699,7 +1589,6 @@
                     }
                     if (parsedRewards.length > 0) {
                         rewardsList = parsedRewards;
-                        localStorage.setItem("kids_rewards_list", JSON.stringify(rewardsList));
                     } else {
                         rewardsList = [...defaultRewards];
                         set(dbRefRewards, rewardsList);
@@ -1715,7 +1604,6 @@
                     }
                     if (parsedQuests.length > 0) {
                         parentQuestsList = parsedQuests;
-                        localStorage.setItem("kids_parent_quests", JSON.stringify(parentQuestsList));
                     } else {
                         parentQuestsList = [...defaultParentQuests];
                         set(dbRefParentQuests, parentQuestsList);
@@ -1731,6 +1619,7 @@
                             notificationsList.push({ id: key, ...data[key] });
                         });
                         notificationsList.sort((a, b) => b.timestamp - a.timestamp);
+                        cleanOldNotifications(); // Auto-clean 2 days old items
                         document.getElementById("notify-badge").classList.remove("hidden");
                         document.getElementById("notify-dot").classList.remove("hidden");
                     }
@@ -1739,7 +1628,6 @@
                 });
 
                 if (currentUser) loadUserStars();
-                syncOfflineQueueToFirebase();
 
             } catch (e) {
                 console.error("Firebase Error:", e);
@@ -1763,29 +1651,32 @@
         }
 
         function saveToStorage() { 
-            localStorage.setItem(`kids_vocab_${subjectMode.toLowerCase()}_data`, JSON.stringify(rawVocabList));
-            if (isFirebaseActive && navigator.onLine) {
+            if (isFirebaseActive) {
                 const { set } = window.firebaseModules;
                 const currentDbRef = subjectMode === 'EN' ? dbRefVocabEN : dbRefVocabTH;
                 if (currentDbRef) set(currentDbRef, rawVocabList);
+            } else {
+                localStorage.setItem(`kids_vocab_${subjectMode.toLowerCase()}_data`, JSON.stringify(rawVocabList)); 
             }
         }
 
         function saveLevelConfigToStorage() {
-            localStorage.setItem("max_level", maxLevel.toString());
-            localStorage.setItem("level_avatars_config", JSON.stringify(levelAvatarsConfig));
-            if (isFirebaseActive && dbRefLevelConfig && navigator.onLine) {
+            if (isFirebaseActive && dbRefLevelConfig) {
                 const { set } = window.firebaseModules;
                 set(dbRefLevelConfig, { maxLevel: maxLevel, levelAvatars: levelAvatarsConfig });
+            } else {
+                localStorage.setItem("max_level", maxLevel.toString());
+                localStorage.setItem("level_avatars_config", JSON.stringify(levelAvatarsConfig));
             }
             updateUserLevelAndAvatarDisplay();
         }
 
         function saveParentQuestsToStorage() {
-            localStorage.setItem("kids_parent_quests", JSON.stringify(parentQuestsList));
-            if (isFirebaseActive && dbRefParentQuests && navigator.onLine) {
+            if (isFirebaseActive && dbRefParentQuests) {
                 const { set } = window.firebaseModules;
                 set(dbRefParentQuests, parentQuestsList);
+            } else {
+                localStorage.setItem("kids_parent_quests", JSON.stringify(parentQuestsList));
             }
             renderParentQuestsList();
         }
@@ -1858,7 +1749,10 @@
             if (assignPloern) newAssignees.push("เพลิน");
 
             quest.assignees = newAssignees;
+            
+            // Fixed Assign Bug: Sync to storage
             saveParentQuestsToStorage();
+            
             closeAssignModal();
             alert(`อัปเดตผู้รับภารกิจ "${quest.title}" เรียบร้อยแล้ว!`);
         }
@@ -1956,10 +1850,11 @@
         }
 
         function saveRewardsToStorage() {
-            localStorage.setItem("kids_rewards_list", JSON.stringify(rewardsList));
-            if (isFirebaseActive && dbRefRewards && navigator.onLine) {
+            if (isFirebaseActive && dbRefRewards) {
                 const { set } = window.firebaseModules;
                 set(dbRefRewards, rewardsList);
+            } else {
+                localStorage.setItem("kids_rewards_list", JSON.stringify(rewardsList));
             }
             renderRewardsList();
         }
@@ -1995,20 +1890,19 @@
         }
 
         function switchRewardTab(tab) {
-            const shopBtn = document.getElementById("tab-sub-shop-btn");
-            const invBtn = document.getElementById("tab-sub-inv-btn");
+            const shopBtn = document.getElementById("shop-tab-btn");
+            const invBtn = document.getElementById("inventory-tab-btn");
             const shopView = document.getElementById("reward-shop-view");
             const invView = document.getElementById("reward-inventory-view");
 
             if (tab === 'shop') {
-                shopBtn.className = "flex-1 py-2 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition";
-                invBtn.className = "flex-1 py-2 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition";
+                shopBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition";
+                invBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition";
                 shopView.classList.remove("hidden");
                 invView.classList.add("hidden");
-                renderRewardsList();
             } else {
-                invBtn.className = "flex-1 py-2 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition";
-                shopBtn.className = "flex-1 py-2 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition";
+                invBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white shadow transition";
+                shopBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-black text-amber-900 hover:bg-amber-200 transition";
                 invView.classList.remove("hidden");
                 shopView.classList.add("hidden");
                 renderUserInventory();
@@ -2017,15 +1911,13 @@
 
         function renderRewardsList() {
             const container = document.getElementById("rewards-list-container");
-            if (!container) return;
-
             if (!rewardsList || rewardsList.length === 0) {
                 container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">ยังไม่มีรายการของรางวัล</div>`;
                 return;
             }
 
             container.innerHTML = rewardsList.map(r => `
-                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 flex justify-between items-center shadow-sm">
+                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 flex justify-between items-center">
                     <div>
                         <div class="font-extrabold text-amber-900 text-sm">${r.name}</div>
                         <div class="text-xs text-amber-700 font-bold">ใช้ ${r.stars} ดาว 🌟</div>
@@ -2052,35 +1944,35 @@
                 date: new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
             };
 
-            const localKey = `user_inventory_${userName}`;
-            const currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
-            currentInv.unshift(item);
-            localStorage.setItem(localKey, JSON.stringify(currentInv));
-
-            if (isFirebaseActive && navigator.onLine) {
+            if (isFirebaseActive) {
                 const { push, ref } = window.firebaseModules;
                 const db = window.firebaseModules.getDatabase();
                 push(ref(db, `user_inventory/${userName}`), item);
             } else {
-                enqueueOfflineAction({ type: 'ADD_INVENTORY', user: userName, item: item });
+                const localKey = `user_inventory_${userName}`;
+                const currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
+                currentInv.unshift(item);
+                localStorage.setItem(localKey, JSON.stringify(currentInv));
             }
 
             if (userName === currentUser) {
-                userInventoryList = currentInv;
+                if (!isFirebaseActive) {
+                    userInventoryList = JSON.parse(localStorage.getItem(`user_inventory_${currentUser}`) || "[]");
+                }
                 renderUserInventory();
             }
         }
 
         function useInventoryItem(invId) {
             if (confirm("คุณใช้งานรางวัลนี้แล้วใช่ไหมครับ?")) {
-                userInventoryList = userInventoryList.filter(x => x.invId !== invId);
-                localStorage.setItem(`user_inventory_${currentUser}`, JSON.stringify(userInventoryList));
-                renderUserInventory();
-
-                if (isFirebaseActive && navigator.onLine) {
+                if (isFirebaseActive) {
                     const { ref, set } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
                     set(ref(db, `user_inventory/${currentUser}/${invId}`), null);
+                } else {
+                    userInventoryList = userInventoryList.filter(x => x.invId !== invId);
+                    localStorage.setItem(`user_inventory_${currentUser}`, JSON.stringify(userInventoryList));
+                    renderUserInventory();
                 }
             }
         }
@@ -2122,19 +2014,39 @@
                 timestamp: Date.now()
             };
 
-            if (isFirebaseActive && dbRefNotify && navigator.onLine) {
+            if (isFirebaseActive && dbRefNotify) {
                 const { push } = window.firebaseModules;
                 push(dbRefNotify, newNotify);
             } else {
                 notificationsList.unshift(newNotify);
-                enqueueOfflineAction({ type: 'ADD_NOTIFICATION', notification: newNotify });
+                cleanOldNotifications();
                 renderNotifications();
+            }
+        }
+
+        // --- Auto Clean Notifications older than 2 days (48 Hours) ---
+        function cleanOldNotifications() {
+            const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+            const now = Date.now();
+
+            if (isFirebaseActive && dbRefNotify) {
+                const { ref, remove } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+
+                notificationsList.forEach(n => {
+                    if (now - n.timestamp > twoDaysMs) {
+                        const itemKey = n.id || n.timestamp;
+                        remove(ref(db, `kids_notifications/${itemKey}`));
+                    }
+                });
+            } else {
+                notificationsList = notificationsList.filter(n => (now - n.timestamp) <= twoDaysMs);
             }
         }
 
         function deleteNotification(notifyId) {
             if (confirm("ต้องการลบการแจ้งเตือนนี้ใช่หรือไม่?")) {
-                if (isFirebaseActive && dbRefNotify && navigator.onLine) {
+                if (isFirebaseActive && dbRefNotify) {
                     const { ref, set } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
                     set(ref(db, `kids_notifications/${notifyId}`), null);
@@ -2149,6 +2061,8 @@
             const listEl = document.getElementById("notify-list");
             if (!listEl) return;
             
+            cleanOldNotifications();
+
             if (notificationsList.length === 0) {
                 listEl.innerHTML = `<div class="text-center text-xs text-slate-400 py-8">ยังไม่มีรายการแจ้งเตือนล่าสุด</div>`;
                 return;
@@ -2287,40 +2201,44 @@
 
         function approveParentQuest(notifyId, userName, starsReward, isApproved) {
             if (isApproved) {
-                const localStarKey = `total_stars_${userName}`;
-                const currentStars = parseInt(localStorage.getItem(localStarKey) || "0", 10);
-                const newStars = currentStars + starsReward;
-                localStorage.setItem(localStarKey, newStars.toString());
-
-                const localExpKey = `user_exp_${userName}`;
-                const currentExp = parseInt(localStorage.getItem(localExpKey) || "0", 10);
-                const newExp = currentExp + (starsReward * 100);
-                localStorage.setItem(localExpKey, newExp.toString());
-
-                if (isFirebaseActive && navigator.onLine) {
-                    const { ref, set } = window.firebaseModules;
+                if (isFirebaseActive) {
+                    const { ref, get, set } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
-                    set(ref(db, `user_stars/${userName}`), newStars);
-                    set(ref(db, `user_exp/${userName}`), newExp);
+                    
+                    const userStarRef = ref(db, `user_stars/${userName}`);
+                    get(userStarRef).then(snapshot => {
+                        const currentStars = snapshot.val() || 0;
+                        set(userStarRef, currentStars + starsReward);
+                    });
+
+                    const userExpRef = ref(db, `user_exp/${userName}`);
+                    get(userExpRef).then(snapshot => {
+                        const currentExp = snapshot.val() || 0;
+                        set(userExpRef, currentExp + (starsReward * 100));
+                    });
+
                 } else {
-                    enqueueOfflineAction({ type: 'UPDATE_STARS', user: userName, stars: newStars });
-                    enqueueOfflineAction({ type: 'UPDATE_EXP', user: userName, exp: newExp });
-                }
+                    const localStarKey = `total_stars_${userName}`;
+                    const currentStars = parseInt(localStorage.getItem(localStarKey) || "0", 10);
+                    localStorage.setItem(localStarKey, (currentStars + starsReward).toString());
 
-                if (userName === currentUser) {
-                    totalStars = newStars;
-                    document.getElementById("score").innerText = totalStars;
-                    document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
-                    currentChildEXP = newExp;
-                    updateUserLevelAndAvatarDisplay();
-                }
+                    const localExpKey = `user_exp_${userName}`;
+                    const currentExp = parseInt(localStorage.getItem(localExpKey) || "0", 10);
+                    localStorage.setItem(localExpKey, (currentExp + (starsReward * 100)).toString());
 
+                    if (userName === currentUser) {
+                        totalStars += starsReward;
+                        document.getElementById("score").innerText = totalStars;
+                        currentChildEXP += (starsReward * 100);
+                        updateUserLevelAndAvatarDisplay();
+                    }
+                }
                 alert(`ตรวจผ่านแล้ว! เพิ่ม 🌟 ${starsReward} ดาว และ +${starsReward * 100} EXP ให้น้อง ${userName} เรียบร้อยครับ`);
             } else {
                 alert(`ปฏิเสธภารกิจเรียบร้อยแล้ว`);
             }
 
-            if (isFirebaseActive && dbRefNotify && navigator.onLine) {
+            if (isFirebaseActive && dbRefNotify) {
                 const { ref, update } = window.firebaseModules;
                 const db = window.firebaseModules.getDatabase();
                 update(ref(db, `kids_notifications/${notifyId}`), { status: isApproved ? 'approved' : 'rejected' });
@@ -2340,7 +2258,7 @@
                 alert(`ปฏิเสธคำขอเรียบร้อยแล้ว`);
             }
 
-            if (isFirebaseActive && dbRefNotify && navigator.onLine) {
+            if (isFirebaseActive && dbRefNotify) {
                 const { ref, update } = window.firebaseModules;
                 const db = window.firebaseModules.getDatabase();
                 update(ref(db, `kids_notifications/${notifyId}`), { status: isApproved ? 'approved' : 'rejected' });
@@ -2360,6 +2278,23 @@
 
         function closeNotifyModal() { document.getElementById("notify-modal").classList.add("hidden"); }
 
+        function openQuestModal() {
+            document.getElementById("quest-user-stars").innerText = `🌟 ${totalStars}`;
+            
+            const parentAddSec = document.getElementById("parent-add-reward-section");
+            if (isParentUser) {
+                parentAddSec.classList.remove("hidden");
+            } else {
+                parentAddSec.classList.add("hidden");
+            }
+
+            switchRewardTab('shop');
+            renderRewardsList();
+            document.getElementById("quest-modal").classList.remove("hidden");
+        }
+
+        function closeQuestModal() { document.getElementById("quest-modal").classList.add("hidden"); }
+
         function requestReward(rewardName, starsReq) {
             if (totalStars < starsReq) {
                 alert(`ดาวสะสมไม่พอครับ! ต้องการ ${starsReq} ดาว (ตอนนี้มี ${totalStars} ดาว)`);
@@ -2376,6 +2311,7 @@
                 });
 
                 alert(`ส่งคำขอแลก "${rewardName}" ถึงพ่อนะและแม่พัดแล้วครับ! รอคุณพ่อคุณแม่ออนุมัตินะครับ ✨`);
+                closeQuestModal();
             }
         }
 
@@ -2428,18 +2364,21 @@
             const footerNav = document.getElementById("footer-nav");
 
             if (isParent) {
-                if (addBtn) { addBtn.classList.remove("hidden"); addBtn.classList.add("flex"); }
-                if (flashcardSec) flashcardSec.classList.remove("hidden");
-                if (spellingSec) spellingSec.classList.add("hidden");
-                if (parentControls) parentControls.classList.remove("hidden");
+                addBtn.classList.remove("hidden");
+                addBtn.classList.add("flex");
+                flashcardSec.classList.remove("hidden");
+                spellingSec.classList.add("hidden");
+                parentControls.classList.remove("hidden");
                 if (parentCreateQuestBox) parentCreateQuestBox.classList.remove("hidden");
                 if (parentManageStarsBox) parentManageStarsBox.classList.remove("hidden");
                 if (footerNav && currentMainTab === 'vocab') footerNav.classList.remove("hidden");
             } else {
-                if (addBtn) { addBtn.classList.add("hidden"); addBtn.classList.remove("flex"); }
-                if (flashcardSec) flashcardSec.classList.add("hidden");
-                if (spellingSec) { spellingSec.classList.remove("hidden"); spellingSec.classList.add("flex"); }
-                if (parentControls) parentControls.classList.add("hidden");
+                addBtn.classList.add("hidden");
+                addBtn.classList.remove("flex");
+                flashcardSec.classList.add("hidden");
+                spellingSec.classList.remove("hidden");
+                spellingSec.classList.add("flex");
+                parentControls.classList.add("hidden");
                 if (parentCreateQuestBox) parentCreateQuestBox.classList.add("hidden");
                 if (parentManageStarsBox) parentManageStarsBox.classList.add("hidden");
                 if (footerNav) footerNav.classList.add("hidden");
@@ -2448,9 +2387,7 @@
             filterVocabForUser();
             currentIndex = 0;
             setCorrectAnswers = 0;
-            
             loadUserStars();
-            updateUserLevelAndAvatarDisplay();
             updateCard();
             renderParentQuestsList();
             renderNotifications();
@@ -2670,7 +2607,7 @@
             localStorage.setItem("enable_daily_limit", isDailyLimitEnabled ? "true" : "false");
             localStorage.setItem("daily_limit_rounds", dailyLimitRounds.toString());
 
-            if (isFirebaseActive && dbRefDailyConfig && navigator.onLine) {
+            if (isFirebaseActive && dbRefDailyConfig) {
                 const { set } = window.firebaseModules;
                 set(dbRefDailyConfig, { enabled: isDailyLimitEnabled, rounds: dailyLimitRounds });
             }
@@ -2890,11 +2827,6 @@
         }
 
         async function askGeminiAI() {
-            if (!navigator.onLine) {
-                alert("ขออภัยครับ ฟีเจอร์ AI จำเป็นต้องใช้อินเทอร์เน็ต กรุณาเชื่อมต่อเน็ตแล้วลองใหม่อีกครั้งครับ");
-                return;
-            }
-
             const enInput = document.getElementById("input-en").value.trim();
             const thInput = document.getElementById("input-th").value.trim();
             const apiKey = localStorage.getItem("gemini_api_key");
