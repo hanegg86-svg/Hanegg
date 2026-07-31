@@ -428,7 +428,7 @@
                     <p class="text-xs text-amber-700 font-bold mt-1">เลือกตัวละคร ภาษา และธีม แล้วให้ AI แต่งนิทานให้ฟังนะ</p>
                 </div>
 
-                <!-- 0. เลือกภาษา (เพิ่มฟังก์ชั่นสลับภาษา TH / EN) -->
+                <!-- 0. เลือกภาษา (TH / EN) -->
                 <div class="mb-3 bg-amber-50 p-2.5 rounded-2xl border border-amber-200">
                     <label class="block text-xs font-black text-amber-900 mb-1.5">🌐 ภาษาของนิทาน (Language)</label>
                     <div class="flex bg-amber-200/60 p-1 rounded-xl gap-1">
@@ -1179,14 +1179,19 @@
 เพื่อนร่วมทาง: ${selectedStoryPet}
 คำสั่งภาษา: ${langInstruction}
 
+ข้อกำหนดสำคัญมากเรื่อง Emoji ประกอบหน้า:
+- ในแต่ละหน้า (pages) ให้วิเคราะห์เนื้อหาในหน้านั้น แล้วเลือก Emoji 1 ตัวที่ตรงกับคีย์เวิร์ด/วัตถุ/เหตุการณ์หลักในหน้านั้นจริงๆ
+  * ตัวอย่าง: ถ้าหน้านั้นพูดถึง "ประตูไม้" ให้ใช้ 🚪, "บ้านขนมหวาน" ให้ใช้ 🍬, "สะพานสายรุ้ง" ให้ใช้ 🌈, "ปราสาท" ให้ใช้ 🏰, "หมาน้อย/ภูต" ให้ใช้ 🐶 หรือ 🧚
+- ห้ามสุ่ม Emoji ทั่วไป (เช่น จรวด ดาว) ที่ไม่เกี่ยวข้องกับเนื้อเรื่องในหน้านั้นเด็ดขาด
+
 ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น ห้ามมี markdown หรือคำอธิบายเพิ่มเติม:
 {
   "title": "ชื่อเรื่องนิทาน",
   "pages": [
-    { "page": 1, "text": "เนื้อหานิทานหน้า 1 (2-3 ประโยค)", "emoji": "🚀" },
-    { "page": 2, "text": "เนื้อหานิทานหน้า 2 (2-3 ประโยค)", "emoji": "✨" },
-    { "page": 3, "text": "เนื้อหานิทานหน้า 3 (2-3 ประโยค)", "emoji": "🌟" },
-    { "page": 4, "text": "เนื้อหานิทานหน้า 4 สรุปข้อคิดสั้นๆ", "emoji": "🎉" }
+    { "page": 1, "text": "เนื้อหานิทานหน้า 1", "emoji": "Emoji จากคีย์เวิร์ดหน้า 1" },
+    { "page": 2, "text": "เนื้อหานิทานหน้า 2", "emoji": "Emoji จากคีย์เวิร์ดหน้า 2" },
+    { "page": 3, "text": "เนื้อหานิทานหน้า 3", "emoji": "Emoji จากคีย์เวิร์ดหน้า 3" },
+    { "page": 4, "text": "เนื้อหานิทานหน้า 4", "emoji": "Emoji จากคีย์เวิร์ดหน้า 4" }
   ]
 }`;
 
@@ -1837,7 +1842,7 @@
             if (isFirebaseActive) {
                 initFirebase();
             } else {
-                const localData = localStorage.getItem(`kids_vocab_${mode.toLowerCase()}_data`);
+                const localData = localStorage.getItem(`kids_vocab_${subjectMode.toLowerCase()}_data`);
                 rawVocabList = localData ? JSON.parse(localData) : (mode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH]);
                 filterVocabForUser();
                 updateCard();
