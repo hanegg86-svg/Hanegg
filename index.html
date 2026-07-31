@@ -660,16 +660,16 @@
                 </div>
                 <div class="flex justify-between items-center text-sm font-bold text-amber-900">
                     <span>ดาวที่ได้รับในรอบนี้:</span>
-                    <span class="text-lg text-amber-500">🌟 1 ดวง</span>
+                    <span id="summary-stars-earned" class="text-lg text-amber-500">🌟 1 ดวง</span>
                 </div>
                 <div class="flex justify-between items-center text-sm font-bold text-amber-900 pt-1 border-t border-amber-200">
                     <span>EXP ที่ได้รับ:</span>
-                    <span class="text-sm text-purple-600 font-black">+100 EXP ✨</span>
+                    <span id="summary-exp-earned" class="text-sm text-purple-600 font-black">+100 EXP ✨</span>
                 </div>
             </div>
 
             <div class="space-y-3">
-                <div class="bg-emerald-50 text-emerald-800 text-xs font-bold p-3 rounded-xl border border-emerald-200">
+                <div id="summary-saved-badge" class="bg-emerald-50 text-emerald-800 text-xs font-bold p-3 rounded-xl border border-emerald-200">
                     ✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!
                 </div>
                 <button onclick="restartSession()" class="w-full bg-amber-500 active:bg-amber-600 text-white font-bold py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-base">
@@ -937,6 +937,7 @@
         let isDailyLimitEnabled = true;
         let dailyLimitRounds = 3;
         let todayPlayedRounds = 0;
+        let todayStoryRewardEarned = false; // ตรวจสอบว่าวันนี้รับรางวัลนิทานไปหรือยัง
 
         let maxLevel = 10;
         let currentChildEXP = 0;
@@ -1282,25 +1283,69 @@
         }
 
         function triggerStoryCompletionModal() {
-            totalStars += 1;
-            saveUserStars();
-            addEXPToUser(100);
+            const starsEarnedEl = document.getElementById("summary-stars-earned");
+            const expEarnedEl = document.getElementById("summary-exp-earned");
+            const savedBadge = document.getElementById("summary-saved-badge");
+
+            if (!todayStoryRewardEarned) {
+                // ครั้งแรกของวัน: แจกดาว + EXP
+                totalStars += 1;
+                saveUserStars();
+                addEXPToUser(100);
+                markTodayStoryRewardEarned();
+
+                starsEarnedEl.innerText = "🌟 1 ดวง";
+                starsEarnedEl.className = "text-lg text-amber-500";
+                expEarnedEl.innerText = "+100 EXP ✨";
+                savedBadge.innerText = "✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
+                savedBadge.className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-3 rounded-xl border border-emerald-200";
+
+                sendInAppNotification('COMPLETED_STORY', { title: generatedStoryData.title, lang: selectedStoryLang });
+
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const msg = selectedStoryLang === 'EN' ? 
+                        `Great job ${currentUser || ''}! You finished the story and earned 1 star!` :
+                        `เก่งมากเลยครับ ${currentUser || ''} อ่านนิทานจบเล่ม รับไปเลย 1 ดาว และ 100 EXP`;
+                    const utterance = new SpeechSynthesisUtterance(msg);
+                    utterance.lang = selectedStoryLang === 'EN' ? 'en-US' : 'th-TH';
+                    window.speechSynthesis.speak(utterance);
+                }
+            } else {
+                // อ่านซ้ำในวันเดียวกัน: ไม่แจกดาวเพิ่ม
+                starsEarnedEl.innerText = "🌟 0 ดวง (รับโควต้าวันนี้แล้ว)";
+                starsEarnedEl.className = "text-sm text-slate-500 font-bold";
+                expEarnedEl.innerText = "+0 EXP";
+                savedBadge.innerText = "💡 หนูรับโควต้าดาว และ EXP ประจำวันของนิทานไปแล้วนะครับ พรุ่งนี้มารับใหม่นะ!";
+                savedBadge.className = "bg-amber-50 text-amber-900 text-xs font-bold p-3 rounded-xl border border-amber-200";
+
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const msg = selectedStoryLang === 'EN' ? 
+                        `Great job ${currentUser || ''}! You finished another story today!` :
+                        `เก่งมากเลยครับ ${currentUser || ''} อ่านนิทานจบอีกเล่มแล้ว!`;
+                    const utterance = new SpeechSynthesisUtterance(msg);
+                    utterance.lang = selectedStoryLang === 'EN' ? 'en-US' : 'th-TH';
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
 
             document.getElementById("summary-total-count").innerText = "อ่านนิทานจบเล่ม!";
             document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} อ่านนิทานเรื่อง "${generatedStoryData.title}" จบแล้ว!`;
             document.getElementById("completion-modal").classList.remove("hidden");
+        }
 
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const msg = selectedStoryLang === 'EN' ? 
-                    `Great job ${currentUser || ''}! You finished the story and earned 1 star!` :
-                    `เก่งมากเลยครับ ${currentUser || ''} อ่านนิทานจบเล่ม รับไปเลย 1 ดาว และ 100 EXP`;
-                const utterance = new SpeechSynthesisUtterance(msg);
-                utterance.lang = selectedStoryLang === 'EN' ? 'en-US' : 'th-TH';
-                window.speechSynthesis.speak(utterance);
+        function markTodayStoryRewardEarned() {
+            todayStoryRewardEarned = true;
+            const todayStr = getTodayDateString();
+
+            if (isFirebaseActive && currentUser) {
+                const { ref, set } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                set(ref(db, `user_daily_story_reward/${currentUser}/${todayStr}`), true);
+            } else {
+                localStorage.setItem(`story_reward_${currentUser}_${todayStr}`, "true");
             }
-
-            sendInAppNotification('COMPLETED_STORY', { title: generatedStoryData.title, lang: selectedStoryLang });
         }
 
         // --- MATH COMBINATION GAME ENGINE ---
@@ -1548,6 +1593,12 @@
             incrementTodayRounds();
 
             document.getElementById("summary-total-count").innerText = "5 / 5 ข้อ";
+            document.getElementById("summary-stars-earned").innerText = "🌟 1 ดวง";
+            document.getElementById("summary-stars-earned").className = "text-lg text-amber-500";
+            document.getElementById("summary-exp-earned").innerText = "+100 EXP ✨";
+            document.getElementById("summary-saved-badge").innerText = "✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
+            document.getElementById("summary-saved-badge").className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-3 rounded-xl border border-emerald-200";
+
             document.getElementById("completion-subtitle").innerText = `🎉 เล่นเกมคิดเลขผสมคำตอบถูกครบ 5 ข้อแล้ว!`;
             document.getElementById("completion-modal").classList.remove("hidden");
 
@@ -1599,6 +1650,11 @@
                     checkDailyLimitStatus();
                 });
 
+                onValue(ref(db, `user_daily_story_reward/${currentUser}/${todayStr}`), (snapshot) => {
+                    const val = snapshot.val();
+                    todayStoryRewardEarned = val !== null ? val : false;
+                });
+
                 onValue(ref(db, `user_inventory/${currentUser}`), (snapshot) => {
                     const val = snapshot.val();
                     userInventoryList = [];
@@ -1617,6 +1673,7 @@
 
                 const todayStr = getTodayDateString();
                 todayPlayedRounds = parseInt(localStorage.getItem(`daily_rounds_${currentUser}_${todayStr}`) || "0", 10);
+                todayStoryRewardEarned = localStorage.getItem(`story_reward_${currentUser}_${todayStr}`) === "true";
                 
                 const localInv = localStorage.getItem(`user_inventory_${currentUser}`);
                 userInventoryList = localInv ? JSON.parse(localInv) : [];
@@ -2810,6 +2867,12 @@
             incrementTodayRounds();
 
             document.getElementById("summary-total-count").innerText = "5 / 5 คำ";
+            document.getElementById("summary-stars-earned").innerText = "🌟 1 ดวง";
+            document.getElementById("summary-stars-earned").className = "text-lg text-amber-500";
+            document.getElementById("summary-exp-earned").innerText = "+100 EXP ✨";
+            document.getElementById("summary-saved-badge").innerText = "✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
+            document.getElementById("summary-saved-badge").className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-3 rounded-xl border border-emerald-200";
+
             document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} ท่องถูกครบชุด 5 คำแล้ว!`;
             document.getElementById("completion-modal").classList.remove("hidden");
 
