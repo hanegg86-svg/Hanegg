@@ -423,9 +423,9 @@
             <div id="story-creator-box" class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full">
                 <div class="text-center mb-3">
                     <h3 class="text-xl font-black text-amber-900 flex items-center justify-center gap-2">
-                        📖 สร้างนิทานของหนูเอง!
+                        📖 นิทานเลือกเส้นทาง (8 หน้าจบ)
                     </h3>
-                    <p class="text-xs text-amber-700 font-bold mt-1">เลือกตัวละคร ภาษา และธีม แล้วให้ AI แต่งนิทานให้ฟังนะ</p>
+                    <p class="text-xs text-amber-700 font-bold mt-1">เลือกตัวละครและสถานที่ แล้วมาเลือกเส้นทางผจญภัยกัน!</p>
                 </div>
 
                 <!-- 0. เลือกภาษา (TH / EN) -->
@@ -492,7 +492,7 @@
                 </div>
 
                 <button id="btn-generate-story" onclick="generateAIStory()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-95 text-white font-extrabold py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-base transition">
-                    ✨ เนรมิตนิทานเลย! ✨
+                    ✨ เนรมิตนิทาน 8 หน้าเลย! ✨
                 </button>
             </div>
 
@@ -500,36 +500,47 @@
             <div id="story-reader-box" class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full hidden flex-col items-center">
                 <div class="w-full flex justify-between items-center mb-3 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-200">
                     <span id="story-title-display" class="text-xs font-black text-amber-950 truncate max-w-[200px]">ชื่อเรื่องนิทาน</span>
-                    <span id="story-page-indicator" class="text-[10px] font-black text-amber-800 bg-amber-200 px-2 py-0.5 rounded-full">หน้า 1 / 4</span>
+                    <span id="story-page-indicator" class="text-[10px] font-black text-amber-800 bg-amber-200 px-2 py-0.5 rounded-full">หน้า 1 / 8</span>
                 </div>
 
                 <!-- Picture Frame -->
-                <div class="w-full h-48 bg-amber-50 rounded-2xl border-2 border-amber-200 flex items-center justify-center overflow-hidden mb-4 shadow-inner relative">
+                <div class="w-full h-44 bg-amber-50 rounded-2xl border-2 border-amber-200 flex items-center justify-center overflow-hidden mb-3 shadow-inner relative">
                     <span id="story-image-emoji" class="text-7xl bounce-anim">🚀</span>
                 </div>
 
                 <!-- Text Frame -->
-                <div class="w-full bg-amber-50/60 border border-amber-200 rounded-2xl p-4 min-h-[110px] mb-4 flex items-center justify-center text-center">
-                    <p id="story-text-display" class="text-sm font-bold text-amber-950 leading-relaxed">
+                <div class="w-full bg-amber-50/60 border border-amber-200 rounded-2xl p-3.5 min-h-[95px] mb-3 flex items-center justify-center text-center">
+                    <p id="story-text-display" class="text-xs sm:text-sm font-bold text-amber-950 leading-relaxed">
                         เนื้อเรื่องจะแสดงที่นี่...
                     </p>
                 </div>
 
+                <!-- Interactive Choices Container (ปรากฏเฉพาะหน้า 2, 4, 6) -->
+                <div id="story-choices-box" class="w-full space-y-2 mb-3 hidden">
+                    <p class="text-[11px] font-extrabold text-amber-900 text-center">👇 หนูจะเลือกทำอย่างไรดีนะ?</p>
+                    <button id="btn-choice-a" onclick="makeStoryChoice('A')" class="w-full bg-amber-100 hover:bg-amber-200 border-2 border-amber-400 p-2.5 rounded-xl text-xs font-extrabold text-amber-950 text-left shadow-sm active:scale-95 transition">
+                        A) ตัวเลือก A
+                    </button>
+                    <button id="btn-choice-b" onclick="makeStoryChoice('B')" class="w-full bg-purple-100 hover:bg-purple-200 border-2 border-purple-300 p-2.5 rounded-xl text-xs font-extrabold text-purple-950 text-left shadow-sm active:scale-95 transition">
+                        B) ตัวเลือก B
+                    </button>
+                </div>
+
                 <!-- Action Controls -->
                 <div class="w-full flex gap-2 mb-3">
-                    <button onclick="speakStoryPageText()" class="flex-1 bg-sky-400 active:bg-sky-500 text-white font-extrabold py-3 rounded-2xl shadow flex items-center justify-center gap-1.5 text-xs">
+                    <button onclick="speakStoryPageText()" class="flex-1 bg-sky-400 active:bg-sky-500 text-white font-extrabold py-2.5 rounded-2xl shadow flex items-center justify-center gap-1.5 text-xs">
                         <i data-lucide="volume-2" class="w-4 h-4"></i> ฟังเสียงอ่าน 🔊
                     </button>
                 </div>
 
                 <div class="w-full flex justify-between gap-2 border-t border-amber-100 pt-3">
-                    <button onclick="prevStoryPage()" id="btn-prev-story" class="bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-1">
+                    <button onclick="prevStoryPage()" id="btn-prev-story" class="bg-slate-200 text-slate-700 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center gap-1">
                         ← หน้าก่อน
                     </button>
                     <button onclick="openStoryCreator()" class="bg-amber-100 text-amber-900 font-bold py-2.5 px-3 rounded-xl text-xs">
                         🔄 แต่งเรื่องใหม่
                     </button>
-                    <button onclick="nextStoryPage()" id="btn-next-story" class="bg-amber-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow flex items-center gap-1">
+                    <button onclick="nextStoryPage()" id="btn-next-story" class="bg-amber-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs shadow flex items-center gap-1">
                         ถัดไป →
                     </button>
                 </div>
@@ -937,7 +948,7 @@
         let isDailyLimitEnabled = true;
         let dailyLimitRounds = 3;
         let todayPlayedRounds = 0;
-        let todayStoryRewardEarned = false; // ตรวจสอบว่าวันนี้รับรางวัลนิทานไปหรือยัง
+        let todayStoryRewardEarned = false;
 
         let maxLevel = 10;
         let currentChildEXP = 0;
@@ -958,11 +969,11 @@
         let mathSelectedOp = null;
         let mathSelectedNum2Idx = null;
 
-        // --- AI STORYTELLER VARIABLES ---
+        // --- AI STORYTELLER VARIABLES (8 Pages Interactive) ---
         let selectedStoryHero = 'พูนและเพลิน';
         let selectedStoryTheme = 'อวกาศ';
         let selectedStoryPet = 'หุ่นยนต์จิ๋ว';
-        let selectedStoryLang = 'TH'; // ภาษาของนิทาน (TH / EN)
+        let selectedStoryLang = 'TH'; 
         let generatedStoryData = null;
         let currentStoryPage = 0;
 
@@ -1084,7 +1095,7 @@
             }
         }
 
-        // --- AI STORYTELLER MODULE ---
+        // --- AI STORYTELLER MODULE (8 Pages Choose Your Own Adventure) ---
         function initStoryTabState() {
             selectStoryLang('TH');
             selectStoryHero(currentUser === 'เพลิน' ? 'เพลิน' : 'พูน');
@@ -1150,7 +1161,7 @@
             const btnCat = document.getElementById("story-pet-cat");
 
             const normal = "p-2 rounded-xl border-2 border-amber-200 bg-amber-50 flex flex-col items-center text-xs font-bold text-amber-900 shadow-sm";
-            const active = "p-2 rounded-xl border-2 border-amber-500 bg-amber-200 flex flex-col items-center text-xs font-bold text-amber-950 shadow-md scale-105";
+            const active = "p-2 rounded-xl border-2 border-amber-500 bg-amber-200 flex flex-col items-center transition shadow-md scale-105";
 
             btnDog.className = pet === 'เจ้าหมาน้อย' ? active : normal;
             btnRobot.className = pet === 'หุ่นยนต์จิ๋ว' ? active : normal;
@@ -1168,31 +1179,44 @@
 
             const btnGen = document.getElementById("btn-generate-story");
             btnGen.disabled = true;
-            btnGen.innerHTML = `<span class="spinner"></span> AI กำลังเนรมิตนิทาน...`;
+            btnGen.innerHTML = `<span class="spinner"></span> AI กำลังเนรมิตนิทาน 8 หน้า...`;
 
             let langInstruction = selectedStoryLang === 'EN' ? 
                 "Write the story in SIMPLE EASY ENGLISH for kids." : 
                 "แต่งนิทานเป็นภาษาไทยที่อ่านง่าย สนุกสนานสำหรับเด็ก";
 
-            const prompt = `แต่งนิทานสั้นๆ 4 หน้า สั้นกระชับ สนุกสนาน
+            const prompt = `แต่งนิทานแนว Interactive Choose Your Own Adventure ความยาว 8 หน้า
 ตัวละครหลัก: ${selectedStoryHero}
 สถานที่ผจญภัย: ${selectedStoryTheme}
 เพื่อนร่วมทาง: ${selectedStoryPet}
 คำสั่งภาษา: ${langInstruction}
 
+โครงสร้าง 8 หน้าที่ต้องระบุ:
+- Page 1: เริ่มต้นเรื่องราว
+- Page 2: เกิดสถานการณ์ ให้มีทางเลือก choiceA และ choiceB
+- Page 3: ผลลัพธ์จากการเดินทางช่วงแรก
+- Page 4: สถานการณ์ถัดมา ให้มีทางเลือก choiceA และ choiceB
+- Page 5: การผจญภัยด่านสำคัญ
+- Page 6: การตัดสินใจครั้งสุดท้าย ให้มีทางเลือก choiceA และ choiceB
+- Page 7: Climax ของเรื่องราว
+- Page 8: บทสรุปแฮปปี้เอนดิ้ง
+
 ข้อกำหนดสำคัญมากเรื่อง Emoji ประกอบหน้า:
 - ในแต่ละหน้า (pages) ให้วิเคราะห์เนื้อหาในหน้านั้น แล้วเลือก Emoji 1 ตัวที่ตรงกับคีย์เวิร์ด/วัตถุ/เหตุการณ์หลักในหน้านั้นจริงๆ
   * ตัวอย่าง: ถ้าหน้านั้นพูดถึง "ประตูไม้" ให้ใช้ 🚪, "บ้านขนมหวาน" ให้ใช้ 🍬, "สะพานสายรุ้ง" ให้ใช้ 🌈, "ปราสาท" ให้ใช้ 🏰, "หมาน้อย/ภูต" ให้ใช้ 🐶 หรือ 🧚
-- ห้ามสุ่ม Emoji ทั่วไป (เช่น จรวด ดาว) ที่ไม่เกี่ยวข้องกับเนื้อเรื่องในหน้านั้นเด็ดขาด
 
 ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น ห้ามมี markdown หรือคำอธิบายเพิ่มเติม:
 {
   "title": "ชื่อเรื่องนิทาน",
   "pages": [
-    { "page": 1, "text": "เนื้อหานิทานหน้า 1", "emoji": "Emoji จากคีย์เวิร์ดหน้า 1" },
-    { "page": 2, "text": "เนื้อหานิทานหน้า 2", "emoji": "Emoji จากคีย์เวิร์ดหน้า 2" },
-    { "page": 3, "text": "เนื้อหานิทานหน้า 3", "emoji": "Emoji จากคีย์เวิร์ดหน้า 3" },
-    { "page": 4, "text": "เนื้อหานิทานหน้า 4", "emoji": "Emoji จากคีย์เวิร์ดหน้า 4" }
+    { "page": 1, "text": "เนื้อหาหน้า 1", "emoji": "Emoji หน้า 1" },
+    { "page": 2, "text": "เนื้อหาหน้า 2 ก่อนเลือกทางเลือก", "emoji": "Emoji หน้า 2", "choiceA": "ทางเลือก A...", "choiceB": "ทางเลือก B..." },
+    { "page": 3, "text": "เนื้อหาหน้า 3", "emoji": "Emoji หน้า 3" },
+    { "page": 4, "text": "เนื้อหาหน้า 4 ก่อนเลือกทางเลือก", "emoji": "Emoji หน้า 4", "choiceA": "ทางเลือก A...", "choiceB": "ทางเลือก B..." },
+    { "page": 5, "text": "เนื้อหาหน้า 5", "emoji": "Emoji หน้า 5" },
+    { "page": 6, "text": "เนื้อหาหน้า 6 ก่อนเลือกทางเลือก", "emoji": "Emoji หน้า 6", "choiceA": "ทางเลือก A...", "choiceB": "ทางเลือก B..." },
+    { "page": 7, "text": "เนื้อหาหน้า 7", "emoji": "Emoji หน้า 7" },
+    { "page": 8, "text": "บทสรุปหน้า 8", "emoji": "Emoji หน้า 8" }
   ]
 }`;
 
@@ -1224,7 +1248,7 @@
                 alert("ไม่สามารถสร้างนิทานได้: " + (error.message || "กรุณาตรวจสอบ API Key และการเชื่อมต่อ"));
             } finally {
                 btnGen.disabled = false;
-                btnGen.innerHTML = `✨ เนรมิตนิทานเลย! ✨`;
+                btnGen.innerHTML = `✨ เนรมิตนิทาน 8 หน้าเลย! ✨`;
             }
         }
 
@@ -1239,17 +1263,41 @@
 
             const btnPrev = document.getElementById("btn-prev-story");
             const btnNext = document.getElementById("btn-next-story");
+            const choicesBox = document.getElementById("story-choices-box");
 
             btnPrev.disabled = currentStoryPage === 0;
             btnPrev.style.opacity = currentStoryPage === 0 ? "0.5" : "1";
 
-            if (currentStoryPage === generatedStoryData.pages.length - 1) {
-                btnNext.innerText = selectedStoryLang === 'EN' ? "Finish! 🌟" : "อ่านจบแล้ว! 🌟";
-                btnNext.className = "bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow flex items-center gap-1";
+            // ตรวจสอบว่าเป็นหน้าที่ให้เลือกทางเลือกหรือไม่ (หน้า 2, 4, 6)
+            if (pageData.choiceA && pageData.choiceB) {
+                choicesBox.classList.remove("hidden");
+                document.getElementById("btn-choice-a").innerText = `A) ${pageData.choiceA}`;
+                document.getElementById("btn-choice-b").innerText = `B) ${pageData.choiceB}`;
+                btnNext.classList.add("hidden"); // ซ่อนปุ่มถัดไป ให้เลือกทางเลือกก่อน
             } else {
-                btnNext.innerText = selectedStoryLang === 'EN' ? "Next →" : "ถัดไป →";
-                btnNext.className = "bg-amber-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow flex items-center gap-1";
+                choicesBox.classList.add("hidden");
+                btnNext.classList.remove("hidden");
+
+                if (currentStoryPage === generatedStoryData.pages.length - 1) {
+                    btnNext.innerText = selectedStoryLang === 'EN' ? "Finish! 🌟" : "อ่านจบแล้ว! 🌟";
+                    btnNext.className = "bg-emerald-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs shadow flex items-center gap-1";
+                } else {
+                    btnNext.innerText = selectedStoryLang === 'EN' ? "Next →" : "ถัดไป →";
+                    btnNext.className = "bg-amber-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs shadow flex items-center gap-1";
+                }
             }
+        }
+
+        function makeStoryChoice(choiceOption) {
+            const pageData = generatedStoryData.pages[currentStoryPage];
+            const choiceText = choiceOption === 'A' ? pageData.choiceA : pageData.choiceB;
+
+            // ต่อเติมเนื้อเรื่องสั้นๆ เพื่อเล่าผลลัพธ์ของตัวเลือก
+            pageData.text += `\n\n👉 หนูเลือก: ${choiceText}`;
+            
+            // ไปหน้าถัดไป
+            currentStoryPage++;
+            renderStoryPage();
         }
 
         function nextStoryPage() {
@@ -1288,7 +1336,6 @@
             const savedBadge = document.getElementById("summary-saved-badge");
 
             if (!todayStoryRewardEarned) {
-                // ครั้งแรกของวัน: แจกดาว + EXP
                 totalStars += 1;
                 saveUserStars();
                 addEXPToUser(100);
@@ -1305,14 +1352,13 @@
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
                     const msg = selectedStoryLang === 'EN' ? 
-                        `Great job ${currentUser || ''}! You finished the story and earned 1 star!` :
-                        `เก่งมากเลยครับ ${currentUser || ''} อ่านนิทานจบเล่ม รับไปเลย 1 ดาว และ 100 EXP`;
+                        `Great job ${currentUser || ''}! You finished the interactive story and earned 1 star!` :
+                        `เก่งมากเลยครับ ${currentUser || ''} ผจญภัยอ่านนิทานจบเล่ม รับไปเลย 1 ดาว และ 100 EXP`;
                     const utterance = new SpeechSynthesisUtterance(msg);
                     utterance.lang = selectedStoryLang === 'EN' ? 'en-US' : 'th-TH';
                     window.speechSynthesis.speak(utterance);
                 }
             } else {
-                // อ่านซ้ำในวันเดียวกัน: ไม่แจกดาวเพิ่ม
                 starsEarnedEl.innerText = "🌟 0 ดวง (รับโควต้าวันนี้แล้ว)";
                 starsEarnedEl.className = "text-sm text-slate-500 font-bold";
                 expEarnedEl.innerText = "+0 EXP";
@@ -1322,7 +1368,7 @@
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
                     const msg = selectedStoryLang === 'EN' ? 
-                        `Great job ${currentUser || ''}! You finished another story today!` :
+                        `Great job ${currentUser || ''}! You finished another interactive story today!` :
                         `เก่งมากเลยครับ ${currentUser || ''} อ่านนิทานจบอีกเล่มแล้ว!`;
                     const utterance = new SpeechSynthesisUtterance(msg);
                     utterance.lang = selectedStoryLang === 'EN' ? 'en-US' : 'th-TH';
@@ -1330,8 +1376,8 @@
                 }
             }
 
-            document.getElementById("summary-total-count").innerText = "อ่านนิทานจบเล่ม!";
-            document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} อ่านนิทานเรื่อง "${generatedStoryData.title}" จบแล้ว!`;
+            document.getElementById("summary-total-count").innerText = "อ่านนิทานจบเล่ม (8 หน้า)!";
+            document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} ผจญภัยอ่านนิทานเรื่อง "${generatedStoryData.title}" จบแล้ว!`;
             document.getElementById("completion-modal").classList.remove("hidden");
         }
 
@@ -2566,7 +2612,7 @@
                             <span class="text-3xl bg-white p-2 rounded-xl border border-purple-200">${avatars[n.user] || '👦'}</span>
                             <div class="flex-1">
                                 <div class="flex justify-between items-center mb-0.5">
-                                    <span class="font-extrabold text-sm text-purple-950">${n.user} อ่านนิทาน AI จบเล่ม! 📖</span>
+                                    <span class="font-extrabold text-sm text-purple-950">${n.user} อ่านนิทาน AI จบเล่ม (8 หน้า)! 📖</span>
                                     <span class="text-[10px] font-bold text-purple-700/60">${n.time}</span>
                                 </div>
                                 <p class="text-xs text-purple-900/80 font-medium">
