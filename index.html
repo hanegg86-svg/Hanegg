@@ -247,10 +247,11 @@
                         <input type="text" id="new-quest-title" placeholder="ชื่อภารกิจ (เช่น ช่วยล้างจาน, ทำการบ้านเสร็จ)" class="w-full border border-amber-300 rounded-xl p-2 text-xs focus:outline-none focus:border-amber-500">
                         <div class="flex gap-2">
                             <input type="number" id="new-quest-stars" min="1" placeholder="ดาวรางวัล (เช่น 2)" class="w-1/2 border border-amber-300 rounded-xl p-2 text-xs text-center font-bold focus:outline-none focus:border-amber-500">
-                            <div class="w-1/2 flex items-center gap-2 text-xs font-bold text-slate-700">
-                                <label><input type="checkbox" id="quest-assign-poon" checked> 👦พูน</label>
-                                <label><input type="checkbox" id="quest-assign-ploern" checked> 👧เพลิน</label>
-                            </div>
+                            <select id="new-quest-assignee" class="w-1/2 border border-amber-300 rounded-xl p-2 text-xs font-bold text-amber-900 focus:outline-none">
+                                <option value="BOTH">👦👧 ให้ทั้งสองคน</option>
+                                <option value="POON">👦 น้องพูน</option>
+                                <option value="PLOERN">👧 น้องเพลิน</option>
+                            </select>
                         </div>
                         <button onclick="createNewParentQuest()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-xl text-xs shadow">
                             บันทึกภารกิจ 💾
@@ -439,32 +440,6 @@
             ถัดไป <i data-lucide="chevron-right"></i>
         </button>
     </footer>
-
-    <!-- Modal Assign Quest -->
-    <div id="assign-quest-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white w-full max-w-xs rounded-3xl p-5 shadow-2xl relative border-4 border-amber-300">
-            <h3 class="text-base font-extrabold text-amber-900 mb-2 text-center">🎯 มอบหมายภารกิจ</h3>
-            <p id="assign-quest-title" class="text-xs font-bold text-amber-800 text-center mb-4 bg-amber-50 p-2.5 rounded-xl border border-amber-200"></p>
-            
-            <input type="hidden" id="assign-quest-id">
-            
-            <div class="space-y-2 mb-5">
-                <label class="flex items-center gap-2 p-2.5 bg-amber-50 rounded-xl border border-amber-200 cursor-pointer text-xs font-bold text-slate-700 hover:bg-amber-100 transition">
-                    <input type="checkbox" id="reassign-poon" class="w-4 h-4 text-amber-600 rounded">
-                    👦 น้องพูน
-                </label>
-                <label class="flex items-center gap-2 p-2.5 bg-amber-50 rounded-xl border border-amber-200 cursor-pointer text-xs font-bold text-slate-700 hover:bg-amber-100 transition">
-                    <input type="checkbox" id="reassign-ploern" class="w-4 h-4 text-amber-600 rounded">
-                    👧 น้องเพลิน
-                </label>
-            </div>
-
-            <div class="flex gap-2">
-                <button onclick="closeAssignModal()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs">ยกเลิก</button>
-                <button onclick="saveQuestAssignment()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-xs shadow">บันทึก 💾</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Modal Rewards -->
     <div id="quest-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -879,6 +854,18 @@
                 if (char === ' ') return '<span class="letter-space"></span>';
                 return `<span class="blank-box"></span>`;
             }).join('');
+        }
+
+        function sanitizeQuestsList(quests) {
+            if (!Array.isArray(quests)) return [];
+            return quests.map((q, idx) => {
+                return {
+                    id: q.id ? String(q.id) : (Date.now() + idx).toString(),
+                    title: q.title || "ภารกิจพิเศษ",
+                    stars: q.stars || 1,
+                    assignees: Array.isArray(q.assignees) ? q.assignees : ["พูน", "เพลิน"]
+                };
+            });
         }
 
         function initData() {
@@ -1518,7 +1505,7 @@
                 rewardsList = localRewards ? JSON.parse(localRewards) : [...defaultRewards];
 
                 const localQuests = localStorage.getItem("kids_parent_quests");
-                parentQuestsList = localQuests ? JSON.parse(localQuests) : [...defaultParentQuests];
+                parentQuestsList = sanitizeQuestsList(localQuests ? JSON.parse(localQuests) : [...defaultParentQuests]);
 
                 filterVocabForUser();
                 updateCard();
@@ -1603,9 +1590,9 @@
                         parsedQuests = Array.isArray(data) ? data : Object.values(data);
                     }
                     if (parsedQuests.length > 0) {
-                        parentQuestsList = parsedQuests;
+                        parentQuestsList = sanitizeQuestsList(parsedQuests);
                     } else {
-                        parentQuestsList = [...defaultParentQuests];
+                        parentQuestsList = sanitizeQuestsList([...defaultParentQuests]);
                         set(dbRefParentQuests, parentQuestsList);
                     }
                     renderParentQuestsList();
@@ -1619,7 +1606,7 @@
                             notificationsList.push({ id: key, ...data[key] });
                         });
                         notificationsList.sort((a, b) => b.timestamp - a.timestamp);
-                        cleanOldNotifications(); // Auto-clean 2 days old items
+                        cleanOldNotifications();
                         document.getElementById("notify-badge").classList.remove("hidden");
                         document.getElementById("notify-dot").classList.remove("hidden");
                     }
@@ -1684,17 +1671,16 @@
         function createNewParentQuest() {
             const title = document.getElementById("new-quest-title").value.trim();
             const stars = parseInt(document.getElementById("new-quest-stars").value, 10);
-            const assignPoon = document.getElementById("quest-assign-poon").checked;
-            const assignPloern = document.getElementById("quest-assign-ploern").checked;
+            const assigneeVal = document.getElementById("new-quest-assignee").value;
 
             if (!title || isNaN(stars) || stars <= 0) {
                 alert("กรุณากรอกชื่อภารกิจและจำนวนดาวให้ถูกต้องครับ");
                 return;
             }
 
-            const assignees = [];
-            if (assignPoon) assignees.push("พูน");
-            if (assignPloern) assignees.push("เพลิน");
+            let assignees = ["พูน", "เพลิน"];
+            if (assigneeVal === "POON") assignees = ["พูน"];
+            else if (assigneeVal === "PLOERN") assignees = ["เพลิน"];
 
             const newQuest = {
                 id: Date.now().toString(),
@@ -1713,53 +1699,34 @@
 
         function deleteParentQuest(id) {
             if (confirm("คุณต้องการลบภารกิจนี้ใช่หรือไม่?")) {
-                parentQuestsList = parentQuestsList.filter(q => q.id !== id);
+                parentQuestsList = parentQuestsList.filter(q => String(q.id) !== String(id));
                 saveParentQuestsToStorage();
             }
         }
 
-        function openAssignModal(questId) {
-            const quest = parentQuestsList.find(q => q.id === questId);
+        // --- ฟังก์ชั่นอัปเดตผู้รับภารกิจโดยตรงจาก Dropdown ---
+        function updateQuestAssigneeFromDropdown(questId, selectedMode) {
+            const quest = parentQuestsList.find(q => String(q.id) === String(questId));
             if (!quest) return;
 
-            document.getElementById("assign-quest-id").value = quest.id;
-            document.getElementById("assign-quest-title").innerText = quest.title;
+            if (selectedMode === "BOTH") {
+                quest.assignees = ["พูน", "เพลิน"];
+            } else if (selectedMode === "POON") {
+                quest.assignees = ["พูน"];
+            } else if (selectedMode === "PLOERN") {
+                quest.assignees = ["เพลิน"];
+            } else if (selectedMode === "NONE") {
+                quest.assignees = [];
+            }
 
-            const assignees = quest.assignees || ["พูน", "เพลิน"];
-            document.getElementById("reassign-poon").checked = assignees.includes("พูน");
-            document.getElementById("reassign-ploern").checked = assignees.includes("เพลิน");
-
-            document.getElementById("assign-quest-modal").classList.remove("hidden");
-        }
-
-        function closeAssignModal() {
-            document.getElementById("assign-quest-modal").classList.add("hidden");
-        }
-
-        function saveQuestAssignment() {
-            const id = document.getElementById("assign-quest-id").value;
-            const quest = parentQuestsList.find(q => q.id === id);
-            if (!quest) return;
-
-            const assignPoon = document.getElementById("reassign-poon").checked;
-            const assignPloern = document.getElementById("reassign-ploern").checked;
-
-            const newAssignees = [];
-            if (assignPoon) newAssignees.push("พูน");
-            if (assignPloern) newAssignees.push("เพลิน");
-
-            quest.assignees = newAssignees;
-            
-            // Fixed Assign Bug: Sync to storage
             saveParentQuestsToStorage();
-            
-            closeAssignModal();
-            alert(`อัปเดตผู้รับภารกิจ "${quest.title}" เรียบร้อยแล้ว!`);
         }
 
         function renderParentQuestsList() {
             const container = document.getElementById("parent-quests-list");
             if (!container) return;
+
+            parentQuestsList = sanitizeQuestsList(parentQuestsList);
 
             let filteredQuests = parentQuestsList;
             
@@ -1769,16 +1736,14 @@
                     const isForUser = assignees.includes(currentUser);
                     if (!isForUser) return false;
 
-                    const existingNotify = notificationsList.find(n => 
+                    const isApproved = notificationsList.some(n => 
                         n.type === 'SUBMIT_QUEST' && 
                         n.user === currentUser && 
-                        n.details && n.details.questTitle === q.title
+                        n.details && n.details.questTitle === q.title &&
+                        n.status === 'approved'
                     );
 
-                    if (existingNotify && existingNotify.status === 'approved') {
-                        return false;
-                    }
-                    return true;
+                    return !isApproved;
                 });
             }
 
@@ -1788,15 +1753,28 @@
             }
 
             container.innerHTML = filteredQuests.map(q => {
-                let actionButtonHtml = '';
+                let actionAreaHtml = '';
+                
                 if (isParentUser) {
-                    actionButtonHtml = `
-                        <button onclick="openAssignModal('${q.id}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 p-2 rounded-xl text-xs font-bold border border-amber-300 flex items-center gap-1">
-                            🎯 Assign
-                        </button>
-                        <button onclick="deleteParentQuest('${q.id}')" class="bg-red-100 text-red-700 hover:bg-red-200 p-2 rounded-xl text-xs font-bold border border-red-300">
-                            🗑️ ลบ
-                        </button>
+                    const assignees = q.assignees || ["พูน", "เพลิน"];
+                    let currentVal = "BOTH";
+                    if (assignees.includes("พูน") && assignees.includes("เพลิน")) currentVal = "BOTH";
+                    else if (assignees.includes("พูน")) currentVal = "POON";
+                    else if (assignees.includes("เพลิน")) currentVal = "PLOERN";
+                    else currentVal = "NONE";
+
+                    actionAreaHtml = `
+                        <div class="flex items-center gap-1.5">
+                            <select onchange="updateQuestAssigneeFromDropdown('${q.id}', this.value)" class="border-2 border-amber-300 rounded-xl p-1 text-xs font-bold text-amber-900 bg-amber-100 focus:outline-none shadow-sm">
+                                <option value="BOTH" ${currentVal === 'BOTH' ? 'selected' : ''}>👦👧 ทั้งคู่</option>
+                                <option value="POON" ${currentVal === 'POON' ? 'selected' : ''}>👦 น้องพูน</option>
+                                <option value="PLOERN" ${currentVal === 'PLOERN' ? 'selected' : ''}>👧 น้องเพลิน</option>
+                                <option value="NONE" ${currentVal === 'NONE' ? 'selected' : ''}>🚫 ไม่ระบุ</option>
+                            </select>
+                            <button onclick="deleteParentQuest('${q.id}')" class="bg-red-100 text-red-700 hover:bg-red-200 p-1.5 rounded-xl text-xs font-bold border border-red-300">
+                                🗑️
+                            </button>
+                        </div>
                     `;
                 } else {
                     const existingNotify = notificationsList.find(n => 
@@ -1807,32 +1785,27 @@
                     );
 
                     if (existingNotify) {
-                        actionButtonHtml = `
-                            <span class="bg-amber-200/80 text-amber-900 font-bold py-2 px-3 rounded-xl text-xs border border-amber-300">
-                                ⏳ รอพ่อนะ/แม่พัด ตรวจ
+                        actionAreaHtml = `
+                            <span class="bg-amber-200/80 text-amber-900 font-bold py-1.5 px-3 rounded-xl text-xs border border-amber-300">
+                                ⏳ รอตรวจ
                             </span>
                         `;
                     } else {
-                        actionButtonHtml = `
-                            <button onclick="submitParentQuestForCheck('${q.title}', ${q.stars})" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-2 px-3 rounded-xl text-xs shadow">
-                                กดส่งภารกิจ ✨
+                        actionAreaHtml = `
+                            <button onclick="submitParentQuestForCheck('${q.title}', ${q.stars})" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1.5 px-3 rounded-xl text-xs shadow">
+                                ส่งภารกิจ ✨
                             </button>
                         `;
                     }
                 }
 
                 return `
-                    <div class="bg-amber-50 p-3.5 rounded-2xl border-2 border-amber-200 flex justify-between items-center shadow-sm">
-                        <div>
-                            <div class="font-extrabold text-amber-900 text-sm mb-1">${q.title}</div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">รางวัล 🌟 ${q.stars} ดวง</span>
-                                <span class="text-[10px] text-slate-500 font-bold">🎯 ${q.assignees && q.assignees.length > 0 ? q.assignees.join(', ') : 'ทุกคน'}</span>
-                            </div>
+                    <div class="bg-amber-50 p-3 rounded-2xl border-2 border-amber-200 flex justify-between items-center shadow-sm gap-2">
+                        <div class="flex-1">
+                            <div class="font-extrabold text-amber-900 text-sm mb-0.5">${q.title}</div>
+                            <div class="text-xs text-amber-700 font-bold">รางวัล 🌟 ${q.stars} ดวง</div>
                         </div>
-                        <div class="flex items-center gap-1.5">
-                            ${actionButtonHtml}
-                        </div>
+                        ${actionAreaHtml}
                     </div>
                 `;
             }).join('');
@@ -1884,7 +1857,7 @@
 
         function deleteRewardItem(id) {
             if (confirm("คุณต้องการลบของรางวัลนี้ใช่หรือไม่?")) {
-                rewardsList = rewardsList.filter(r => r.id !== id);
+                rewardsList = rewardsList.filter(r => String(r.id) !== String(id));
                 saveRewardsToStorage();
             }
         }
@@ -1970,7 +1943,7 @@
                     const db = window.firebaseModules.getDatabase();
                     set(ref(db, `user_inventory/${currentUser}/${invId}`), null);
                 } else {
-                    userInventoryList = userInventoryList.filter(x => x.invId !== invId);
+                    userInventoryList = userInventoryList.filter(x => String(x.invId) !== String(invId));
                     localStorage.setItem(`user_inventory_${currentUser}`, JSON.stringify(userInventoryList));
                     renderUserInventory();
                 }
@@ -2051,7 +2024,7 @@
                     const db = window.firebaseModules.getDatabase();
                     set(ref(db, `kids_notifications/${notifyId}`), null);
                 } else {
-                    notificationsList = notificationsList.filter(n => (n.id || n.timestamp.toString()) !== notifyId.toString());
+                    notificationsList = notificationsList.filter(n => String(n.id || n.timestamp) !== String(notifyId));
                     renderNotifications();
                 }
             }
@@ -2243,7 +2216,7 @@
                 const db = window.firebaseModules.getDatabase();
                 update(ref(db, `kids_notifications/${notifyId}`), { status: isApproved ? 'approved' : 'rejected' });
             } else {
-                const item = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
+                const item = notificationsList.find(x => String(x.id || x.timestamp) === String(notifyId));
                 if (item) item.status = isApproved ? 'approved' : 'rejected';
                 renderNotifications();
                 renderParentQuestsList();
@@ -2263,7 +2236,7 @@
                 const db = window.firebaseModules.getDatabase();
                 update(ref(db, `kids_notifications/${notifyId}`), { status: isApproved ? 'approved' : 'rejected' });
             } else {
-                const item = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
+                const item = notificationsList.find(x => String(x.id || x.timestamp) === String(notifyId));
                 if (item) item.status = isApproved ? 'approved' : 'rejected';
                 renderNotifications();
             }
