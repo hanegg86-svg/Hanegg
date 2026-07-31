@@ -166,7 +166,7 @@
         </div>
     </div>
 
-    <!-- Navigation Tabs (เพิ่ม Tab นิทาน AI) -->
+    <!-- Navigation Tabs -->
     <div class="flex justify-center gap-1 mt-3 px-2">
         <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-0.5 transition whitespace-nowrap">
             📋 ภารกิจ
@@ -416,16 +416,25 @@
             </div>
         </div>
 
-        <!-- SECTION 4: AI STORYTELLER TAB (เพิ่มใหม่) -->
+        <!-- SECTION 4: AI STORYTELLER TAB -->
         <div id="main-story-tab" class="w-full max-w-sm hidden flex-col items-center">
             
             <!-- Story Creator Form -->
             <div id="story-creator-box" class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full">
-                <div class="text-center mb-4">
+                <div class="text-center mb-3">
                     <h3 class="text-xl font-black text-amber-900 flex items-center justify-center gap-2">
                         📖 สร้างนิทานของหนูเอง!
                     </h3>
-                    <p class="text-xs text-amber-700 font-bold mt-1">เลือกตัวละครและธีม แล้วให้ AI แต่งนิทานให้ฟังนะ</p>
+                    <p class="text-xs text-amber-700 font-bold mt-1">เลือกตัวละคร ภาษา และธีม แล้วให้ AI แต่งนิทานให้ฟังนะ</p>
+                </div>
+
+                <!-- 0. เลือกภาษา (เพิ่มฟังก์ชั่นสลับภาษา TH / EN) -->
+                <div class="mb-3 bg-amber-50 p-2.5 rounded-2xl border border-amber-200">
+                    <label class="block text-xs font-black text-amber-900 mb-1.5">🌐 ภาษาของนิทาน (Language)</label>
+                    <div class="flex bg-amber-200/60 p-1 rounded-xl gap-1">
+                        <button onclick="selectStoryLang('TH')" id="story-lang-th" class="flex-1 py-1.5 rounded-lg text-xs font-black bg-amber-500 text-white shadow transition">🇹🇭 ภาษาไทย</button>
+                        <button onclick="selectStoryLang('EN')" id="story-lang-en" class="flex-1 py-1.5 rounded-lg text-xs font-black text-amber-900 transition">🇬🇧 English</button>
+                    </div>
                 </div>
 
                 <!-- 1. เลือกตัวเอก -->
@@ -487,7 +496,7 @@
                 </button>
             </div>
 
-            <!-- Story Display Reader (แสดงผลเมื่อเจนเสร็จ) -->
+            <!-- Story Display Reader -->
             <div id="story-reader-box" class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full hidden flex-col items-center">
                 <div class="w-full flex justify-between items-center mb-3 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-200">
                     <span id="story-title-display" class="text-xs font-black text-amber-950 truncate max-w-[200px]">ชื่อเรื่องนิทาน</span>
@@ -952,6 +961,7 @@
         let selectedStoryHero = 'พูนและเพลิน';
         let selectedStoryTheme = 'อวกาศ';
         let selectedStoryPet = 'หุ่นยนต์จิ๋ว';
+        let selectedStoryLang = 'TH'; // ภาษาของนิทาน (TH / EN)
         let generatedStoryData = null;
         let currentStoryPage = 0;
 
@@ -1075,6 +1085,7 @@
 
         // --- AI STORYTELLER MODULE ---
         function initStoryTabState() {
+            selectStoryLang('TH');
             selectStoryHero(currentUser === 'เพลิน' ? 'เพลิน' : 'พูน');
             selectStoryTheme('อวกาศ');
             selectStoryPet('หุ่นยนต์จิ๋ว');
@@ -1085,6 +1096,20 @@
             document.getElementById("story-creator-box").classList.remove("hidden");
             document.getElementById("story-reader-box").classList.add("hidden");
             document.getElementById("story-reader-box").classList.remove("flex");
+        }
+
+        function selectStoryLang(lang) {
+            selectedStoryLang = lang;
+            const btnTH = document.getElementById("story-lang-th");
+            const btnEN = document.getElementById("story-lang-en");
+
+            if (lang === 'TH') {
+                btnTH.className = "flex-1 py-1.5 rounded-lg text-xs font-black bg-amber-500 text-white shadow transition";
+                btnEN.className = "flex-1 py-1.5 rounded-lg text-xs font-black text-amber-900 transition";
+            } else {
+                btnEN.className = "flex-1 py-1.5 rounded-lg text-xs font-black bg-amber-500 text-white shadow transition";
+                btnTH.className = "flex-1 py-1.5 rounded-lg text-xs font-black text-amber-900 transition";
+            }
         }
 
         function selectStoryHero(hero) {
@@ -1142,21 +1167,26 @@
 
             const btnGen = document.getElementById("btn-generate-story");
             btnGen.disabled = true;
-            btnGen.innerHTML = `<span class="spinner"></span> AI กำลังเนรมิตนิทานสนุกๆ...`;
+            btnGen.innerHTML = `<span class="spinner"></span> AI กำลังเนรมิตนิทาน...`;
 
-            const prompt = `แต่งนิทานสั้นๆ สำหรับเด็ก มีทั้งหมด 4 หน้า สั้นกระชับ สนุกสนาน และให้ข้อคิด
+            let langInstruction = selectedStoryLang === 'EN' ? 
+                "Write the story in SIMPLE EASY ENGLISH for kids." : 
+                "แต่งนิทานเป็นภาษาไทยที่อ่านง่าย สนุกสนานสำหรับเด็ก";
+
+            const prompt = `แต่งนิทานสั้นๆ 4 หน้า สั้นกระชับ สนุกสนาน
 ตัวละครหลัก: ${selectedStoryHero}
 สถานที่ผจญภัย: ${selectedStoryTheme}
 เพื่อนร่วมทาง: ${selectedStoryPet}
+คำสั่งภาษา: ${langInstruction}
 
 ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น ห้ามมี markdown หรือคำอธิบายเพิ่มเติม:
 {
-  "title": "ชื่อเรื่องนิทานน่ารักๆ",
+  "title": "ชื่อเรื่องนิทาน",
   "pages": [
-    { "page": 1, "text": "เนื้อหานิทานหน้า 1 ภาษาไทยสั้นๆ 2-3 ประโยค", "emoji": "🚀" },
-    { "page": 2, "text": "เนื้อหานิทานหน้า 2 ภาษาไทยสั้นๆ 2-3 ประโยค", "emoji": "✨" },
-    { "page": 3, "text": "เนื้อหานิทานหน้า 3 ภาษาไทยสั้นๆ 2-3 ประโยค", "emoji": "🌟" },
-    { "page": 4, "text": "เนื้อหานิทานหน้า 4 สรุปและให้ข้อคิดสั้นๆ", "emoji": "🎉" }
+    { "page": 1, "text": "เนื้อหานิทานหน้า 1 (2-3 ประโยค)", "emoji": "🚀" },
+    { "page": 2, "text": "เนื้อหานิทานหน้า 2 (2-3 ประโยค)", "emoji": "✨" },
+    { "page": 3, "text": "เนื้อหานิทานหน้า 3 (2-3 ประโยค)", "emoji": "🌟" },
+    { "page": 4, "text": "เนื้อหานิทานหน้า 4 สรุปข้อคิดสั้นๆ", "emoji": "🎉" }
   ]
 }`;
 
@@ -1208,10 +1238,10 @@
             btnPrev.style.opacity = currentStoryPage === 0 ? "0.5" : "1";
 
             if (currentStoryPage === generatedStoryData.pages.length - 1) {
-                btnNext.innerText = "อ่านจบแล้ว! 🌟";
+                btnNext.innerText = selectedStoryLang === 'EN' ? "Finish! 🌟" : "อ่านจบแล้ว! 🌟";
                 btnNext.className = "bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow flex items-center gap-1";
             } else {
-                btnNext.innerText = "ถัดไป →";
+                btnNext.innerText = selectedStoryLang === 'EN' ? "Next →" : "ถัดไป →";
                 btnNext.className = "bg-amber-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow flex items-center gap-1";
             }
         }
@@ -1240,7 +1270,7 @@
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'th-TH';
+                utterance.lang = selectedStoryLang === 'EN' ? 'en-US' : 'th-TH';
                 utterance.rate = 0.85;
                 window.speechSynthesis.speak(utterance);
             }
@@ -1257,12 +1287,15 @@
 
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(`เก่งมากเลยครับ ${currentUser || ''} อ่านนิทานจบเล่ม รับไปเลย 1 ดาว และ 100 EXP`);
-                utterance.lang = 'th-TH';
+                const msg = selectedStoryLang === 'EN' ? 
+                    `Great job ${currentUser || ''}! You finished the story and earned 1 star!` :
+                    `เก่งมากเลยครับ ${currentUser || ''} อ่านนิทานจบเล่ม รับไปเลย 1 ดาว และ 100 EXP`;
+                const utterance = new SpeechSynthesisUtterance(msg);
+                utterance.lang = selectedStoryLang === 'EN' ? 'en-US' : 'th-TH';
                 window.speechSynthesis.speak(utterance);
             }
 
-            sendInAppNotification('COMPLETED_STORY', { title: generatedStoryData.title });
+            sendInAppNotification('COMPLETED_STORY', { title: generatedStoryData.title, lang: selectedStoryLang });
         }
 
         // --- MATH COMBINATION GAME ENGINE ---
@@ -2475,7 +2508,7 @@
                                     <span class="text-[10px] font-bold text-purple-700/60">${n.time}</span>
                                 </div>
                                 <p class="text-xs text-purple-900/80 font-medium">
-                                    เรื่อง: <span class="font-bold text-purple-800">"${n.details.title}"</span> | ได้รับ <span class="font-bold text-amber-600">🌟 1 ดวง</span>
+                                    เรื่อง: <span class="font-bold text-purple-800">"${n.details.title}"</span> (${n.details.lang === 'EN' ? '🇬🇧 English' : '🇹🇭 ภาษาไทย'}) | ได้รับ <span class="font-bold text-amber-600">🌟 1 ดวง</span>
                                 </p>
                             </div>
                             ${deleteBtnHtml}
