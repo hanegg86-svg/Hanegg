@@ -139,10 +139,6 @@
         </div>
 
         <div class="flex items-center gap-1.5">
-            <button onclick="openQuestModal()" title="ร้านค้าแลกรางวัล" class="bg-amber-100 p-2 rounded-full shadow border border-amber-300 text-amber-900 min-w-[40px] min-h-[40px] flex items-center justify-center">
-                <span class="text-base">🎁</span>
-            </button>
-
             <button onclick="openNotifyModal()" class="bg-amber-100 text-amber-900 p-2 rounded-full shadow border border-amber-300 min-w-[40px] min-h-[40px] flex items-center justify-center relative">
                 <i data-lucide="bell" class="w-4 h-4"></i>
                 <span id="notify-badge" class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-ping"></span>
@@ -166,16 +162,19 @@
         </div>
     </div>
 
-    <!-- Navigation Tabs -->
+    <!-- Navigation Tabs (ย้ายปุ่มร้านค้ากลับลงมาแล้วครับ) -->
     <div class="flex justify-center gap-1.5 mt-3 px-3">
-        <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition">
+        <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition">
             📋 ภารกิจ
         </button>
-        <button id="tab-vocab-btn" onclick="switchMainTab('vocab')" class="flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
+        <button id="tab-vocab-btn" onclick="switchMainTab('vocab')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
             🎴 ท่องศัพท์
         </button>
-        <button id="tab-math-btn" onclick="switchMainTab('math')" class="flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
+        <button id="tab-math-btn" onclick="switchMainTab('math')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
             🔢 คิดเลขไว
+        </button>
+        <button onclick="openQuestModal()" title="ร้านค้าแลกรางวัล" class="py-2 px-2.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-amber-100 text-amber-900 flex items-center justify-center gap-1 transition">
+            🎁 ร้านค้า
         </button>
     </div>
 
@@ -931,8 +930,8 @@
             const footerNav = document.getElementById("footer-nav");
             const langSwitchBox = document.getElementById("lang-switch-box");
 
-            const activeBtnClass = "flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition";
-            const inactiveBtnClass = "flex-1 py-2 px-1.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition";
+            const activeBtnClass = "flex-1 py-2 px-1 rounded-2xl font-black text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition";
+            const inactiveBtnClass = "flex-1 py-2 px-1 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition";
 
             questBtn.className = inactiveBtnClass;
             vocabBtn.className = inactiveBtnClass;
@@ -1725,7 +1724,6 @@
             }
         }
 
-        // 🔧 FIX 1: ฟังก์ชันเปิด Modal และดึงรายชื่อเด็กมาติ๊กถูก
         function openAssignModal(questId) {
             const quest = parentQuestsList.find(q => String(q.id) === String(questId));
             if (!quest) {
@@ -1736,7 +1734,6 @@
             document.getElementById("assign-quest-id").value = quest.id;
             document.getElementById("assign-quest-title").innerText = quest.title;
 
-            // แปลงข้อมูล Object จาก Firebase ให้กลับมาเป็น Array ป้องกันการติ๊กเพี้ยน
             let assignees = quest.assignees || ["พูน", "เพลิน"];
             if (!Array.isArray(assignees)) assignees = Object.values(assignees);
 
@@ -1750,7 +1747,6 @@
             document.getElementById("assign-quest-modal").classList.add("hidden");
         }
 
-        // 🔧 FIX 2: ฟังก์ชันบันทึกค่าที่ติ๊กกลับลงฐานข้อมูลทันที
         function saveQuestAssignment() {
             const id = document.getElementById("assign-quest-id").value;
             const quest = parentQuestsList.find(q => String(q.id) === String(id));
@@ -1769,19 +1765,16 @@
 
             quest.assignees = newAssignees;
 
-            // บันทึกลงฐานข้อมูล/Firebase ทันที และวาดหน้าจอใหม่
             saveParentQuestsToStorage();
 
             closeAssignModal();
             alert(`อัปเดตผู้รับภารกิจ "${quest.title}" เรียบร้อยแล้ว!`);
         }
 
-        // 🔧 FIX 3: ฟังก์ชันตรวจเช็กสิทธิ์และซ่อมแซมข้อมูลเก่าอัตโนมัติ (Auto-Repair)
         function renderParentQuestsList() {
             const container = document.getElementById("parent-quests-list");
             if (!container) return;
 
-            // 🛠️ ระบบซ่อมแซมข้อมูลเก่าอัตโนมัติ (Auto-Repair Legacy Data)
             parentQuestsList.forEach((q, idx) => {
                 if (!q.id) q.id = "quest_legacy_" + idx + "_" + Date.now();
                 if (q.assignees && !Array.isArray(q.assignees)) {
