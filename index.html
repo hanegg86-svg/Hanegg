@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kids Vocab & Math AI</title>
+    <title>Kids Vocab, Math & Story AI</title>
 
     <!-- PWA Settings & Web App Configuration -->
     <link rel="manifest" href="manifest.json">
@@ -109,7 +109,7 @@
             <img src="Icon.png" alt="App Cover" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('splash-fallback-icon').classList.remove('hidden');">
             <span id="splash-fallback-icon" class="text-7xl hidden">🎴</span>
         </div>
-        <div class="text-white font-bold text-lg tracking-wider">Kids Vocab & Math AI</div>
+        <div class="text-white font-bold text-lg tracking-wider">Kids Vocab, Math & Story AI</div>
         <div class="text-amber-200 text-xs mt-1">กำลังโหลด...</div>
     </div>
 
@@ -139,6 +139,10 @@
         </div>
 
         <div class="flex items-center gap-1.5">
+            <button onclick="openQuestModal()" title="ร้านค้าแลกรางวัล" class="bg-amber-100 p-2 rounded-full shadow border border-amber-300 text-amber-900 min-w-[40px] min-h-[40px] flex items-center justify-center">
+                <span class="text-base">🎁</span>
+            </button>
+
             <button onclick="openNotifyModal()" class="bg-amber-100 text-amber-900 p-2 rounded-full shadow border border-amber-300 min-w-[40px] min-h-[40px] flex items-center justify-center relative">
                 <i data-lucide="bell" class="w-4 h-4"></i>
                 <span id="notify-badge" class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white hidden animate-ping"></span>
@@ -162,19 +166,19 @@
         </div>
     </div>
 
-    <!-- Navigation Tabs (ย้ายปุ่มร้านค้ากลับลงมาแล้วครับ) -->
-    <div class="flex justify-center gap-1.5 mt-3 px-3">
-        <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition">
+    <!-- Navigation Tabs (เพิ่ม Tab นิทาน AI) -->
+    <div class="flex justify-center gap-1 mt-3 px-2">
+        <button id="tab-quest-btn" onclick="switchMainTab('quest')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-0.5 transition whitespace-nowrap">
             📋 ภารกิจ
         </button>
-        <button id="tab-vocab-btn" onclick="switchMainTab('vocab')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
+        <button id="tab-vocab-btn" onclick="switchMainTab('vocab')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-0.5 transition whitespace-nowrap">
             🎴 ท่องศัพท์
         </button>
-        <button id="tab-math-btn" onclick="switchMainTab('math')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition">
-            🔢 คิดเลขไว
+        <button id="tab-math-btn" onclick="switchMainTab('math')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-0.5 transition whitespace-nowrap">
+            🔢 คิดเลข
         </button>
-        <button onclick="openQuestModal()" title="ร้านค้าแลกรางวัล" class="py-2 px-2.5 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-amber-100 text-amber-900 flex items-center justify-center gap-1 transition">
-            🎁 ร้านค้า
+        <button id="tab-story-btn" onclick="switchMainTab('story')" class="flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-0.5 transition whitespace-nowrap">
+            📖 นิทาน AI
         </button>
     </div>
 
@@ -353,8 +357,6 @@
 
         <!-- SECTION 3: MATH MINIGAME TAB -->
         <div id="main-math-tab" class="w-full max-w-sm hidden flex-col items-center">
-            
-            <!-- Controls & Levels -->
             <div class="w-full flex justify-between items-center mb-3">
                 <div class="flex bg-amber-100 p-1 rounded-2xl border border-amber-300 gap-1 flex-1 mr-2">
                     <button id="math-diff-easy" onclick="setMathDifficulty('easy')" class="flex-1 py-1 rounded-xl text-[11px] font-black bg-emerald-500 text-white shadow transition">🟢 ง่าย</button>
@@ -366,15 +368,12 @@
                 </button>
             </div>
 
-            <!-- Card Board -->
             <div class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full text-center flex flex-col items-center">
-                
                 <div class="w-full flex justify-between items-center mb-3 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-200">
                     <span id="math-progress-text" class="text-xs font-bold text-amber-900">ข้อที่ 1 / 5</span>
                     <span id="math-diff-tag" class="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">บวกลบ (4 ตัว)</span>
                 </div>
 
-                <!-- Target Circle -->
                 <div class="text-center mb-3">
                     <p class="text-[11px] font-extrabold text-amber-800 mb-1">เป้าหมายที่ต้องผสมให้ได้</p>
                     <div class="w-24 h-24 bg-gradient-to-tr from-amber-400 to-yellow-300 rounded-full shadow-lg flex items-center justify-center border-4 border-white mx-auto">
@@ -382,12 +381,10 @@
                     </div>
                 </div>
 
-                <!-- Formula Text Display -->
                 <div class="w-full bg-amber-50 border-2 border-dashed border-amber-200 rounded-2xl p-2.5 min-h-[48px] flex items-center justify-center text-center mb-3 shadow-inner">
                     <span id="math-formula-text" class="text-amber-800/60 font-bold text-xs">แตะตัวเลขและเครื่องหมายเพื่อผสม</span>
                 </div>
 
-                <!-- Number Bubbles Container -->
                 <div class="w-full mb-3">
                     <div class="flex justify-between items-center mb-1.5 px-1">
                         <span class="text-xs font-extrabold text-amber-900">ตัวเลขของคุณ:</span>
@@ -397,7 +394,6 @@
                     </div>
                 </div>
 
-                <!-- Operators Container -->
                 <div class="w-full mb-4">
                     <p class="text-[11px] font-extrabold text-amber-900 text-center mb-1.5">เครื่องหมาย:</p>
                     <div class="flex justify-center gap-2">
@@ -408,7 +404,6 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="w-full flex gap-2">
                     <button onclick="resetCurrentMathQuestion()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold py-3 rounded-2xl text-xs bubble-btn">
                         ล้างใหม่ 🔄
@@ -419,6 +414,118 @@
                 </div>
 
             </div>
+        </div>
+
+        <!-- SECTION 4: AI STORYTELLER TAB (เพิ่มใหม่) -->
+        <div id="main-story-tab" class="w-full max-w-sm hidden flex-col items-center">
+            
+            <!-- Story Creator Form -->
+            <div id="story-creator-box" class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full">
+                <div class="text-center mb-4">
+                    <h3 class="text-xl font-black text-amber-900 flex items-center justify-center gap-2">
+                        📖 สร้างนิทานของหนูเอง!
+                    </h3>
+                    <p class="text-xs text-amber-700 font-bold mt-1">เลือกตัวละครและธีม แล้วให้ AI แต่งนิทานให้ฟังนะ</p>
+                </div>
+
+                <!-- 1. เลือกตัวเอก -->
+                <div class="mb-3">
+                    <label class="block text-xs font-black text-amber-900 mb-1.5">1. ใครเป็นพระเอก/นางเอก?</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="selectStoryHero('พูน')" id="story-hero-poon" class="p-2.5 rounded-2xl border-2 border-amber-300 bg-amber-50 hover:bg-amber-100 flex flex-col items-center transition shadow-sm">
+                            <span class="text-2xl">👦🏻</span>
+                            <span class="text-xs font-bold text-amber-900 mt-1">พี่พูน</span>
+                        </button>
+                        <button onclick="selectStoryHero('เพลิน')" id="story-hero-ploern" class="p-2.5 rounded-2xl border-2 border-amber-200 bg-amber-50 hover:bg-amber-100 flex flex-col items-center transition shadow-sm">
+                            <span class="text-2xl">👧🏻</span>
+                            <span class="text-xs font-bold text-amber-900 mt-1">น้องเพลิน</span>
+                        </button>
+                        <button onclick="selectStoryHero('พูนและเพลิน')" id="story-hero-both" class="p-2.5 rounded-2xl border-2 border-amber-200 bg-amber-50 hover:bg-amber-100 flex flex-col items-center transition shadow-sm">
+                            <span class="text-2xl">👫</span>
+                            <span class="text-xs font-bold text-amber-900 mt-1">ทั้งคู่</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. เลือกธีม -->
+                <div class="mb-3">
+                    <label class="block text-xs font-black text-amber-900 mb-1.5">2. เลือกสถานที่ผจญภัย</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="selectStoryTheme('อวกาศ')" id="story-theme-space" class="p-2 rounded-xl border-2 border-amber-300 bg-amber-50 flex items-center gap-2 text-xs font-bold text-amber-900 shadow-sm">
+                            <span class="text-xl">🚀</span> ท่องอวกาศ
+                        </button>
+                        <button onclick="selectStoryTheme('เมืองเวทมนตร์')" id="story-theme-magic" class="p-2 rounded-xl border-2 border-amber-200 bg-amber-50 flex items-center gap-2 text-xs font-bold text-amber-900 shadow-sm">
+                            <span class="text-xl">🏰</span> เมืองเวทมนตร์
+                        </button>
+                        <button onclick="selectStoryTheme('ดินแดนไดโนเสาร์')" id="story-theme-dino" class="p-2 rounded-xl border-2 border-amber-200 bg-amber-50 flex items-center gap-2 text-xs font-bold text-amber-900 shadow-sm">
+                            <span class="text-xl">🦖</span> ดินแดนไดโนเสาร์
+                        </button>
+                        <button onclick="selectStoryTheme('เมืองใต้ทะเล')" id="story-theme-ocean" class="p-2 rounded-xl border-2 border-amber-200 bg-amber-50 flex items-center gap-2 text-xs font-bold text-amber-900 shadow-sm">
+                            <span class="text-xl">🌊</span> เมืองใต้ทะเล
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. เลือกเพื่อนร่วมทาง -->
+                <div class="mb-4">
+                    <label class="block text-xs font-black text-amber-900 mb-1.5">3. เพื่อนร่วมทางสุดพิเศษ</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="selectStoryPet('เจ้าหมาน้อย')" id="story-pet-dog" class="p-2 rounded-xl border-2 border-amber-300 bg-amber-50 flex flex-col items-center text-xs font-bold text-amber-900 shadow-sm">
+                            <span class="text-lg">🐶</span> เจ้าโฮ่ง
+                        </button>
+                        <button onclick="selectStoryPet('หุ่นยนต์จิ๋ว')" id="story-pet-robot" class="p-2 rounded-xl border-2 border-amber-200 bg-amber-50 flex flex-col items-center text-xs font-bold text-amber-900 shadow-sm">
+                            <span class="text-lg">🤖</span> หุ่นยนต์
+                        </button>
+                        <button onclick="selectStoryPet('เจ้าแมวเหมียว')" id="story-pet-cat" class="p-2 rounded-xl border-2 border-amber-200 bg-amber-50 flex flex-col items-center text-xs font-bold text-amber-900 shadow-sm">
+                            <span class="text-lg">🐱</span> เจ้าเหมียว
+                        </button>
+                    </div>
+                </div>
+
+                <button id="btn-generate-story" onclick="generateAIStory()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-95 text-white font-extrabold py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-base transition">
+                    ✨ เนรมิตนิทานเลย! ✨
+                </button>
+            </div>
+
+            <!-- Story Display Reader (แสดงผลเมื่อเจนเสร็จ) -->
+            <div id="story-reader-box" class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full hidden flex-col items-center">
+                <div class="w-full flex justify-between items-center mb-3 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-200">
+                    <span id="story-title-display" class="text-xs font-black text-amber-950 truncate max-w-[200px]">ชื่อเรื่องนิทาน</span>
+                    <span id="story-page-indicator" class="text-[10px] font-black text-amber-800 bg-amber-200 px-2 py-0.5 rounded-full">หน้า 1 / 4</span>
+                </div>
+
+                <!-- Picture Frame -->
+                <div class="w-full h-48 bg-amber-50 rounded-2xl border-2 border-amber-200 flex items-center justify-center overflow-hidden mb-4 shadow-inner relative">
+                    <span id="story-image-emoji" class="text-7xl bounce-anim">🚀</span>
+                </div>
+
+                <!-- Text Frame -->
+                <div class="w-full bg-amber-50/60 border border-amber-200 rounded-2xl p-4 min-h-[110px] mb-4 flex items-center justify-center text-center">
+                    <p id="story-text-display" class="text-sm font-bold text-amber-950 leading-relaxed">
+                        เนื้อเรื่องจะแสดงที่นี่...
+                    </p>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="w-full flex gap-2 mb-3">
+                    <button onclick="speakStoryPageText()" class="flex-1 bg-sky-400 active:bg-sky-500 text-white font-extrabold py-3 rounded-2xl shadow flex items-center justify-center gap-1.5 text-xs">
+                        <i data-lucide="volume-2" class="w-4 h-4"></i> ฟังเสียงอ่าน 🔊
+                    </button>
+                </div>
+
+                <div class="w-full flex justify-between gap-2 border-t border-amber-100 pt-3">
+                    <button onclick="prevStoryPage()" id="btn-prev-story" class="bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-1">
+                        ← หน้าก่อน
+                    </button>
+                    <button onclick="openStoryCreator()" class="bg-amber-100 text-amber-900 font-bold py-2.5 px-3 rounded-xl text-xs">
+                        🔄 แต่งเรื่องใหม่
+                    </button>
+                    <button onclick="nextStoryPage()" id="btn-next-story" class="bg-amber-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow flex items-center gap-1">
+                        ถัดไป →
+                    </button>
+                </div>
+            </div>
+
         </div>
 
         <!-- Floating Action Button -->
@@ -534,13 +641,13 @@
     <div id="completion-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center border-4 border-amber-300 relative overflow-hidden">
             <div class="text-6xl mb-2 bounce-anim">🌟</div>
-            <h3 class="text-2xl font-black text-amber-900 mb-1">ตอบถูกครบ 5 คำแล้ว! 🎉</h3>
+            <h3 class="text-2xl font-black text-amber-900 mb-1">ทำกิจกรรมสำเร็จแล้ว! 🎉</h3>
             <p id="completion-subtitle" class="text-sm font-bold text-amber-700 mb-4">ได้รับ 1 ดาวสะสม!</p>
 
             <div class="bg-amber-50 rounded-2xl p-4 border border-amber-200 mb-5 space-y-2">
                 <div class="flex justify-between items-center text-sm font-bold text-amber-900">
-                    <span>จำนวนโจทย์ที่ทำสำเร็จ:</span>
-                    <span id="summary-total-count" class="text-lg text-emerald-600">5 / 5 ข้อ</span>
+                    <span>สถานะกิจกรรม:</span>
+                    <span id="summary-total-count" class="text-lg text-emerald-600">สำเร็จ!</span>
                 </div>
                 <div class="flex justify-between items-center text-sm font-bold text-amber-900">
                     <span>ดาวที่ได้รับในรอบนี้:</span>
@@ -557,14 +664,14 @@
                     ✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!
                 </div>
                 <button onclick="restartSession()" class="w-full bg-amber-500 active:bg-amber-600 text-white font-bold py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-base">
-                    <i data-lucide="rotate-ccw"></i> ฝึกชุดถัดไป 🔄
+                    <i data-lucide="rotate-ccw"></i> ทำกิจกรรมถัดไป 🔄
                 </button>
             </div>
         </div>
     </div>
 
     <!-- User Selection Modal -->
-    <div id="profile-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div id="profile-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
             <h3 class="text-xl font-extrabold text-amber-900 mb-4">ใครกำลังใช้งานอยู่เอ่ย? 🎈</h3>
             <div class="grid grid-cols-2 gap-3 mb-4">
@@ -796,8 +903,8 @@
         ];
 
         const defaultParentQuests = [
-            { id: "quest_1", title: "🧹 ช่วยเก็บของเล่นใส่กล่อง", stars: 2, assignees: ["พูน", "เพลิน"] },
-            { id: "quest_2", title: "📚 ทำการบ้านประจำวันเสร็จตรงเวลา", stars: 3, assignees: ["พูน", "เพลิน"] }
+            { id: "1", title: "🧹 ช่วยเก็บของเล่นใส่กล่อง", stars: 2, assignees: ["พูน", "เพลิน"] },
+            { id: "2", title: "📚 ทำการบ้านประจำวันเสร็จตรงเวลา", stars: 3, assignees: ["พูน", "เพลิน"] }
         ];
 
         let parentQuestsList = [];
@@ -831,16 +938,22 @@
         };
         let selectedLvlConfigChild = 'พูน';
 
-        // --- MATH BUBBLE COMBINATION GAME VARIABLES ---
+        // --- MATH GAME VARIABLES ---
         let mathDifficulty = 'easy';
         let mathQuestionIndex = 1;
         let mathInitialNumbers = [];
         let mathCurrentNumbers = [];
         let mathTargetNumber = 0;
-
         let mathSelectedNum1Idx = null;
         let mathSelectedOp = null;
         let mathSelectedNum2Idx = null;
+
+        // --- AI STORYTELLER VARIABLES ---
+        let selectedStoryHero = 'พูนและเพลิน';
+        let selectedStoryTheme = 'อวกาศ';
+        let selectedStoryPet = 'หุ่นยนต์จิ๋ว';
+        let generatedStoryData = null;
+        let currentStoryPage = 0;
 
         let dbRefVocabEN = null;
         let dbRefVocabTH = null;
@@ -906,15 +1019,7 @@
             document.getElementById("input-daily-limit-rounds").value = dailyLimitRounds;
 
             setTimeout(initFirebase, 300);
-
-            const savedUser = localStorage.getItem("current_active_user");
-            const savedIsParent = localStorage.getItem("is_parent_user") === "true";
-
-            if (savedUser) {
-                setProfile(savedUser, savedIsParent);
-            } else {
-                openProfileModal();
-            }
+            openProfileModal();
         }
 
         function switchMainTab(tab) {
@@ -922,24 +1027,29 @@
             const vocabBtn = document.getElementById("tab-vocab-btn");
             const questBtn = document.getElementById("tab-quest-btn");
             const mathBtn = document.getElementById("tab-math-btn");
+            const storyBtn = document.getElementById("tab-story-btn");
 
             const vocabSec = document.getElementById("main-vocab-tab");
             const questSec = document.getElementById("main-quest-tab");
             const mathSec = document.getElementById("main-math-tab");
+            const storySec = document.getElementById("main-story-tab");
 
             const footerNav = document.getElementById("footer-nav");
             const langSwitchBox = document.getElementById("lang-switch-box");
 
-            const activeBtnClass = "flex-1 py-2 px-1 rounded-2xl font-black text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-1 transition";
-            const inactiveBtnClass = "flex-1 py-2 px-1 rounded-2xl font-black text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-1 transition";
+            const activeBtnClass = "flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-[11px] shadow-md border-2 border-amber-400 bg-amber-400 text-amber-950 flex items-center justify-center gap-0.5 transition whitespace-nowrap";
+            const inactiveBtnClass = "flex-1 py-2 px-1 rounded-2xl font-black text-[10px] sm:text-[11px] shadow-sm border-2 border-amber-300 bg-white text-amber-900 flex items-center justify-center gap-0.5 transition whitespace-nowrap";
 
             questBtn.className = inactiveBtnClass;
             vocabBtn.className = inactiveBtnClass;
             mathBtn.className = inactiveBtnClass;
+            storyBtn.className = inactiveBtnClass;
 
             questSec.classList.add("hidden"); questSec.classList.remove("flex");
             vocabSec.classList.add("hidden"); vocabSec.classList.remove("flex");
             mathSec.classList.add("hidden"); mathSec.classList.remove("flex");
+            storySec.classList.add("hidden"); storySec.classList.remove("flex");
+            
             footerNav.classList.add("hidden");
             langSwitchBox.classList.add("hidden");
 
@@ -956,7 +1066,203 @@
                 mathBtn.className = activeBtnClass;
                 mathSec.classList.remove("hidden"); mathSec.classList.add("flex");
                 generateMathPuzzle();
+            } else if (tab === 'story') {
+                storyBtn.className = activeBtnClass;
+                storySec.classList.remove("hidden"); storySec.classList.add("flex");
+                initStoryTabState();
             }
+        }
+
+        // --- AI STORYTELLER MODULE ---
+        function initStoryTabState() {
+            selectStoryHero(currentUser === 'เพลิน' ? 'เพลิน' : 'พูน');
+            selectStoryTheme('อวกาศ');
+            selectStoryPet('หุ่นยนต์จิ๋ว');
+            openStoryCreator();
+        }
+
+        function openStoryCreator() {
+            document.getElementById("story-creator-box").classList.remove("hidden");
+            document.getElementById("story-reader-box").classList.add("hidden");
+            document.getElementById("story-reader-box").classList.remove("flex");
+        }
+
+        function selectStoryHero(hero) {
+            selectedStoryHero = hero;
+            const btnPoon = document.getElementById("story-hero-poon");
+            const btnPloern = document.getElementById("story-hero-ploern");
+            const btnBoth = document.getElementById("story-hero-both");
+
+            const normal = "p-2.5 rounded-2xl border-2 border-amber-200 bg-amber-50 hover:bg-amber-100 flex flex-col items-center transition shadow-sm";
+            const active = "p-2.5 rounded-2xl border-2 border-amber-500 bg-amber-200 flex flex-col items-center transition shadow-md scale-105";
+
+            btnPoon.className = hero === 'พูน' ? active : normal;
+            btnPloern.className = hero === 'เพลิน' ? active : normal;
+            btnBoth.className = hero === 'พูนและเพลิน' ? active : normal;
+        }
+
+        function selectStoryTheme(theme) {
+            selectedStoryTheme = theme;
+            const btnSpace = document.getElementById("story-theme-space");
+            const btnMagic = document.getElementById("story-theme-magic");
+            const btnDino = document.getElementById("story-theme-dino");
+            const btnOcean = document.getElementById("story-theme-ocean");
+
+            const normal = "p-2 rounded-xl border-2 border-amber-200 bg-amber-50 flex items-center gap-2 text-xs font-bold text-amber-900 shadow-sm";
+            const active = "p-2 rounded-xl border-2 border-amber-500 bg-amber-200 flex items-center gap-2 text-xs font-bold text-amber-950 shadow-md scale-105";
+
+            btnSpace.className = theme === 'อวกาศ' ? active : normal;
+            btnMagic.className = theme === 'เมืองเวทมนตร์' ? active : normal;
+            btnDino.className = theme === 'ดินแดนไดโนเสาร์' ? active : normal;
+            btnOcean.className = theme === 'เมืองใต้ทะเล' ? active : normal;
+        }
+
+        function selectStoryPet(pet) {
+            selectedStoryPet = pet;
+            const btnDog = document.getElementById("story-pet-dog");
+            const btnRobot = document.getElementById("story-pet-robot");
+            const btnCat = document.getElementById("story-pet-cat");
+
+            const normal = "p-2 rounded-xl border-2 border-amber-200 bg-amber-50 flex flex-col items-center text-xs font-bold text-amber-900 shadow-sm";
+            const active = "p-2 rounded-xl border-2 border-amber-500 bg-amber-200 flex flex-col items-center text-xs font-bold text-amber-950 shadow-md scale-105";
+
+            btnDog.className = pet === 'เจ้าหมาน้อย' ? active : normal;
+            btnRobot.className = pet === 'หุ่นยนต์จิ๋ว' ? active : normal;
+            btnCat.className = pet === 'เจ้าแมวเหมียว' ? active : normal;
+        }
+
+        async function generateAIStory() {
+            const apiKey = localStorage.getItem("gemini_api_key");
+
+            if (!apiKey) {
+                alert("กรุณากดปุ่มลูกกุญแจ 🔑 ด้านบนขวาเพื่อใส่ Gemini API Key ก่อนสร้างนิทานครับ!");
+                openKeyModal();
+                return;
+            }
+
+            const btnGen = document.getElementById("btn-generate-story");
+            btnGen.disabled = true;
+            btnGen.innerHTML = `<span class="spinner"></span> AI กำลังเนรมิตนิทานสนุกๆ...`;
+
+            const prompt = `แต่งนิทานสั้นๆ สำหรับเด็ก มีทั้งหมด 4 หน้า สั้นกระชับ สนุกสนาน และให้ข้อคิด
+ตัวละครหลัก: ${selectedStoryHero}
+สถานที่ผจญภัย: ${selectedStoryTheme}
+เพื่อนร่วมทาง: ${selectedStoryPet}
+
+ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น ห้ามมี markdown หรือคำอธิบายเพิ่มเติม:
+{
+  "title": "ชื่อเรื่องนิทานน่ารักๆ",
+  "pages": [
+    { "page": 1, "text": "เนื้อหานิทานหน้า 1 ภาษาไทยสั้นๆ 2-3 ประโยค", "emoji": "🚀" },
+    { "page": 2, "text": "เนื้อหานิทานหน้า 2 ภาษาไทยสั้นๆ 2-3 ประโยค", "emoji": "✨" },
+    { "page": 3, "text": "เนื้อหานิทานหน้า 3 ภาษาไทยสั้นๆ 2-3 ประโยค", "emoji": "🌟" },
+    { "page": 4, "text": "เนื้อหานิทานหน้า 4 สรุปและให้ข้อคิดสั้นๆ", "emoji": "🎉" }
+  ]
+}`;
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.7 } })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+
+                const responseText = data.candidates[0].content.parts[0].text;
+                const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+                generatedStoryData = JSON.parse(cleanJson);
+
+                currentStoryPage = 0;
+                renderStoryPage();
+
+                document.getElementById("story-creator-box").classList.add("hidden");
+                document.getElementById("story-reader-box").classList.remove("hidden");
+                document.getElementById("story-reader-box").classList.add("flex");
+
+            } catch (error) {
+                console.error("Story Generation Error:", error);
+                alert("ไม่สามารถสร้างนิทานได้: " + (error.message || "กรุณาตรวจสอบ API Key และการเชื่อมต่อ"));
+            } finally {
+                btnGen.disabled = false;
+                btnGen.innerHTML = `✨ เนรมิตนิทานเลย! ✨`;
+            }
+        }
+
+        function renderStoryPage() {
+            if (!generatedStoryData || !generatedStoryData.pages) return;
+
+            const pageData = generatedStoryData.pages[currentStoryPage];
+            document.getElementById("story-title-display").innerText = generatedStoryData.title || "นิทาน AI";
+            document.getElementById("story-page-indicator").innerText = `หน้า ${currentStoryPage + 1} / ${generatedStoryData.pages.length}`;
+            document.getElementById("story-text-display").innerText = pageData.text;
+            document.getElementById("story-image-emoji").innerText = pageData.emoji || "📖";
+
+            const btnPrev = document.getElementById("btn-prev-story");
+            const btnNext = document.getElementById("btn-next-story");
+
+            btnPrev.disabled = currentStoryPage === 0;
+            btnPrev.style.opacity = currentStoryPage === 0 ? "0.5" : "1";
+
+            if (currentStoryPage === generatedStoryData.pages.length - 1) {
+                btnNext.innerText = "อ่านจบแล้ว! 🌟";
+                btnNext.className = "bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow flex items-center gap-1";
+            } else {
+                btnNext.innerText = "ถัดไป →";
+                btnNext.className = "bg-amber-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow flex items-center gap-1";
+            }
+        }
+
+        function nextStoryPage() {
+            if (!generatedStoryData) return;
+            if (currentStoryPage < generatedStoryData.pages.length - 1) {
+                currentStoryPage++;
+                renderStoryPage();
+            } else {
+                triggerStoryCompletionModal();
+            }
+        }
+
+        function prevStoryPage() {
+            if (currentStoryPage > 0) {
+                currentStoryPage--;
+                renderStoryPage();
+            }
+        }
+
+        function speakStoryPageText() {
+            if (!generatedStoryData || !generatedStoryData.pages) return;
+            const text = generatedStoryData.pages[currentStoryPage].text;
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'th-TH';
+                utterance.rate = 0.85;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function triggerStoryCompletionModal() {
+            totalStars += 1;
+            saveUserStars();
+            addEXPToUser(100);
+
+            document.getElementById("summary-total-count").innerText = "อ่านนิทานจบเล่ม!";
+            document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} อ่านนิทานเรื่อง "${generatedStoryData.title}" จบแล้ว!`;
+            document.getElementById("completion-modal").classList.remove("hidden");
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(`เก่งมากเลยครับ ${currentUser || ''} อ่านนิทานจบเล่ม รับไปเลย 1 ดาว และ 100 EXP`);
+                utterance.lang = 'th-TH';
+                window.speechSynthesis.speak(utterance);
+            }
+
+            sendInAppNotification('COMPLETED_STORY', { title: generatedStoryData.title });
         }
 
         // --- MATH COMBINATION GAME ENGINE ---
@@ -1703,7 +2009,7 @@
             if (assignPloern) assignees.push("เพลิน");
 
             const newQuest = {
-                id: "quest_" + Date.now(),
+                id: Date.now().toString(),
                 title: title,
                 stars: stars,
                 assignees: assignees
@@ -1719,24 +2025,19 @@
 
         function deleteParentQuest(id) {
             if (confirm("คุณต้องการลบภารกิจนี้ใช่หรือไม่?")) {
-                parentQuestsList = parentQuestsList.filter(q => String(q.id) !== String(id));
+                parentQuestsList = parentQuestsList.filter(q => q.id !== id);
                 saveParentQuestsToStorage();
             }
         }
 
         function openAssignModal(questId) {
-            const quest = parentQuestsList.find(q => String(q.id) === String(questId));
-            if (!quest) {
-                alert("ไม่พบข้อมูลภารกิจนี้ (รหัสไม่ตรงกัน)");
-                return;
-            }
+            const quest = parentQuestsList.find(q => q.id === questId);
+            if (!quest) return;
 
             document.getElementById("assign-quest-id").value = quest.id;
             document.getElementById("assign-quest-title").innerText = quest.title;
 
-            let assignees = quest.assignees || ["พูน", "เพลิน"];
-            if (!Array.isArray(assignees)) assignees = Object.values(assignees);
-
+            const assignees = quest.assignees || ["พูน", "เพลิน"];
             document.getElementById("reassign-poon").checked = assignees.includes("พูน");
             document.getElementById("reassign-ploern").checked = assignees.includes("เพลิน");
 
@@ -1749,12 +2050,8 @@
 
         function saveQuestAssignment() {
             const id = document.getElementById("assign-quest-id").value;
-            const quest = parentQuestsList.find(q => String(q.id) === String(id));
-            
-            if (!quest) {
-                alert("บันทึกไม่สำเร็จ ไม่พบข้อมูลภารกิจนี้");
-                return;
-            }
+            const quest = parentQuestsList.find(q => q.id === id);
+            if (!quest) return;
 
             const assignPoon = document.getElementById("reassign-poon").checked;
             const assignPloern = document.getElementById("reassign-ploern").checked;
@@ -1764,9 +2061,7 @@
             if (assignPloern) newAssignees.push("เพลิน");
 
             quest.assignees = newAssignees;
-
             saveParentQuestsToStorage();
-
             closeAssignModal();
             alert(`อัปเดตผู้รับภารกิจ "${quest.title}" เรียบร้อยแล้ว!`);
         }
@@ -1774,13 +2069,6 @@
         function renderParentQuestsList() {
             const container = document.getElementById("parent-quests-list");
             if (!container) return;
-
-            parentQuestsList.forEach((q, idx) => {
-                if (!q.id) q.id = "quest_legacy_" + idx + "_" + Date.now();
-                if (q.assignees && !Array.isArray(q.assignees)) {
-                    q.assignees = Object.values(q.assignees);
-                }
-            });
 
             let filteredQuests = parentQuestsList;
             
@@ -1842,20 +2130,13 @@
                     }
                 }
 
-                let assigneesText = 'ทุกคน';
-                if (q.assignees && Array.isArray(q.assignees) && q.assignees.length > 0) {
-                    assigneesText = q.assignees.join(', ');
-                } else if (q.assignees && typeof q.assignees === 'object') {
-                    assigneesText = Object.values(q.assignees).join(', ');
-                }
-
                 return `
                     <div class="bg-amber-50 p-3.5 rounded-2xl border-2 border-amber-200 flex justify-between items-center shadow-sm">
                         <div>
                             <div class="font-extrabold text-amber-900 text-sm mb-1">${q.title}</div>
                             <div class="flex items-center gap-2">
                                 <span class="text-xs bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">รางวัล 🌟 ${q.stars} ดวง</span>
-                                <span class="text-[10px] text-slate-500 font-bold">🎯 ${assigneesText}</span>
+                                <span class="text-[10px] text-slate-500 font-bold">🎯 ${q.assignees && q.assignees.length > 0 ? q.assignees.join(', ') : 'ทุกคน'}</span>
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5">
@@ -2184,6 +2465,22 @@
                             ${deleteBtnHtml}
                         </div>
                     `;
+                } else if (n.type === 'COMPLETED_STORY') {
+                    return `
+                        <div class="p-3.5 bg-purple-50 rounded-2xl border border-purple-200 flex items-start gap-3 shadow-sm">
+                            <span class="text-3xl bg-white p-2 rounded-xl border border-purple-200">${avatars[n.user] || '👦'}</span>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center mb-0.5">
+                                    <span class="font-extrabold text-sm text-purple-950">${n.user} อ่านนิทาน AI จบเล่ม! 📖</span>
+                                    <span class="text-[10px] font-bold text-purple-700/60">${n.time}</span>
+                                </div>
+                                <p class="text-xs text-purple-900/80 font-medium">
+                                    เรื่อง: <span class="font-bold text-purple-800">"${n.details.title}"</span> | ได้รับ <span class="font-bold text-amber-600">🌟 1 ดวง</span>
+                                </p>
+                            </div>
+                            ${deleteBtnHtml}
+                        </div>
+                    `;
                 } else {
                     return `
                         <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 flex items-start gap-3 shadow-sm">
@@ -2355,10 +2652,6 @@
         function setProfile(name, isParent) {
             currentUser = name;
             isParentUser = isParent;
-
-            localStorage.setItem("current_active_user", name);
-            localStorage.setItem("is_parent_user", isParent ? "true" : "false");
-
             document.getElementById("user-name").innerText = name;
             
             const avatars = { 'พ่อนะ': '👨‍💼', 'แม่พัด': '👩‍💼', 'พูน': '👦', 'เพลิน': '👧' };
@@ -2497,6 +2790,8 @@
             if (currentMainTab === 'math') {
                 mathQuestionIndex = 1;
                 generateMathPuzzle();
+            } else if (currentMainTab === 'story') {
+                openStoryCreator();
             } else {
                 setCorrectAnswers = 0;
                 shuffleArray(filteredVocabList);
