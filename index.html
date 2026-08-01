@@ -316,14 +316,14 @@
             <div id="spelling-section" class="w-full max-w-sm hidden flex-col items-center">
                 <div id="daily-limit-banner" class="w-full bg-red-100 border-2 border-red-300 rounded-2xl p-4 text-center mb-4 hidden shadow-md">
                     <div class="text-3xl mb-1">🛑</div>
-                    <div class="font-extrabold text-red-900 text-base mb-1">หนูเล่นครบโควต้าวันนี้แล้วครับ!</div>
-                    <div class="text-xs text-red-700 font-bold">พ่อนะ และ แม่พัด กำหนดให้ท่องวันละ <span id="limit-rounds-text">3</span> รอบ เพื่อพักสายตา พรุ่งนี้ค่อยมาเล่นใหม่นะ! 🎈</div>
+                    <div class="font-extrabold text-red-900 text-base mb-1">หนูเล่นครบโควต้ารวมวันนี้แล้วครับ!</div>
+                    <div class="text-xs text-red-700 font-bold">พ่อนะ และ แม่พัด กำหนดโควต้ารวมไว้ <span id="limit-rounds-text">3</span> รอบ เพื่อพักสายตา พรุ่งนี้ค่อยมาเล่นใหม่นะ! 🎈</div>
                 </div>
 
                 <div id="spelling-card-box" class="bg-white border-4 border-amber-300 rounded-3xl p-6 shadow-xl w-full text-center flex flex-col items-center">
                     <div class="w-full flex justify-between items-center mb-3 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-200">
                         <span id="set-progress-text" class="text-xs font-bold text-amber-900">ชุดที่ 1 (คำที่ 1/5)</span>
-                        <span id="daily-quota-text" class="text-[10px] font-extrabold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-full">วันนี้ 0/3 รอบ</span>
+                        <span id="daily-quota-text" class="text-[10px] font-extrabold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-full">โควต้ารวม 0/3 รอบ</span>
                     </div>
 
                     <div class="w-24 h-24 mb-3 flex items-center justify-center overflow-hidden rounded-2xl bg-amber-50">
@@ -416,16 +416,16 @@
             </div>
         </div>
 
-        <!-- SECTION 4: AI STORYTELLER TAB -->
+        <!-- SECTION 4: AI STORYTELLER TAB (10 Pages Dynamic Resource Strategy Game) -->
         <div id="main-story-tab" class="w-full max-w-sm hidden flex-col items-center">
             
             <!-- Story Creator Form -->
             <div id="story-creator-box" class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full">
                 <div class="text-center mb-3">
                     <h3 class="text-xl font-black text-amber-900 flex items-center justify-center gap-2">
-                        📖 นิทานเลือกเส้นทาง (8 หน้าจบ)
+                        📖 นิทานวางแผน AI (4 หน้าทางเลือก)
                     </h3>
-                    <p class="text-xs text-amber-700 font-bold mt-1">เลือกตัวละครและสถานที่ แล้วมาเลือกเส้นทางผจญภัยกัน!</p>
+                    <p class="text-xs text-amber-700 font-bold mt-1">ผจญภัย 10 หน้า มีทางเลือกสนุกๆ 4 ด่าน (หน้า 2, 4, 6, 8)</p>
                 </div>
 
                 <!-- 0. เลือกภาษา (TH / EN) -->
@@ -492,38 +492,57 @@
                 </div>
 
                 <button id="btn-generate-story" onclick="generateAIStory()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-95 text-white font-extrabold py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-base transition">
-                    ✨ เนรมิตนิทาน 8 หน้าเลย! ✨
+                    ✨ เนรมิตเกมส์นิทาน 10 หน้าเลย! ✨
                 </button>
             </div>
 
             <!-- Story Display Reader -->
             <div id="story-reader-box" class="bg-white border-4 border-amber-300 rounded-3xl p-5 shadow-xl w-full hidden flex-col items-center">
+                
+                <!-- 3 Dynamic Resources Bars Display -->
+                <div class="w-full bg-amber-50 p-2.5 rounded-2xl border border-amber-200 mb-3 space-y-1.5 shadow-sm">
+                    <!-- 1. Resource 1 -->
+                    <div class="flex items-center gap-2">
+                        <span id="story-hp-text" class="text-[11px] font-black text-red-900 w-28 whitespace-nowrap truncate">⚡ ออกซิเจน: 50/50</span>
+                        <div class="flex-1 bg-slate-200 h-2.5 rounded-full overflow-hidden relative">
+                            <div id="story-hp-progress" class="bg-red-500 h-full w-full transition-all duration-300"></div>
+                        </div>
+                    </div>
+                    <!-- 2. Resource 2 -->
+                    <div class="flex items-center gap-2">
+                        <span id="story-food-text" class="text-[11px] font-black text-amber-900 w-28 whitespace-nowrap truncate">🍞 เสบียง: 50/50</span>
+                        <div class="flex-1 bg-slate-200 h-2.5 rounded-full overflow-hidden relative">
+                            <div id="story-food-progress" class="bg-amber-500 h-full w-full transition-all duration-300"></div>
+                        </div>
+                    </div>
+                    <!-- 3. Resource 3 -->
+                    <div class="flex items-center gap-2">
+                        <span id="story-brain-text" class="text-[11px] font-black text-blue-900 w-28 whitespace-nowrap truncate">🛡️ เกราะยาน: 50/50</span>
+                        <div class="flex-1 bg-slate-200 h-2.5 rounded-full overflow-hidden relative">
+                            <div id="story-brain-progress" class="bg-blue-500 h-full w-full transition-all duration-300"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="w-full flex justify-between items-center mb-3 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-200">
                     <span id="story-title-display" class="text-xs font-black text-amber-950 truncate max-w-[200px]">ชื่อเรื่องนิทาน</span>
-                    <span id="story-page-indicator" class="text-[10px] font-black text-amber-800 bg-amber-200 px-2 py-0.5 rounded-full">หน้า 1 / 8</span>
+                    <span id="story-page-indicator" class="text-[10px] font-black text-amber-800 bg-amber-200 px-2 py-0.5 rounded-full">หน้า 1 / 10</span>
                 </div>
 
                 <!-- Picture Frame -->
-                <div class="w-full h-44 bg-amber-50 rounded-2xl border-2 border-amber-200 flex items-center justify-center overflow-hidden mb-3 shadow-inner relative">
+                <div class="w-full h-40 bg-amber-50 rounded-2xl border-2 border-amber-200 flex items-center justify-center overflow-hidden mb-3 shadow-inner relative">
                     <span id="story-image-emoji" class="text-7xl bounce-anim">🚀</span>
                 </div>
 
                 <!-- Text Frame -->
-                <div class="w-full bg-amber-50/60 border border-amber-200 rounded-2xl p-3.5 min-h-[95px] mb-3 flex items-center justify-center text-center">
+                <div class="w-full bg-amber-50/60 border border-amber-200 rounded-2xl p-3.5 min-h-[90px] mb-3 flex items-center justify-center text-center">
                     <p id="story-text-display" class="text-xs sm:text-sm font-bold text-amber-950 leading-relaxed">
                         เนื้อเรื่องจะแสดงที่นี่...
                     </p>
                 </div>
 
-                <!-- Interactive Choices Container (ปรากฏเฉพาะหน้า 2, 4, 6) -->
+                <!-- Interactive 4 Choices Container (ปรากฏเฉพาะหน้า 2, 4, 6, 8) -->
                 <div id="story-choices-box" class="w-full space-y-2 mb-3 hidden">
-                    <p class="text-[11px] font-extrabold text-amber-900 text-center">👇 หนูจะเลือกทำอย่างไรดีนะ?</p>
-                    <button id="btn-choice-a" onclick="makeStoryChoice('A')" class="w-full bg-amber-100 hover:bg-amber-200 border-2 border-amber-400 p-2.5 rounded-xl text-xs font-extrabold text-amber-950 text-left shadow-sm active:scale-95 transition">
-                        A) ตัวเลือก A
-                    </button>
-                    <button id="btn-choice-b" onclick="makeStoryChoice('B')" class="w-full bg-purple-100 hover:bg-purple-200 border-2 border-purple-300 p-2.5 rounded-xl text-xs font-extrabold text-purple-950 text-left shadow-sm active:scale-95 transition">
-                        B) ตัวเลือก B
-                    </button>
                 </div>
 
                 <!-- Action Controls -->
@@ -606,7 +625,7 @@
 
             <div id="reward-shop-view">
                 <div class="text-center mb-3">
-                    <p class="text-xs text-amber-700">สะสมดาวจากการท่องศัพท์และภารกิจเพื่อแลกรางวัล!</p>
+                    <p class="text-xs text-amber-700">สะสมดาวจากการทำภารกิจเพื่อแลกรางวัล!</p>
                     <div class="mt-1 bg-amber-100 py-1 px-4 rounded-full inline-block border border-amber-300 font-bold text-amber-900 text-xs">
                         ดาวสะสม: <span id="quest-user-stars" class="text-amber-600 text-base">🌟 0</span>
                     </div>
@@ -845,10 +864,10 @@
                 </button>
 
                 <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200">
-                    <label class="block text-xs font-bold text-amber-900 mb-1">🛑 จำกัดสิทธิ์ท่องศัพท์ต่อวัน (รอบ/วัน)</label>
+                    <label class="block text-xs font-bold text-amber-900 mb-1">🛑 จำกัดโควต้ารวมเล่นทุกเกมต่อวัน (รอบ/วัน)</label>
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="input-enable-daily-limit" class="w-4 h-4 text-amber-600 rounded">
-                        <span class="text-xs font-bold text-slate-700">เปิดใช้งานจำกัดรอบ</span>
+                        <span class="text-xs font-bold text-slate-700">เปิดโควต้ารวม</span>
                         <input type="number" id="input-daily-limit-rounds" min="1" max="50" placeholder="3" class="w-16 border-2 border-amber-200 rounded-xl p-1 text-center font-bold text-sm">
                         <span class="text-xs text-slate-600 font-bold">รอบ/วัน</span>
                     </div>
@@ -948,7 +967,6 @@
         let isDailyLimitEnabled = true;
         let dailyLimitRounds = 3;
         let todayPlayedRounds = 0;
-        let todayStoryRewardEarned = false;
 
         let maxLevel = 10;
         let currentChildEXP = 0;
@@ -969,13 +987,42 @@
         let mathSelectedOp = null;
         let mathSelectedNum2Idx = null;
 
-        // --- AI STORYTELLER VARIABLES (8 Pages Interactive) ---
+        // --- AI STORYTELLER VARIABLES (10 Pages Easy Friendly Resource RPG) ---
         let selectedStoryHero = 'พูนและเพลิน';
         let selectedStoryTheme = 'อวกาศ';
         let selectedStoryPet = 'หุ่นยนต์จิ๋ว';
         let selectedStoryLang = 'TH'; 
         let generatedStoryData = null;
         let currentStoryPage = 0;
+        
+        // 3 Dynamic Resources Maps & Variables
+        const themeResourcesMap = {
+            'อวกาศ': [
+                { name: 'ออกซิเจน', icon: '⚡' },
+                { name: 'เสบียงสำรอง', icon: '🍞' },
+                { name: 'เกราะยาน', icon: '🛡️' }
+            ],
+            'เมืองเวทมนตร์': [
+                { name: 'พลังเวท', icon: '✨' },
+                { name: 'ยาฟื้นฟู', icon: '🧪' },
+                { name: 'ม้วนคาถา', icon: '📜' }
+            ],
+            'ดินแดนไดโนเสาร์': [
+                { name: 'พลังกาย', icon: '❤️' },
+                { name: 'เนื้อแห้ง', icon: '🥩' },
+                { name: 'อุปกรณ์พรางตัว', icon: '🪨' }
+            ],
+            'เมืองใต้ทะเล': [
+                { name: 'ถังอากาศ', icon: '🫧' },
+                { name: 'อาหารทะเล', icon: '🐟' },
+                { name: 'ไฟฉายใต้น้ำ', icon: '🔦' }
+            ]
+        };
+
+        let playerHP = 50;
+        let playerFood = 50;
+        let playerBrain = 50;
+        const maxHP = 50, maxFood = 50, maxBrain = 50;
 
         let dbRefVocabEN = null;
         let dbRefVocabTH = null;
@@ -1093,9 +1140,10 @@
                 storySec.classList.remove("hidden"); storySec.classList.add("flex");
                 initStoryTabState();
             }
+            checkDailyLimitStatus();
         }
 
-        // --- AI STORYTELLER MODULE (8 Pages Choose Your Own Adventure) ---
+        // --- AI STORYTELLER MODULE (10 Pages Easy-Friendly Resource Strategy RPG) ---
         function initStoryTabState() {
             selectStoryLang('TH');
             selectStoryHero(currentUser === 'เพลิน' ? 'เพลิน' : 'พูน');
@@ -1168,7 +1216,41 @@
             btnCat.className = pet === 'เจ้าแมวเหมียว' ? active : normal;
         }
 
+        function updateResourcesDisplay() {
+            const resConfig = themeResourcesMap[selectedStoryTheme] || themeResourcesMap['อวกาศ'];
+
+            const hpBar = document.getElementById("story-hp-progress");
+            const hpText = document.getElementById("story-hp-text");
+            const foodBar = document.getElementById("story-food-progress");
+            const foodText = document.getElementById("story-food-text");
+            const brainBar = document.getElementById("story-brain-progress");
+            const brainText = document.getElementById("story-brain-text");
+
+            if (hpBar && hpText) {
+                const pctHP = Math.max(0, Math.min(100, (playerHP / maxHP) * 100));
+                hpBar.style.width = `${pctHP}%`;
+                hpText.innerText = `${resConfig[0].icon} ${resConfig[0].name}: ${playerHP}/${maxHP}`;
+            }
+
+            if (foodBar && foodText) {
+                const pctFood = Math.max(0, Math.min(100, (playerFood / maxFood) * 100));
+                foodBar.style.width = `${pctFood}%`;
+                foodText.innerText = `${resConfig[1].icon} ${resConfig[1].name}: ${playerFood}/${maxFood}`;
+            }
+
+            if (brainBar && brainText) {
+                const pctBrain = Math.max(0, Math.min(100, (playerBrain / maxBrain) * 100));
+                brainBar.style.width = `${pctBrain}%`;
+                brainText.innerText = `${resConfig[2].icon} ${resConfig[2].name}: ${playerBrain}/${maxBrain}`;
+            }
+        }
+
         async function generateAIStory() {
+            if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
+                alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วครับ! พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ 🎈`);
+                return;
+            }
+
             const apiKey = localStorage.getItem("gemini_api_key");
 
             if (!apiKey) {
@@ -1179,44 +1261,85 @@
 
             const btnGen = document.getElementById("btn-generate-story");
             btnGen.disabled = true;
-            btnGen.innerHTML = `<span class="spinner"></span> AI กำลังเนรมิตนิทาน 8 หน้า...`;
+            btnGen.innerHTML = `<span class="spinner"></span> AI กำลังเนรมิตเกมส์นิทาน 10 หน้า...`;
+
+            const resConfig = themeResourcesMap[selectedStoryTheme] || themeResourcesMap['อวกาศ'];
+            const r1Name = `${resConfig[0].icon} ${resConfig[0].name}`;
+            const r2Name = `${resConfig[1].icon} ${resConfig[1].name}`;
+            const r3Name = `${resConfig[2].icon} ${resConfig[2].name}`;
 
             let langInstruction = selectedStoryLang === 'EN' ? 
                 "Write the story in SIMPLE EASY ENGLISH for kids." : 
                 "แต่งนิทานเป็นภาษาไทยที่อ่านง่าย สนุกสนานสำหรับเด็ก";
 
-            const prompt = `แต่งนิทานแนว Interactive Choose Your Own Adventure ความยาว 8 หน้า
+            const prompt = `แต่งนิทานแนว Interactive Resource Management Strategy ความยาว 10 หน้า (เน้นสนุกสนาน และปรับระดับความยากให้อ่านง่าย เหมาะสำหรับเด็กเล็ก):
 ตัวละครหลัก: ${selectedStoryHero}
 สถานที่ผจญภัย: ${selectedStoryTheme}
 เพื่อนร่วมทาง: ${selectedStoryPet}
+ทรัพยากร 3 ประเภทในเรื่อง: 1. ${r1Name}, 2. ${r2Name}, 3. ${r3Name}
 คำสั่งภาษา: ${langInstruction}
 
-โครงสร้าง 8 หน้าที่ต้องระบุ:
-- Page 1: เริ่มต้นเรื่องราว
-- Page 2: เกิดสถานการณ์ ให้มีทางเลือก choiceA และ choiceB
-- Page 3: ผลลัพธ์จากการเดินทางช่วงแรก
-- Page 4: สถานการณ์ถัดมา ให้มีทางเลือก choiceA และ choiceB
-- Page 5: การผจญภัยด่านสำคัญ
-- Page 6: การตัดสินใจครั้งสุดท้าย ให้มีทางเลือก choiceA และ choiceB
-- Page 7: Climax ของเรื่องราว
-- Page 8: บทสรุปแฮปปี้เอนดิ้ง
+กฎเกณฑ์ระบบทรัพยากรและการตัดสินใจ (เน้นความง่าย สนุกสนาน ไม่ลงโทษรุนแรง):
+- มีความยาวรวม 10 หน้าพอดี
+- มีหน้าทางเลือกทั้งหมด 4 หน้า ได้แก่ หน้า 2, หน้า 4, หน้า 6 และ หน้า 8 
+- ในหน้าทางเลือกทั้ง 4 นี้ ต้องมีทางเลือก 4 ข้อเสมอ คือ choiceA, choiceB, choiceC และ choiceD
+- แต่ละทางเลือกต้องกำหนดผลกระทบต่อทรัพยากรทั้ง 3 ชนิด ดังนี้:
+  * choiceA -> hpEffectA, foodEffectA, brainEffectA
+  * choiceB -> hpEffectB, foodEffectB, brainEffectB
+  * choiceC -> hpEffectC, foodEffectC, brainEffectC
+  * choiceD -> hpEffectD, foodEffectD, brainEffectD
+- **กฎปรับลดระดับความยาก (Gentle & Easy Mode):**
+  * ให้เน้นทางเลือกเชิงบวกและการแก้ปัญหาอย่างสร้างสรรค์
+  * ตัวเลือกที่ดีเยี่ยม: เพิ่มทรัพยากรอย่างน้อย 1-2 ชนิด (+5 ถึง +15) และหักน้อยมากๆ หรือไม่หักเลย
+  * ตัวเลือกทั่วไป/ปานกลาง: หักทรัพยากรเบาๆ เพียงเล็กน้อย (-5 ถึง -15)
+  * **ห้ามมีตัวเลือกที่หักทรัพยากรรุนแรงเกิน -20** เพื่อป้องกันไม่ให้เด็กแพ้ หรือ Game Over ง่ายเกินไป ให้เล่นสนุกจนจบเรื่องได้ง่ายครับ!
 
-ข้อกำหนดสำคัญมากเรื่อง Emoji ประกอบหน้า:
-- ในแต่ละหน้า (pages) ให้วิเคราะห์เนื้อหาในหน้านั้น แล้วเลือก Emoji 1 ตัวที่ตรงกับคีย์เวิร์ด/วัตถุ/เหตุการณ์หลักในหน้านั้นจริงๆ
-  * ตัวอย่าง: ถ้าหน้านั้นพูดถึง "ประตูไม้" ให้ใช้ 🚪, "บ้านขนมหวาน" ให้ใช้ 🍬, "สะพานสายรุ้ง" ให้ใช้ 🌈, "ปราสาท" ให้ใช้ 🏰, "หมาน้อย/ภูต" ให้ใช้ 🐶 หรือ 🧚
-
-ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น ห้ามมี markdown หรือคำอธิบายเพิ่มเติม:
+ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น (ห้ามมี markdown):
 {
   "title": "ชื่อเรื่องนิทาน",
   "pages": [
-    { "page": 1, "text": "เนื้อหาหน้า 1", "emoji": "Emoji หน้า 1" },
-    { "page": 2, "text": "เนื้อหาหน้า 2 ก่อนเลือกทางเลือก", "emoji": "Emoji หน้า 2", "choiceA": "ทางเลือก A...", "choiceB": "ทางเลือก B..." },
-    { "page": 3, "text": "เนื้อหาหน้า 3", "emoji": "Emoji หน้า 3" },
-    { "page": 4, "text": "เนื้อหาหน้า 4 ก่อนเลือกทางเลือก", "emoji": "Emoji หน้า 4", "choiceA": "ทางเลือก A...", "choiceB": "ทางเลือก B..." },
-    { "page": 5, "text": "เนื้อหาหน้า 5", "emoji": "Emoji หน้า 5" },
-    { "page": 6, "text": "เนื้อหาหน้า 6 ก่อนเลือกทางเลือก", "emoji": "Emoji หน้า 6", "choiceA": "ทางเลือก A...", "choiceB": "ทางเลือก B..." },
-    { "page": 7, "text": "เนื้อหาหน้า 7", "emoji": "Emoji หน้า 7" },
-    { "page": 8, "text": "บทสรุปหน้า 8", "emoji": "Emoji หน้า 8" }
+    { "page": 1, "text": "...", "emoji": "🚀" },
+    { 
+      "page": 2, 
+      "text": "...", 
+      "emoji": "👾", 
+      "choiceA": "...", "hpEffectA": 10, "foodEffectA": -5, "brainEffectA": 5,
+      "choiceB": "...", "hpEffectB": -5, "foodEffectB": -10, "brainEffectB": 5,
+      "choiceC": "...", "hpEffectC": -10, "foodEffectC": 5, "brainEffectC": -5,
+      "choiceD": "...", "hpEffectD": -15, "foodEffectD": -5, "brainEffectD": 10
+    },
+    { "page": 3, "text": "...", "emoji": "🗺️" },
+    { 
+      "page": 4, 
+      "text": "...", 
+      "emoji": "🏰", 
+      "choiceA": "...", "hpEffectA": -5, "foodEffectA": 10, "brainEffectA": -5,
+      "choiceB": "...", "hpEffectB": 5, "foodEffectB": -5, "brainEffectB": 10,
+      "choiceC": "...", "hpEffectC": -10, "foodEffectC": -10, "brainEffectC": 5,
+      "choiceD": "...", "hpEffectD": -15, "foodEffectD": 5, "brainEffectD": -5
+    },
+    { "page": 5, "text": "...", "emoji": "⚡" },
+    { 
+      "page": 6, 
+      "text": "...", 
+      "emoji": "🔑", 
+      "choiceA": "...", "hpEffectA": 10, "foodEffectA": -5, "brainEffectA": -10,
+      "choiceB": "...", "hpEffectB": -5, "foodEffectB": 10, "brainEffectB": -5,
+      "choiceC": "...", "hpEffectC": -10, "foodEffectC": -5, "brainEffectC": 10,
+      "choiceD": "...", "hpEffectD": -12, "foodEffectD": -10, "brainEffectD": 5
+    },
+    { "page": 7, "text": "...", "emoji": "🐲" },
+    { 
+      "page": 8, 
+      "text": "...", 
+      "emoji": "💎", 
+      "choiceA": "...", "hpEffectA": -5, "foodEffectA": -5, "brainEffectA": 15,
+      "choiceB": "...", "hpEffectB": 10, "foodEffectB": -10, "brainEffectB": 5,
+      "choiceC": "...", "hpEffectC": -10, "foodEffectC": 10, "brainEffectC": -5,
+      "choiceD": "...", "hpEffectD": -15, "foodEffectD": -5, "brainEffectD": 10
+    },
+    { "page": 9, "text": "...", "emoji": "✨" },
+    { "page": 10, "text": "...", "emoji": "🏆" }
   ]
 }`;
 
@@ -1237,6 +1360,10 @@
                 generatedStoryData = JSON.parse(cleanJson);
 
                 currentStoryPage = 0;
+                playerHP = maxHP;
+                playerFood = maxFood;
+                playerBrain = maxBrain;
+                updateResourcesDisplay();
                 renderStoryPage();
 
                 document.getElementById("story-creator-box").classList.add("hidden");
@@ -1248,8 +1375,36 @@
                 alert("ไม่สามารถสร้างนิทานได้: " + (error.message || "กรุณาตรวจสอบ API Key และการเชื่อมต่อ"));
             } finally {
                 btnGen.disabled = false;
-                btnGen.innerHTML = `✨ เนรมิตนิทาน 8 หน้าเลย! ✨`;
+                btnGen.innerHTML = `✨ เนรมิตเกมส์นิทาน 10 หน้าเลย! ✨`;
             }
+        }
+
+        // ฟังก์ชันช่วยจัดข้อความคำใบ้ แบบง่ายและชัดเจนสำหรับเด็ก
+        function formatEffectHint(resName, icon, val) {
+            if (val === 0) return null;
+            let action = val > 0 ? (selectedStoryLang === 'EN' ? 'Increase' : 'เพิ่ม') : (selectedStoryLang === 'EN' ? 'Decrease' : 'ลด');
+            let magnitude = Math.abs(val) >= 15 ? (selectedStoryLang === 'EN' ? '' : '') : (selectedStoryLang === 'EN' ? 'A Little' : 'เล็กน้อย');
+            
+            return `${icon} ${resName} (${action}${magnitude})`;
+        }
+
+        // ฟังก์ชันสร้างแถบคำใบ้ทรัพยากรสำหรับแต่ละตัวเลือก
+        function getResourceHintBadge(hpEff, foodEff, brainEff) {
+            const resConfig = themeResourcesMap[selectedStoryTheme] || themeResourcesMap['อวกาศ'];
+            let hints = [];
+
+            let h1 = formatEffectHint(resConfig[0].name, resConfig[0].icon, hpEff);
+            let h2 = formatEffectHint(resConfig[1].name, resConfig[1].icon, foodEff);
+            let h3 = formatEffectHint(resConfig[2].name, resConfig[2].icon, brainEff);
+
+            if (h1) hints.push(h1);
+            if (h2) hints.push(h2);
+            if (h3) hints.push(h3);
+
+            if (hints.length === 0) return '';
+            
+            const hintText = selectedStoryLang === 'EN' ? `[Hint: ${hints.join(', ')}]` : `[คำใบ้: ${hints.join(', ')}]`;
+            return `<div class="text-[10px] text-amber-900/80 font-semibold mt-1 bg-white/60 px-2 py-0.5 rounded-md self-start border border-amber-200/50">${hintText}</div>`;
         }
 
         function renderStoryPage() {
@@ -1268,19 +1423,41 @@
             btnPrev.disabled = currentStoryPage === 0;
             btnPrev.style.opacity = currentStoryPage === 0 ? "0.5" : "1";
 
-            // ตรวจสอบว่าเป็นหน้าที่ให้เลือกทางเลือกหรือไม่ (หน้า 2, 4, 6)
-            if (pageData.choiceA && pageData.choiceB) {
+            // ตรวจสอบว่าเป็นหน้าที่ให้เลือกทางเลือก 4 ข้อหรือไม่ (หน้า 2, 4, 6, 8)
+            if (pageData.choiceA && pageData.choiceB && pageData.choiceC && pageData.choiceD) {
+                const hintA = getResourceHintBadge(pageData.hpEffectA, pageData.foodEffectA, pageData.brainEffectA);
+                const hintB = getResourceHintBadge(pageData.hpEffectB, pageData.foodEffectB, pageData.brainEffectB);
+                const hintC = getResourceHintBadge(pageData.hpEffectC, pageData.foodEffectC, pageData.brainEffectC);
+                const hintD = getResourceHintBadge(pageData.hpEffectD, pageData.foodEffectD, pageData.brainEffectD);
+
+                choicesBox.innerHTML = `
+                    <p class="text-[11px] font-extrabold text-amber-900 text-center">💡 ลองอ่านคำใบ้ แล้วเลือกข้อที่ชอบได้เลยนะ:</p>
+                    <button onclick="makeStoryChoice('A')" class="w-full bg-amber-100 hover:bg-amber-200 border-2 border-amber-400 p-2.5 rounded-xl text-xs font-extrabold text-amber-950 text-left shadow-sm active:scale-95 transition flex flex-col">
+                        <span>A) ${pageData.choiceA}</span>
+                        ${hintA}
+                    </button>
+                    <button onclick="makeStoryChoice('B')" class="w-full bg-purple-100 hover:bg-purple-200 border-2 border-purple-300 p-2.5 rounded-xl text-xs font-extrabold text-purple-950 text-left shadow-sm active:scale-95 transition flex flex-col">
+                        <span>B) ${pageData.choiceB}</span>
+                        ${hintB}
+                    </button>
+                    <button onclick="makeStoryChoice('C')" class="w-full bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-300 p-2.5 rounded-xl text-xs font-extrabold text-emerald-950 text-left shadow-sm active:scale-95 transition flex flex-col">
+                        <span>C) ${pageData.choiceC}</span>
+                        ${hintC}
+                    </button>
+                    <button onclick="makeStoryChoice('D')" class="w-full bg-rose-100 hover:bg-rose-200 border-2 border-rose-300 p-2.5 rounded-xl text-xs font-extrabold text-rose-950 text-left shadow-sm active:scale-95 transition flex flex-col">
+                        <span>D) ${pageData.choiceD}</span>
+                        ${hintD}
+                    </button>
+                `;
                 choicesBox.classList.remove("hidden");
-                document.getElementById("btn-choice-a").innerText = `A) ${pageData.choiceA}`;
-                document.getElementById("btn-choice-b").innerText = `B) ${pageData.choiceB}`;
-                btnNext.classList.add("hidden"); // ซ่อนปุ่มถัดไป ให้เลือกทางเลือกก่อน
+                btnNext.classList.add("hidden"); 
             } else {
                 choicesBox.classList.add("hidden");
                 btnNext.classList.remove("hidden");
 
                 if (currentStoryPage === generatedStoryData.pages.length - 1) {
-                    btnNext.innerText = selectedStoryLang === 'EN' ? "Finish! 🌟" : "อ่านจบแล้ว! 🌟";
-                    btnNext.className = "bg-emerald-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs shadow flex items-center gap-1";
+                    btnNext.innerText = selectedStoryLang === 'EN' ? "Victory & Finish! 🏆" : "พิชิตเกมอ่านจบแล้ว! 🏆";
+                    btnNext.className = "bg-emerald-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs shadow flex items-center gap-1 animate-bounce";
                 } else {
                     btnNext.innerText = selectedStoryLang === 'EN' ? "Next →" : "ถัดไป →";
                     btnNext.className = "bg-amber-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs shadow flex items-center gap-1";
@@ -1290,12 +1467,41 @@
 
         function makeStoryChoice(choiceOption) {
             const pageData = generatedStoryData.pages[currentStoryPage];
-            const choiceText = choiceOption === 'A' ? pageData.choiceA : pageData.choiceB;
-
-            // ต่อเติมเนื้อเรื่องสั้นๆ เพื่อเล่าผลลัพธ์ของตัวเลือก
-            pageData.text += `\n\n👉 หนูเลือก: ${choiceText}`;
+            const resConfig = themeResourcesMap[selectedStoryTheme] || themeResourcesMap['อวกาศ'];
             
-            // ไปหน้าถัดไป
+            let choiceText = pageData[`choice${choiceOption}`];
+            let hpEff = pageData[`hpEffect${choiceOption}`] || 0;
+            let foodEff = pageData[`foodEffect${choiceOption}`] || 0;
+            let brainEff = pageData[`brainEffect${choiceOption}`] || 0;
+
+            playerHP += hpEff;
+            playerFood += foodEff;
+            playerBrain += brainEff;
+
+            let summaryText = `(${resConfig[0].icon} ${hpEff >= 0 ? '+'+hpEff : hpEff}, ${resConfig[1].icon} ${foodEff >= 0 ? '+'+foodEff : foodEff}, ${resConfig[2].icon} ${brainEff >= 0 ? '+'+brainEff : brainEff})`;
+            pageData.text += `\n\n👉 หนูเลือกข้อ ${choiceOption}: ${choiceText} ${summaryText}`;
+
+            // ตรวจสอบสถานะ Game Over
+            if (playerHP <= 0 || playerFood <= 0 || playerBrain <= 0) {
+                playerHP = Math.max(0, playerHP);
+                playerFood = Math.max(0, playerFood);
+                playerBrain = Math.max(0, playerBrain);
+                updateResourcesDisplay();
+
+                setTimeout(() => {
+                    alert("💥 GAME OVER! ทรัพยากรบางชนิดหมดเกลี้ยง!\n\nลองกลับไปเริ่มเล่นใหม่และสังเกตคำใบ้เพิ่มพลังอีกครั้งนะครับ! 🚀");
+                    openStoryCreator();
+                }, 300);
+                return;
+            }
+
+            // จำกัดไม่ให้เกินค่า Max
+            if (playerHP > maxHP) playerHP = maxHP;
+            if (playerFood > maxFood) playerFood = maxFood;
+            if (playerBrain > maxBrain) playerBrain = maxBrain;
+
+            updateResourcesDisplay();
+
             currentStoryPage++;
             renderStoryPage();
         }
@@ -1335,63 +1541,37 @@
             const expEarnedEl = document.getElementById("summary-exp-earned");
             const savedBadge = document.getElementById("summary-saved-badge");
 
-            if (!todayStoryRewardEarned) {
-                totalStars += 1;
-                saveUserStars();
-                addEXPToUser(100);
-                markTodayStoryRewardEarned();
+            let avgResourcePct = Math.round(((playerHP + playerFood + playerBrain) / (maxHP + maxFood + maxBrain)) * 100);
+            let bonusExp = Math.round(avgResourcePct * 0.8);
+            let totalExpEarned = 100 + bonusExp;
 
-                starsEarnedEl.innerText = "🌟 1 ดวง";
-                starsEarnedEl.className = "text-lg text-amber-500";
-                expEarnedEl.innerText = "+100 EXP ✨";
-                savedBadge.innerText = "✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
-                savedBadge.className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-3 rounded-xl border border-emerald-200";
+            incrementTodayRounds();
 
-                sendInAppNotification('COMPLETED_STORY', { title: generatedStoryData.title, lang: selectedStoryLang });
+            totalStars += 1;
+            saveUserStars();
+            addEXPToUser(totalExpEarned);
 
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    const msg = selectedStoryLang === 'EN' ? 
-                        `Great job ${currentUser || ''}! You finished the interactive story and earned 1 star!` :
-                        `เก่งมากเลยครับ ${currentUser || ''} ผจญภัยอ่านนิทานจบเล่ม รับไปเลย 1 ดาว และ 100 EXP`;
-                    const utterance = new SpeechSynthesisUtterance(msg);
-                    utterance.lang = selectedStoryLang === 'EN' ? 'en-US' : 'th-TH';
-                    window.speechSynthesis.speak(utterance);
-                }
-            } else {
-                starsEarnedEl.innerText = "🌟 0 ดวง (รับโควต้าวันนี้แล้ว)";
-                starsEarnedEl.className = "text-sm text-slate-500 font-bold";
-                expEarnedEl.innerText = "+0 EXP";
-                savedBadge.innerText = "💡 หนูรับโควต้าดาว และ EXP ประจำวันของนิทานไปแล้วนะครับ พรุ่งนี้มารับใหม่นะ!";
-                savedBadge.className = "bg-amber-50 text-amber-900 text-xs font-bold p-3 rounded-xl border border-amber-200";
+            starsEarnedEl.innerText = "🌟 1 ดวง";
+            starsEarnedEl.className = "text-lg text-amber-500 font-extrabold";
+            expEarnedEl.innerText = `+${totalExpEarned} EXP ✨ (บริหารได้คุ้มค่า ${avgResourcePct}%)`;
+            savedBadge.innerText = "✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
+            savedBadge.className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-3 rounded-xl border border-emerald-200";
 
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    const msg = selectedStoryLang === 'EN' ? 
-                        `Great job ${currentUser || ''}! You finished another interactive story today!` :
-                        `เก่งมากเลยครับ ${currentUser || ''} อ่านนิทานจบอีกเล่มแล้ว!`;
-                    const utterance = new SpeechSynthesisUtterance(msg);
-                    utterance.lang = selectedStoryLang === 'EN' ? 'en-US' : 'th-TH';
-                    window.speechSynthesis.speak(utterance);
-                }
+            sendInAppNotification('COMPLETED_STORY', { title: generatedStoryData.title, lang: selectedStoryLang });
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const msg = selectedStoryLang === 'EN' ? 
+                    `Great job ${currentUser || ''}! You managed your resources wisely and earned 1 star!` :
+                    `เก่งมากเลยครับ ${currentUser || ''} วางแผนใช้ทรัพยากรได้อย่างคุ้มค่า พิชิตเกมนิทานจบ 10 หน้า รับไปเลย 1 ดาว`;
+                const utterance = new SpeechSynthesisUtterance(msg);
+                utterance.lang = selectedStoryLang === 'EN' ? 'en-US' : 'th-TH';
+                window.speechSynthesis.speak(utterance);
             }
 
-            document.getElementById("summary-total-count").innerText = "อ่านนิทานจบเล่ม (8 หน้า)!";
-            document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} ผจญภัยอ่านนิทานเรื่อง "${generatedStoryData.title}" จบแล้ว!`;
+            document.getElementById("summary-total-count").innerText = "พิชิตเกมนิทาน AI!";
+            document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} ผจญภัยอ่านนิทานเรื่อง "${generatedStoryData.title}" จบเรียบร้อย!`;
             document.getElementById("completion-modal").classList.remove("hidden");
-        }
-
-        function markTodayStoryRewardEarned() {
-            todayStoryRewardEarned = true;
-            const todayStr = getTodayDateString();
-
-            if (isFirebaseActive && currentUser) {
-                const { ref, set } = window.firebaseModules;
-                const db = window.firebaseModules.getDatabase();
-                set(ref(db, `user_daily_story_reward/${currentUser}/${todayStr}`), true);
-            } else {
-                localStorage.setItem(`story_reward_${currentUser}_${todayStr}`, "true");
-            }
         }
 
         // --- MATH COMBINATION GAME ENGINE ---
@@ -1554,7 +1734,7 @@
 
         function executeMathCombination() {
             if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
-                alert(`🛑 หนูเล่นครบ ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
+                alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
                 return;
             }
 
@@ -1696,11 +1876,6 @@
                     checkDailyLimitStatus();
                 });
 
-                onValue(ref(db, `user_daily_story_reward/${currentUser}/${todayStr}`), (snapshot) => {
-                    const val = snapshot.val();
-                    todayStoryRewardEarned = val !== null ? val : false;
-                });
-
                 onValue(ref(db, `user_inventory/${currentUser}`), (snapshot) => {
                     const val = snapshot.val();
                     userInventoryList = [];
@@ -1719,7 +1894,6 @@
 
                 const todayStr = getTodayDateString();
                 todayPlayedRounds = parseInt(localStorage.getItem(`daily_rounds_${currentUser}_${todayStr}`) || "0", 10);
-                todayStoryRewardEarned = localStorage.getItem(`story_reward_${currentUser}_${todayStr}`) === "true";
                 
                 const localInv = localStorage.getItem(`user_inventory_${currentUser}`);
                 userInventoryList = localInv ? JSON.parse(localInv) : [];
@@ -1904,26 +2078,36 @@
         function checkDailyLimitStatus() {
             const limitBanner = document.getElementById("daily-limit-banner");
             const checkBtn = document.getElementById("btn-check-answer");
+            const mathCombineBtn = document.querySelector("#main-math-tab button[onclick='executeMathCombination()']");
+            const storyGenBtn = document.getElementById("btn-generate-story");
             const quotaText = document.getElementById("daily-quota-text");
             const limitRoundsText = document.getElementById("limit-rounds-text");
 
             if (limitRoundsText) limitRoundsText.innerText = dailyLimitRounds;
 
             if (!isParentUser && isDailyLimitEnabled) {
-                quotaText.innerText = `วันนี้ ${todayPlayedRounds}/${dailyLimitRounds} รอบ`;
-                quotaText.classList.remove("hidden");
+                if (quotaText) {
+                    quotaText.innerText = `โควต้ารวมวันนี้ ${todayPlayedRounds}/${dailyLimitRounds} รอบ`;
+                    quotaText.classList.remove("hidden");
+                }
 
                 if (todayPlayedRounds >= dailyLimitRounds) {
-                    limitBanner.classList.remove("hidden");
+                    if (limitBanner) limitBanner.classList.remove("hidden");
                     if (checkBtn) { checkBtn.disabled = true; checkBtn.classList.add("opacity-50", "cursor-not-allowed"); }
+                    if (mathCombineBtn) { mathCombineBtn.disabled = true; mathCombineBtn.classList.add("opacity-50", "cursor-not-allowed"); }
+                    if (storyGenBtn) { storyGenBtn.disabled = true; storyGenBtn.classList.add("opacity-50", "cursor-not-allowed"); }
                 } else {
-                    limitBanner.classList.add("hidden");
+                    if (limitBanner) limitBanner.classList.add("hidden");
                     if (checkBtn) { checkBtn.disabled = false; checkBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
+                    if (mathCombineBtn) { mathCombineBtn.disabled = false; mathCombineBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
+                    if (storyGenBtn) { storyGenBtn.disabled = false; storyGenBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
                 }
             } else {
-                limitBanner.classList.add("hidden");
-                quotaText.classList.add("hidden");
+                if (limitBanner) limitBanner.classList.add("hidden");
+                if (quotaText) quotaText.classList.add("hidden");
                 if (checkBtn) { checkBtn.disabled = false; checkBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
+                if (mathCombineBtn) { mathCombineBtn.disabled = false; mathCombineBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
+                if (storyGenBtn) { storyGenBtn.disabled = false; storyGenBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
             }
         }
 
@@ -2612,7 +2796,7 @@
                             <span class="text-3xl bg-white p-2 rounded-xl border border-purple-200">${avatars[n.user] || '👦'}</span>
                             <div class="flex-1">
                                 <div class="flex justify-between items-center mb-0.5">
-                                    <span class="font-extrabold text-sm text-purple-950">${n.user} อ่านนิทาน AI จบเล่ม (8 หน้า)! 📖</span>
+                                    <span class="font-extrabold text-sm text-purple-950">${n.user} พิชิตเกมนิทาน AI วางแผน (10 หน้า)! 📖</span>
                                     <span class="text-[10px] font-bold text-purple-700/60">${n.time}</span>
                                 </div>
                                 <p class="text-xs text-purple-900/80 font-medium">
@@ -2951,7 +3135,7 @@
             if (filteredVocabList.length === 0) return;
 
             if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
-                alert(`🛑 หนูเล่นครบ ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
+                alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
                 return;
             }
 
