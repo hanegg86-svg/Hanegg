@@ -148,7 +148,8 @@
                 <span id="notify-dot" class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-rose-500 rounded-full border-2 border-white hidden"></span>
             </button>
 
-            <button id="btn-key" onclick="openKeyModal()" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-2xl shadow-sm border border-white/20 min-w-[38px] min-h-[38px] flex items-center justify-center transition active:scale-95">
+            <!-- ปุ่มตั้งค่า (ซ่อนไว้สำหรับเด็ก จะเปิดเฉพาะเมื่อเป็นผู้ปกครองเท่านั้น) -->
+            <button id="btn-key" onclick="openKeyModal()" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-2xl shadow-sm border border-white/20 min-w-[38px] min-h-[38px] items-center justify-center transition active:scale-95 hidden">
                 <i data-lucide="key" class="w-4 h-4"></i>
             </button>
         </div>
@@ -249,7 +250,7 @@
             </div>
         </div>
 
-        <!-- TAB 2: MINI GAMES HUB TAB (รวม 3 เกมไว้ที่นี่) -->
+        <!-- TAB 2: MINI GAMES HUB TAB -->
         <div id="main-game-tab" class="w-full hidden flex-col items-center space-y-3">
             
             <!-- Selector Switcher for Mini Games -->
@@ -1241,8 +1242,7 @@
 
             const apiKey = localStorage.getItem("gemini_api_key");
             if (!apiKey) {
-                alert("กรุณากดปุ่มลูกกุญแจ 🔑 ด้านบนขวาเพื่อใส่ Gemini API Key ก่อนสร้างนิทานครับ!");
-                openKeyModal();
+                alert("กรุณาให้คุณพ่อคุณแม่ช่วยตั้งค่า Gemini API Key ให้ก่อนสร้างนิทานครับ!");
                 return;
             }
 
@@ -1313,7 +1313,7 @@
 
             } catch (error) {
                 console.error("Story Generation Error:", error);
-                alert("ไม่สามารถสร้างนิทานได้: " + (error.message || "กรุณาตรวจสอบ API Key และการเชื่อมต่อ"));
+                alert("ไม่สามารถสร้างนิทานได้: " + (error.message || "กรุณาแจ้งพ่อนะหรือแม่พัดให้ตรวจสอบการตั้งค่าครับ"));
             } finally {
                 btnGen.disabled = false;
                 btnGen.innerHTML = `✨ เนรมิตเกมนิทานถ่ายรูปส่องของ 📸`;
@@ -1392,7 +1392,7 @@
         async function captureAndAnalyzeStoryImage() {
             const apiKey = localStorage.getItem("gemini_api_key");
             if (!apiKey) {
-                alert("กรุณากรอก Gemini API Key ในการตั้งค่าก่อนครับ");
+                alert("กรุณาแจ้งพ่อนะหรือแม่พัดให้ช่วยตั้งค่า Gemini API Key ก่อนครับ");
                 return;
             }
 
@@ -3034,6 +3034,7 @@
             document.getElementById("user-avatar").innerText = avatars[name] || '👤';
 
             const addBtn = document.getElementById("btn-add-vocab");
+            const btnKey = document.getElementById("btn-key");
             const flashcardSec = document.getElementById("flashcard-section");
             const spellingSec = document.getElementById("spelling-section");
             const parentControls = document.getElementById("parent-controls");
@@ -3043,6 +3044,8 @@
             if (isParent) {
                 addBtn.classList.remove("hidden");
                 addBtn.classList.add("flex");
+                btnKey.classList.remove("hidden");
+                btnKey.classList.add("flex");
                 flashcardSec.classList.remove("hidden");
                 spellingSec.classList.add("hidden");
                 parentControls.classList.remove("hidden");
@@ -3051,6 +3054,8 @@
             } else {
                 addBtn.classList.add("hidden");
                 addBtn.classList.remove("flex");
+                btnKey.classList.add("hidden");
+                btnKey.classList.remove("flex");
                 flashcardSec.classList.add("hidden");
                 spellingSec.classList.remove("hidden");
                 spellingSec.classList.add("flex");
@@ -3274,10 +3279,19 @@
             }
         }
 
-        function openKeyModal() { document.getElementById("key-modal").classList.remove("hidden"); }
+        function openKeyModal() { 
+            if (!isParentUser) {
+                alert("เข้าใช้งานได้เฉพาะพ่อนะ และ แม่พัด เท่านั้นครับ!");
+                return;
+            }
+            document.getElementById("key-modal").classList.remove("hidden"); 
+        }
+        
         function closeKeyModal() { document.getElementById("key-modal").classList.add("hidden"); }
 
         function saveApiKey() {
+            if (!isParentUser) return;
+
             const key = document.getElementById("input-api-key").value.trim();
             const newPin = document.getElementById("input-parent-pin").value.trim();
             const fbConfig = document.getElementById("input-firebase-config").value.trim();
@@ -3315,6 +3329,7 @@
         }
 
         function openLevelAvatarModal() {
+            if (!isParentUser) return;
             closeKeyModal();
             renderLevelAvatarList();
             document.getElementById("level-avatar-modal").classList.remove("hidden");
@@ -3325,6 +3340,7 @@
         }
 
         function updateMaxLevelSetting() {
+            if (!isParentUser) return;
             const val = parseInt(document.getElementById("input-max-level").value, 10);
             if (!isNaN(val) && val >= 1 && val <= 50) {
                 maxLevel = val;
@@ -3382,6 +3398,7 @@
         }
 
         function handleLevelAvatarUpload(event, child, lvl) {
+            if (!isParentUser) return;
             const file = event.target.files[0];
             if (!file) return;
 
@@ -3418,6 +3435,7 @@
         }
 
         function deleteLevelAvatar(child, lvl) {
+            if (!isParentUser) return;
             if (confirm(`ลบรูปตัวละคร Level ${lvl} ของน้อง ${child} ใช่ไหม?`)) {
                 if (levelAvatarsConfig[child] && levelAvatarsConfig[child][lvl]) {
                     delete levelAvatarsConfig[child][lvl];
@@ -3428,6 +3446,7 @@
         }
 
         function openAddModal() {
+            if (!isParentUser) return;
             document.getElementById("modal-title").innerText = `เพิ่มคำศัพท์ใหม่ (${subjectMode}) 📝`;
             document.getElementById("edit-index").value = "-1";
             document.getElementById("vocab-form").reset();
@@ -3439,6 +3458,7 @@
         }
 
         function editCurrentCard() {
+            if (!isParentUser) return;
             if (filteredVocabList.length === 0) return;
             const item = filteredVocabList[currentIndex];
             const rawIndex = rawVocabList.findIndex(x => x.en === item.en && x.th === item.th);
@@ -3469,6 +3489,7 @@
         }
 
         function deleteCurrentCard() {
+            if (!isParentUser) return;
             if (filteredVocabList.length === 0) return;
             const item = filteredVocabList[currentIndex];
             const rawIndex = rawVocabList.findIndex(x => x.en === item.en && x.th === item.th);
@@ -3513,8 +3534,7 @@
             const apiKey = localStorage.getItem("gemini_api_key");
 
             if (!apiKey) { 
-                alert("กรุณากดปุ่มลูกกุญแจ 🔑 ด้านบนขวาเพื่อตั้งค่า Gemini API Key ก่อนครับ"); 
-                openKeyModal();
+                alert("กรุณาแจ้งพ่อนะหรือแม่พัดให้ช่วยตั้งค่า Gemini API Key ก่อนครับ"); 
                 return; 
             }
 
@@ -3626,6 +3646,8 @@
 
         function handleFormSubmit(e) {
             e.preventDefault();
+            if (!isParentUser) return;
+
             const editIndex = parseInt(document.getElementById("edit-index").value, 10);
             const en = document.getElementById("input-en").value.trim();
             const th = document.getElementById("input-th").value.trim();
