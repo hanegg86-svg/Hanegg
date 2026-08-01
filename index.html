@@ -676,7 +676,7 @@
     <!-- Notification Feed Modal -->
     <div id="notify-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative border-4 border-amber-300 max-h-[80vh] flex flex-col">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center mb-3">
                 <h3 class="text-lg font-extrabold text-amber-900 flex items-center gap-2">
                     <i data-lucide="bell" class="w-5 h-5"></i> บันทึก & คำขอแจ้งเตือน 🎈
                 </h3>
@@ -684,6 +684,13 @@
                     <i data-lucide="x"></i>
                 </button>
             </div>
+            
+            <div id="notify-parent-actions" class="mb-3 hidden">
+                <button onclick="clearAllNotifications()" class="w-full bg-red-100 hover:bg-red-200 text-red-800 font-bold py-2 rounded-xl text-xs border border-red-300 shadow-sm transition">
+                    🗑️ ล้างประวัติการแจ้งเตือนทั้งหมด
+                </button>
+            </div>
+
             <div id="notify-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
                 <div class="text-center text-xs text-slate-400 py-8">ยังไม่มีรายการแจ้งเตือนล่าสุด</div>
             </div>
@@ -1802,14 +1809,29 @@
                     checkDailyLimitStatus();
                 });
 
-                onValue(ref(db, `user_inventory/${currentUser}`), (snapshot) => {
-                    const val = snapshot.val();
-                    userInventoryList = [];
-                    if (val) {
-                        Object.keys(val).forEach(k => userInventoryList.push({ invId: k, ...val[k] }));
-                    }
-                    renderUserInventory();
-                });
+                if (isParentUser) {
+                    onValue(ref(db, `user_inventory`), (snapshot) => {
+                        const val = snapshot.val();
+                        userInventoryList = [];
+                        if (val) {
+                            Object.keys(val).forEach(childName => {
+                                Object.keys(val[childName]).forEach(k => {
+                                    userInventoryList.push({ invId: k, owner: childName, ...val[childName][k] });
+                                });
+                            });
+                        }
+                        renderUserInventory();
+                    });
+                } else {
+                    onValue(ref(db, `user_inventory/${currentUser}`), (snapshot) => {
+                        const val = snapshot.val();
+                        userInventoryList = [];
+                        if (val) {
+                            Object.keys(val).forEach(k => userInventoryList.push({ invId: k, owner: currentUser, ...val[k] }));
+                        }
+                        renderUserInventory();
+                    });
+                }
 
             } else {
                 totalStars = parseInt(localStorage.getItem(getUserStarsKey()) || "0", 10);
@@ -1821,8 +1843,19 @@
                 const todayStr = getTodayDateString();
                 todayPlayedRounds = parseInt(localStorage.getItem(`daily_rounds_${currentUser}_${todayStr}`) || "0", 10);
                 
-                const localInv = localStorage.getItem(`user_inventory_${currentUser}`);
-                userInventoryList = localInv ? JSON.parse(localInv) : [];
+                if (isParentUser) {
+                    userInventoryList = [];
+                    ['พูน', 'เพลิน'].forEach(c => {
+                        const localInv = localStorage.getItem(`user_inventory_${c}`);
+                        if (localInv) {
+                            const parsed = JSON.parse(localInv);
+                            parsed.forEach(item => userInventoryList.push({ ...item, owner: c }));
+                        }
+                    });
+                } else {
+                    const localInv = localStorage.getItem(`user_inventory_${currentUser}`);
+                    userInventoryList = localInv ? JSON.parse(localInv).map(i => ({ ...i, owner: currentUser })) : [];
+                }
                 renderUserInventory();
 
                 checkDailyLimitStatus();
@@ -2516,27 +2549,53 @@
                 localStorage.setItem(localKey, JSON.stringify(currentInv));
             }
 
-            if (userName === currentUser) {
-                if (!isFirebaseActive) {
-                    userInventoryList = JSON.parse(localStorage.getItem(`user_inventory_${currentUser}`) || "[]");
-                }
-                renderUserInventory();
-            }
+            loadUserStars();
         }
 
-        // --- FIXED: กดใช้ของรางวัลแล้วลบออกจากกระเป๋าทันที ---
-        function useInventoryItem(invId) {
-            if (confirm("คุณใช้งานรางวัลนี้แล้วใช่ไหมครับ?")) {
+        // --- FIXED: ลบของรางวัลในกระเป๋าได้ถูกต้องทั้ง เด็ก และ พ่อนะ/แม่พัด ---
+        function deleteInventoryItemDirectly(ownerChild, invId) {
+            const targetChild = ownerChild || currentUser;
+            if (!targetChild) return;
+
+            if (confirm(`ลบของรางวัลนี้ออกจากกระเป๋าของน้อง ${targetChild} ใช่ไหมครับ?`)) {
                 if (isFirebaseActive) {
                     const { ref, remove } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
-                    remove(ref(db, `user_inventory/${currentUser}/${invId}`)).then(() => {
+                    remove(ref(db, `user_inventory/${targetChild}/${invId}`)).then(() => {
                         userInventoryList = userInventoryList.filter(x => x.invId !== invId);
                         renderUserInventory();
                     });
                 } else {
+                    const localKey = `user_inventory_${targetChild}`;
+                    let currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
+                    currentInv = currentInv.filter(x => x.invId !== invId);
+                    localStorage.setItem(localKey, JSON.stringify(currentInv));
+                    
                     userInventoryList = userInventoryList.filter(x => x.invId !== invId);
-                    localStorage.setItem(`user_inventory_${currentUser}`, JSON.stringify(userInventoryList));
+                    renderUserInventory();
+                }
+            }
+        }
+
+        function useInventoryItem(ownerChild, invId) {
+            const targetChild = ownerChild || currentUser;
+            if (!targetChild) return;
+
+            if (confirm("คุณใช้งานรางวัลนี้แล้วใช่ไหมครับ?")) {
+                if (isFirebaseActive) {
+                    const { ref, remove } = window.firebaseModules;
+                    const db = window.firebaseModules.getDatabase();
+                    remove(ref(db, `user_inventory/${targetChild}/${invId}`)).then(() => {
+                        userInventoryList = userInventoryList.filter(x => x.invId !== invId);
+                        renderUserInventory();
+                    });
+                } else {
+                    const localKey = `user_inventory_${targetChild}`;
+                    let currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
+                    currentInv = currentInv.filter(x => x.invId !== invId);
+                    localStorage.setItem(localKey, JSON.stringify(currentInv));
+                    
+                    userInventoryList = userInventoryList.filter(x => x.invId !== invId);
                     renderUserInventory();
                 }
             }
@@ -2555,11 +2614,21 @@
                 <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-3 flex justify-between items-center shadow-sm">
                     <div>
                         <div class="font-black text-emerald-950 text-sm">${item.name}</div>
-                        <div class="text-[10px] font-bold text-emerald-700">อนุมัติแล้วเมื่อ ${item.date}</div>
+                        <div class="text-[10px] font-bold text-emerald-700">
+                            ${isParentUser ? `<span class="text-amber-800 font-extrabold">🎒 กระเป๋าของ: น้อง${item.owner} | </span>` : ''}
+                            อนุมัติเมื่อ ${item.date}
+                        </div>
                     </div>
-                    <button onclick="useInventoryItem('${item.invId}')" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-1.5 px-3 rounded-xl text-xs shadow">
-                        ✨ ใช้รางวัลนี้แล้ว
-                    </button>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="useInventoryItem('${item.owner}', '${item.invId}')" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-1.5 px-3 rounded-xl text-xs shadow">
+                            ✨ ใช้แล้ว
+                        </button>
+                        ${isParentUser ? `
+                            <button onclick="deleteInventoryItemDirectly('${item.owner}', '${item.invId}')" class="bg-red-100 hover:bg-red-200 text-red-700 font-bold p-1.5 rounded-xl text-xs border border-red-300">
+                                🗑️ ลบ
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
             `).join('');
         }
@@ -2601,7 +2670,19 @@
             }
         }
 
-        // --- FIXED: ลบประวัติการแจ้งเตือนอัตโนมัติหากเก่าเกิน 2 วัน (48 ชั่วโมง) ---
+        function clearAllNotifications() {
+            if (confirm("คุณต้องการลบประวัติคำขอและการแจ้งเตือนทั้งหมดใช่หรือไม่?")) {
+                if (isFirebaseActive && dbRefNotify) {
+                    const { ref, set } = window.firebaseModules;
+                    const db = window.firebaseModules.getDatabase();
+                    set(dbRefNotify, null);
+                } else {
+                    notificationsList = [];
+                    renderNotifications();
+                }
+            }
+        }
+
         function autoCleanupOldNotifications() {
             const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
             const now = Date.now();
@@ -2626,6 +2707,16 @@
             autoCleanupOldNotifications();
 
             const listEl = document.getElementById("notify-list");
+            const parentActionsBox = document.getElementById("notify-parent-actions");
+
+            if (parentActionsBox) {
+                if (isParentUser && notificationsList.length > 0) {
+                    parentActionsBox.classList.remove("hidden");
+                } else {
+                    parentActionsBox.classList.add("hidden");
+                }
+            }
+
             if (!listEl) return;
             
             if (notificationsList.length === 0) {
@@ -2639,11 +2730,11 @@
                 const isPending = n.status === 'pending';
                 const itemKey = n.id || n.timestamp;
 
-                const deleteBtnHtml = (isParentUser && !isPending) ? `
+                const deleteBtnHtml = `
                     <button onclick="deleteNotification('${itemKey}')" class="text-xs bg-red-100 text-red-700 hover:bg-red-200 px-2 py-1 rounded-lg font-bold border border-red-300 ml-auto active:scale-95 transition">
                         🗑️ ลบ
                     </button>
-                ` : '';
+                `;
 
                 if (n.type === 'MANUAL_STAR_ADJUST') {
                     return `
