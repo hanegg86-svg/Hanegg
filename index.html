@@ -23,8 +23,8 @@
     <!-- Firebase SDKs (Modular via CDN) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, set, push, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        window.firebaseModules = { initializeApp, getDatabase, ref, onValue, set, push, update, get };
+        import { getDatabase, ref, onValue, set, push, update, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        window.firebaseModules = { initializeApp, getDatabase, ref, onValue, set, push, update, get, remove };
     </script>
 
     <style>
@@ -2501,7 +2501,8 @@
             const item = {
                 invId: Date.now().toString(),
                 name: rewardName,
-                date: new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
+                date: new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }),
+                timestamp: Date.now()
             };
 
             if (isFirebaseActive) {
@@ -2523,12 +2524,16 @@
             }
         }
 
+        // --- FIXED: กดใช้ของรางวัลแล้วลบออกจากกระเป๋าทันที ---
         function useInventoryItem(invId) {
             if (confirm("คุณใช้งานรางวัลนี้แล้วใช่ไหมครับ?")) {
                 if (isFirebaseActive) {
-                    const { ref, set } = window.firebaseModules;
+                    const { ref, remove } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
-                    set(ref(db, `user_inventory/${currentUser}/${invId}`), null);
+                    remove(ref(db, `user_inventory/${currentUser}/${invId}`)).then(() => {
+                        userInventoryList = userInventoryList.filter(x => x.invId !== invId);
+                        renderUserInventory();
+                    });
                 } else {
                     userInventoryList = userInventoryList.filter(x => x.invId !== invId);
                     localStorage.setItem(`user_inventory_${currentUser}`, JSON.stringify(userInventoryList));
@@ -2586,9 +2591,9 @@
         function deleteNotification(notifyId) {
             if (confirm("ต้องการลบการแจ้งเตือนนี้ใช่หรือไม่?")) {
                 if (isFirebaseActive && dbRefNotify) {
-                    const { ref, set } = window.firebaseModules;
+                    const { ref, remove } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
-                    set(ref(db, `kids_notifications/${notifyId}`), null);
+                    remove(ref(db, `kids_notifications/${notifyId}`));
                 } else {
                     notificationsList = notificationsList.filter(n => (n.id || n.timestamp.toString()) !== notifyId.toString());
                     renderNotifications();
@@ -2596,7 +2601,30 @@
             }
         }
 
+        // --- FIXED: ลบประวัติการแจ้งเตือนอัตโนมัติหากเก่าเกิน 2 วัน (48 ชั่วโมง) ---
+        function autoCleanupOldNotifications() {
+            const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+            const now = Date.now();
+
+            const oldItems = notificationsList.filter(n => (now - (n.timestamp || 0)) > TWO_DAYS_MS);
+
+            if (oldItems.length > 0) {
+                oldItems.forEach(item => {
+                    const itemKey = item.id || item.timestamp;
+                    if (isFirebaseActive) {
+                        const { ref, remove } = window.firebaseModules;
+                        const db = window.firebaseModules.getDatabase();
+                        remove(ref(db, `kids_notifications/${itemKey}`));
+                    }
+                });
+
+                notificationsList = notificationsList.filter(n => (now - (n.timestamp || 0)) <= TWO_DAYS_MS);
+            }
+        }
+
         function renderNotifications() {
+            autoCleanupOldNotifications();
+
             const listEl = document.getElementById("notify-list");
             if (!listEl) return;
             
