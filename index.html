@@ -2552,18 +2552,18 @@
             loadUserStars();
         }
 
-        // --- FIXED DELETE FUNCTION: ลบออกถาวรทั้ง LocalStorage และ Firebase Key ---
+        // --- FIX CRITICAL BUG: ระบุเจ้าของไอเทมจริง ป้องกันการลบผิด Path เสมอ ---
         function deleteInventoryItemDirectly(ownerChild, invId) {
-            const targetChild = ownerChild || currentUser;
-            if (!targetChild) return;
+            const targetItem = userInventoryList.find(x => x.invId === invId);
+            const actualOwner = ownerChild || (targetItem ? targetItem.owner : currentUser);
 
-            if (confirm(`ลบของรางวัลนี้ออกจากกระเป๋าของน้อง ${targetChild} ใช่ไหมครับ?`)) {
-                // หา ID ต้นฉบับเพื่อกวาดขยะใน LocalStorage
-                const targetItem = userInventoryList.find(x => x.invId === invId);
+            if (!actualOwner) return;
+
+            if (confirm(`ลบของรางวัลนี้ออกจากกระเป๋าของน้อง ${actualOwner} ใช่ไหมครับ?`)) {
                 const localIdToRemove = targetItem ? (targetItem.originalInvId || invId) : invId;
 
-                // 1. ลบจากฝั่ง LocalStorage
-                const localKey = `user_inventory_${targetChild}`;
+                // 1. ลบจาก LocalStorage ของเด็กคนนั้น
+                const localKey = `user_inventory_${actualOwner}`;
                 let currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
                 currentInv = currentInv.filter(x => x.invId !== localIdToRemove && x.invId !== invId);
                 localStorage.setItem(localKey, JSON.stringify(currentInv));
@@ -2572,27 +2572,27 @@
                 userInventoryList = userInventoryList.filter(x => x.invId !== invId);
                 renderUserInventory();
 
-                // 3. สั่งลบถาวรใน Firebase ด้วย Key ที่ตรงเป๊ะ
+                // 3. สั่งลบจาก Firebase ด้วย Path ชื่อของเด็กคนนั้นเป๊ะๆ
                 if (isFirebaseActive) {
                     const { ref, remove } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
-                    remove(ref(db, `user_inventory/${targetChild}/${invId}`));
+                    remove(ref(db, `user_inventory/${actualOwner}/${invId}`));
                 }
             }
         }
 
-        // --- FIXED USE FUNCTION: กดใช้แล้วลบออกถาวรทั้ง LocalStorage และ Firebase Key ---
+        // --- FIX CRITICAL BUG: ระบุเจ้าของไอเทมจริง ปุ่มใช้แล้วลบออกถาวร ---
         function useInventoryItem(ownerChild, invId) {
-            const targetChild = ownerChild || currentUser;
-            if (!targetChild) return;
+            const targetItem = userInventoryList.find(x => x.invId === invId);
+            const actualOwner = ownerChild || (targetItem ? targetItem.owner : currentUser);
+
+            if (!actualOwner) return;
 
             if (confirm("คุณใช้งานรางวัลนี้แล้วใช่ไหมครับ?")) {
-                // หา ID ต้นฉบับเพื่อกวาดขยะใน LocalStorage
-                const targetItem = userInventoryList.find(x => x.invId === invId);
                 const localIdToRemove = targetItem ? (targetItem.originalInvId || invId) : invId;
 
-                // 1. ลบจากฝั่ง LocalStorage
-                const localKey = `user_inventory_${targetChild}`;
+                // 1. ลบจาก LocalStorage ของเด็กคนนั้น
+                const localKey = `user_inventory_${actualOwner}`;
                 let currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
                 currentInv = currentInv.filter(x => x.invId !== localIdToRemove && x.invId !== invId);
                 localStorage.setItem(localKey, JSON.stringify(currentInv));
@@ -2601,11 +2601,11 @@
                 userInventoryList = userInventoryList.filter(x => x.invId !== invId);
                 renderUserInventory();
 
-                // 3. ลบถาวรใน Firebase ด้วย Key ที่ตรงเป๊ะ
+                // 3. สั่งลบจาก Firebase ด้วย Path ชื่อของเด็กคนนั้นเป๊ะๆ
                 if (isFirebaseActive) {
                     const { ref, remove } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
-                    remove(ref(db, `user_inventory/${targetChild}/${invId}`));
+                    remove(ref(db, `user_inventory/${actualOwner}/${invId}`));
                 }
             }
         }
