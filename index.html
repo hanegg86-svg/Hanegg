@@ -1232,7 +1232,13 @@
 
 กฎสำคัญสำหรับระบบถ่ายรูปหาของ (Item Hunt):
 - ในหน้า 2, 4, 6, 8 จะต้องเป็นหน้าที่มี "ภารกิจถ่ายรูปหาไอเทมจริงรอบบ้าน"
-- สิ่งของที่ให้หาต้องเป็นของในชีวิตประจำวันที่เด็กหาง่ายๆ เช่น "แก้วน้ำ", "ส้มหรือผลไม้", "รองเท้า", "หนังสือ", "ดินสอ", "ช้อน", "หมอน"
+- ให้สุ่มสิ่งของในบ้านที่มีความหลากหลาย จากคลังตัวอย่างต่อไปนี้:
+  * ของใช้: [แก้วน้ำ, ช้อน, หมอน, ผ้าเช็ดหน้า, ร่ม, หูฟัง, นาฬิกา, ขวดน้ำ, หวี]
+  * ผลไม้/อาหาร: [ส้ม, กล้วย, แอปเปิ้ล, ขนม, กล่องนม]
+  * เครื่องเขียน: [ดินสอ, ยางลบ, ไม้บรรทัด, สีไม้, สมุด, กรรไกรป้าน]
+  * เสื้อผ้า/เครื่องแต่งกาย: [รองเท้า, ถุงเท้า, หมวก, แว่นตา]
+  * ของเล่น: [ตุ๊กตา, รถของเล่น, บล็อกตัวต่อ, ลูกบอล]
+- ห้ามเลือกสิ่งของซ้ำกันในนิทานเรื่องเดียวกันเด็ดขาด
 - กำหนดค่า "targetItemTH" (ชื่อภาษาไทย) และ "targetItemEN" (ชื่อภาษาอังกฤษ) สำหรับสิ่งของที่จะให้เด็กหาในหน้านั้นๆ
 
 ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น (ห้ามมี markdown):
@@ -1242,9 +1248,9 @@
     { "page": 1, "text": "...", "emoji": "🚀" },
     { "page": 2, "text": "...", "emoji": "🔍", "isItemHunt": true, "targetItemTH": "แก้วน้ำ", "targetItemEN": "water cup" },
     { "page": 3, "text": "...", "emoji": "🗺️" },
-    { "page": 4, "text": "...", "emoji": "🍎", "isItemHunt": true, "targetItemTH": "ผลไม้ หรือ ส้ม", "targetItemEN": "fruit or orange" },
+    { "page": 4, "text": "...", "emoji": "🍎", "isItemHunt": true, "targetItemTH": "ส้ม", "targetItemEN": "orange" },
     { "page": 5, "text": "...", "emoji": "⚡" },
-    { "page": 6, "text": "...", "emoji": "✏️", "isItemHunt": true, "targetItemTH": "ดินสอ หรือ ปากกา", "targetItemEN": "pencil or pen" },
+    { "page": 6, "text": "...", "emoji": "✏️", "isItemHunt": true, "targetItemTH": "ดินสอ", "targetItemEN": "pencil" },
     { "page": 7, "text": "...", "emoji": "🐲" },
     { "page": 8, "text": "...", "emoji": "👟", "isItemHunt": true, "targetItemTH": "รองเท้า", "targetItemEN": "shoes" },
     { "page": 9, "text": "...", "emoji": "✨" },
@@ -1258,7 +1264,7 @@
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.7 } })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.85 } })
                 });
 
                 const data = await response.json();
