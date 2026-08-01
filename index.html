@@ -2552,27 +2552,27 @@
             loadUserStars();
         }
 
-        // --- FIXED: ลบของรางวัลในกระเป๋าได้ถูกต้องทั้ง เด็ก และ พ่อนะ/แม่พัด ---
+        // --- FIX: สั่งลบถาวรทั้ง Firebase และ LocalStorage ทันทีไม่ให้เด้งกลับมา ---
         function deleteInventoryItemDirectly(ownerChild, invId) {
             const targetChild = ownerChild || currentUser;
             if (!targetChild) return;
 
             if (confirm(`ลบของรางวัลนี้ออกจากกระเป๋าของน้อง ${targetChild} ใช่ไหมครับ?`)) {
+                // 1. ลบจากฝั่ง LocalStorage ของเด็กคนนั้นเสมอ
+                const localKey = `user_inventory_${targetChild}`;
+                let currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
+                currentInv = currentInv.filter(x => x.invId !== invId);
+                localStorage.setItem(localKey, JSON.stringify(currentInv));
+
+                // 2. ลบออกจากอาเรย์ในความจำปัจจุบัน
+                userInventoryList = userInventoryList.filter(x => x.invId !== invId);
+                renderUserInventory();
+
+                // 3. สั่งลบถาวรใน Firebase
                 if (isFirebaseActive) {
                     const { ref, remove } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
-                    remove(ref(db, `user_inventory/${targetChild}/${invId}`)).then(() => {
-                        userInventoryList = userInventoryList.filter(x => x.invId !== invId);
-                        renderUserInventory();
-                    });
-                } else {
-                    const localKey = `user_inventory_${targetChild}`;
-                    let currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
-                    currentInv = currentInv.filter(x => x.invId !== invId);
-                    localStorage.setItem(localKey, JSON.stringify(currentInv));
-                    
-                    userInventoryList = userInventoryList.filter(x => x.invId !== invId);
-                    renderUserInventory();
+                    remove(ref(db, `user_inventory/${targetChild}/${invId}`));
                 }
             }
         }
@@ -2582,21 +2582,21 @@
             if (!targetChild) return;
 
             if (confirm("คุณใช้งานรางวัลนี้แล้วใช่ไหมครับ?")) {
+                // 1. ลบจากฝั่ง LocalStorage
+                const localKey = `user_inventory_${targetChild}`;
+                let currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
+                currentInv = currentInv.filter(x => x.invId !== invId);
+                localStorage.setItem(localKey, JSON.stringify(currentInv));
+
+                // 2. ลบออกจากความจำหน้าจอ
+                userInventoryList = userInventoryList.filter(x => x.invId !== invId);
+                renderUserInventory();
+
+                // 3. ลบถาวรใน Firebase
                 if (isFirebaseActive) {
                     const { ref, remove } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
-                    remove(ref(db, `user_inventory/${targetChild}/${invId}`)).then(() => {
-                        userInventoryList = userInventoryList.filter(x => x.invId !== invId);
-                        renderUserInventory();
-                    });
-                } else {
-                    const localKey = `user_inventory_${targetChild}`;
-                    let currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
-                    currentInv = currentInv.filter(x => x.invId !== invId);
-                    localStorage.setItem(localKey, JSON.stringify(currentInv));
-                    
-                    userInventoryList = userInventoryList.filter(x => x.invId !== invId);
-                    renderUserInventory();
+                    remove(ref(db, `user_inventory/${targetChild}/${invId}`));
                 }
             }
         }
@@ -2659,26 +2659,26 @@
 
         function deleteNotification(notifyId) {
             if (confirm("ต้องการลบการแจ้งเตือนนี้ใช่หรือไม่?")) {
+                notificationsList = notificationsList.filter(n => (n.id || n.timestamp.toString()) !== notifyId.toString());
+                renderNotifications();
+
                 if (isFirebaseActive && dbRefNotify) {
                     const { ref, remove } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
                     remove(ref(db, `kids_notifications/${notifyId}`));
-                } else {
-                    notificationsList = notificationsList.filter(n => (n.id || n.timestamp.toString()) !== notifyId.toString());
-                    renderNotifications();
                 }
             }
         }
 
         function clearAllNotifications() {
             if (confirm("คุณต้องการลบประวัติคำขอและการแจ้งเตือนทั้งหมดใช่หรือไม่?")) {
+                notificationsList = [];
+                renderNotifications();
+
                 if (isFirebaseActive && dbRefNotify) {
-                    const { ref, set } = window.firebaseModules;
+                    const { set } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
                     set(dbRefNotify, null);
-                } else {
-                    notificationsList = [];
-                    renderNotifications();
                 }
             }
         }
