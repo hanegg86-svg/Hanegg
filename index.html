@@ -907,7 +907,6 @@
             }, 1200);
         });
 
-        // ✅ FIXED BUG 1: ลบ Hardcoded API Key ป้องกันข้อมูลหลุดสาธารณะ
         const embeddedFirebaseConfig = {
             apiKey: "",
             authDomain: "han-vocab.firebaseapp.com",
@@ -1066,7 +1065,7 @@
 
         // --- MAIN BOTTOM TABS CONTROL ---
         function switchMainTab(tab) {
-            closeCameraForStory(); // ✅ FIXED BUG 5: ปิดกล้องเสมอเมื่อเปลี่ยนหน้าแท็บหลัก
+            closeCameraForStory();
 
             currentMainTab = tab;
 
@@ -1770,7 +1769,6 @@
             }
         }
 
-        // ✅ FIXED BUG 4: รีเซ็ตข้อนับเมื่อพิชิตครบ 5 ข้อ
         function triggerMathCompletionModal() {
             totalStars += 1;
             saveUserStars();
@@ -2324,7 +2322,8 @@
                 id: Date.now().toString(),
                 title: title,
                 stars: stars,
-                assignees: assignees
+                assignees: assignees,
+                lastAssignedAt: Date.now()
             };
 
             parentQuestsList.push(newQuest);
@@ -2335,9 +2334,29 @@
             alert(`สร้างภารกิจ "${title}" สำเร็จ!`);
         }
 
+        // ✅ FIXED BUG: ลบภารกิจพร้อมลบประวัติการส่งเดิมออก
         function deleteParentQuest(id) {
-            if (confirm("คุณต้องการลบภารกิจนี้ใช่หรือไม่?")) {
+            const quest = parentQuestsList.find(q => q.id === id);
+            if (!quest) return;
+
+            if (confirm(`คุณต้องการลบภารกิจ "${quest.title}" ใช่หรือไม่?`)) {
                 parentQuestsList = parentQuestsList.filter(q => q.id !== id);
+                
+                if (isFirebaseActive && dbRefNotify) {
+                    const { ref, remove } = window.firebaseModules;
+                    const db = window.firebaseModules.getDatabase();
+                    
+                    notificationsList.forEach(n => {
+                        if (n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title) {
+                            remove(ref(db, `kids_notifications/${n.id || n.timestamp}`));
+                        }
+                    });
+                } else {
+                    notificationsList = notificationsList.filter(n => 
+                        !(n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title)
+                    );
+                }
+
                 saveParentQuestsToStorage();
             }
         }
@@ -2360,6 +2379,7 @@
             document.getElementById("assign-quest-modal").classList.add("hidden");
         }
 
+        // ✅ FIXED BUG: เมื่อกด Assign บันทึกเวลาล้าสุด และล้างการแจ้งเตือนเก่า เพื่อให้ภารกิจเด้งให้เด็กทำซ้ำได้ทันที
         function saveQuestAssignment() {
             const id = document.getElementById("assign-quest-id").value;
             const quest = parentQuestsList.find(q => q.id === id);
@@ -2373,11 +2393,29 @@
             if (assignPloern) newAssignees.push("เพลิน");
 
             quest.assignees = newAssignees;
+            quest.lastAssignedAt = Date.now();
+
+            if (isFirebaseActive && dbRefNotify) {
+                const { ref, remove } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                
+                notificationsList.forEach(n => {
+                    if (n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title) {
+                        remove(ref(db, `kids_notifications/${n.id || n.timestamp}`));
+                    }
+                });
+            } else {
+                notificationsList = notificationsList.filter(n => 
+                    !(n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title)
+                );
+            }
+
             saveParentQuestsToStorage();
             closeAssignModal();
-            alert(`อัปเดตผู้รับภารกิจ "${quest.title}" เรียบร้อยแล้ว!`);
+            alert(`แจกภารกิจ "${quest.title}" ให้เด็กๆ เรียบร้อยแล้ว! ✨`);
         }
 
+        // ✅ FIXED BUG: แสดงภารกิจให้เด็กตามรอบเวลาการ Assign
         function renderParentQuestsList() {
             const container = document.getElementById("parent-quests-list");
             if (!container) return;
@@ -2390,15 +2428,30 @@
                     const isForUser = assignees.includes(currentUser);
                     if (!isForUser) return false;
 
-                    const existingNotify = notificationsList.find(n => 
+                    const existingPending = notificationsList.find(n => 
                         n.type === 'SUBMIT_QUEST' && 
                         n.user === currentUser && 
-                        n.details && n.details.questTitle === q.title
+                        n.details && n.details.questTitle === q.title &&
+                        n.status === 'pending'
                     );
 
-                    if (existingNotify && existingNotify.status === 'approved') {
+                    if (existingPending) return true;
+
+                    const lastApproved = notificationsList.find(n => 
+                        n.type === 'SUBMIT_QUEST' && 
+                        n.user === currentUser && 
+                        n.details && n.details.questTitle === q.title &&
+                        n.status === 'approved'
+                    );
+
+                    if (lastApproved && q.lastAssignedAt && lastApproved.timestamp < q.lastAssignedAt) {
+                        return true;
+                    }
+
+                    if (lastApproved && !q.lastAssignedAt) {
                         return false;
                     }
+
                     return true;
                 });
             }
@@ -2699,7 +2752,6 @@
             }
         }
 
-        // ✅ FIXED BUG 2: รีเซ็ตข้อมูลทั้งใน Memory และ Firebase
         function clearAllNotifications() {
             if (confirm("คุณต้องการลบประวัติคำขอและการแจ้งเตือนทั้งหมดใช่หรือไม่?")) {
                 notificationsList = [];
@@ -3494,7 +3546,6 @@
             document.getElementById("add-modal").classList.remove("hidden");
         }
 
-        // ✅ FIXED BUG 3: ลบคำศัพท์ถูกต้องแม่นยำด้วยการเทียบ Object Reference
         function deleteCurrentCard() {
             if (!isParentUser) return;
             if (filteredVocabList.length === 0) return;
