@@ -560,11 +560,14 @@
 
             <!-- SUB-GAME 4: MATH HERO TD MINIGAME -->
             <div id="game-td-container" class="w-full max-w-sm hidden flex-col items-center space-y-3">
+                
+                <!-- Status Bar (HP, Wave, Kills, Coins, Score) -->
                 <div id="td-stats" class="w-full flex justify-around items-center p-2.5 bg-white rounded-2xl shadow-xs text-xs font-bold text-slate-700 border border-slate-100">
                     <div>❤️ HP: <span id="td-hp" class="text-rose-500">10</span></div>
                     <div>🌊 Wave: <span id="td-wave" class="text-indigo-600">1</span>/10</div>
                     <div>👾 Kills: <span id="td-kills" class="text-emerald-600">0</span>/10</div>
-                    <div>🪙 Score: <span id="td-score" class="text-amber-500 font-kids">0</span></div>
+                    <div>🪙 <span id="td-coins" class="text-amber-500 font-extrabold">0</span></div>
+                    <div>Score: <span id="td-score" class="text-slate-500 font-kids">0</span></div>
                 </div>
 
                 <div class="w-full relative">
@@ -582,6 +585,35 @@
                         💣 ระเบิดล้างจอ (เหลือ <span id="td-ult-count">1</span>)
                     </button>
                 </div>
+
+                <!-- 🛒 SHOP / ITEM HELPERS (ร้านค้าตัวช่วยในเกม Math TD) -->
+                <div class="w-full bg-amber-50/80 border border-amber-200/80 p-3 rounded-2xl flex flex-col gap-2">
+                    <div class="text-[11px] font-extrabold text-amber-900 flex items-center gap-1 font-kids">
+                        🛒 ร้านค้าตัวช่วย (ใช้เหรียญทอง):
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="buyTDSlow()" class="py-2 px-2.5 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl text-left flex flex-col shadow-2xs transition active:scale-95">
+                            <span class="text-[11px] font-bold text-slate-800">🐌 ชะลอศัตรู 50%</span>
+                            <span class="text-[10px] text-amber-600 font-extrabold">🪙 100 เหรียญ</span>
+                        </button>
+
+                        <button onclick="buyTDFreeze()" class="py-2 px-2.5 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl text-left flex flex-col shadow-2xs transition active:scale-95">
+                            <span class="text-[11px] font-bold text-slate-800">❄️ แช่แข็งศัตรู</span>
+                            <span class="text-[10px] text-amber-600 font-extrabold">🪙 150 เหรียญ</span>
+                        </button>
+
+                        <button onclick="buyTDHeart()" class="py-2 px-2.5 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl text-left flex flex-col shadow-2xs transition active:scale-95">
+                            <span class="text-[11px] font-bold text-slate-800">❤️ เพิ่มหัวใจ +1</span>
+                            <span class="text-[10px] text-amber-600 font-extrabold">🪙 200 เหรียญ</span>
+                        </button>
+
+                        <button onclick="buyTDUltimate()" class="py-2 px-2.5 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl text-left flex flex-col shadow-2xs transition active:scale-95">
+                            <span class="text-[11px] font-bold text-slate-800">💣 ซื้อระเบิด +1</span>
+                            <span class="text-[10px] text-amber-600 font-extrabold">🪙 300 เหรียญ</span>
+                        </button>
+                    </div>
+                </div>
+
             </div>
 
         </div>
