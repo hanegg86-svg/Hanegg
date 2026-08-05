@@ -872,6 +872,19 @@
                     </div>
                 </div>
 
+                <!-- NEW: LOCAL STORAGE PROGRESS BAR -->
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                            <i data-lucide="hard-drive" class="w-3.5 h-3.5"></i> พื้นที่ Local Storage
+                        </span>
+                        <span id="storage-text" class="text-[10px] font-bold text-slate-500">0.00 / 5.00 MB</span>
+                    </div>
+                    <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                        <div id="storage-progress" class="bg-indigo-500 h-full w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Firebase Config (JSON)</label>
                     <textarea id="input-firebase-config" rows="3" placeholder='{"apiKey": "...", "databaseURL": "...", ...}' class="w-full border border-slate-200 rounded-xl p-2 text-xs font-mono focus:outline-none focus:border-indigo-500"></textarea>
@@ -1285,7 +1298,7 @@
   ]
 }`;
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
 
             try {
                 const response = await fetch(url, {
@@ -1424,7 +1437,7 @@
   "comment": "คำชมเชยสั้นๆ เหมาะสำหรับเด็ก"
 }`;
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
 
             try {
                 const response = await fetch(url, {
@@ -1459,7 +1472,7 @@
 
             } catch (err) {
                 console.error("AI Vision Error:", err);
-                alert("เกิดข้อผิดพลาดในการวิเคราะห์รูปภาพ: " + (err.message || "กรุณาตรวจสอบการเชื่อมต่อ"));
+                alert("เกิดข้อผิดพลาดในการวิเคราะห์รูปภาพ: " + (error.message || "กรุณาตรวจสอบการเชื่อมต่อ"));
             } finally {
                 btnPhoto.disabled = false;
                 btnPhoto.classList.remove("opacity-50");
@@ -1705,7 +1718,7 @@
             let result = 0;
 
             if (mathSelectedOp === '+') result = n1 + n2;
-            else if (mathSelectedOp === '-') result = n1 - n2;
+            else if (mathSelectedOp === '-') result = Math.abs(n1 - n2);
             else if (mathSelectedOp === '×') result = n1 * n2;
             else if (mathSelectedOp === '÷') {
                 if (n2 === 0 || n1 % n2 !== 0) {
@@ -2334,7 +2347,6 @@
             alert(`สร้างภารกิจ "${title}" สำเร็จ!`);
         }
 
-        // ✅ FIXED BUG: ลบภารกิจพร้อมลบประวัติการส่งเดิมออก
         function deleteParentQuest(id) {
             const quest = parentQuestsList.find(q => q.id === id);
             if (!quest) return;
@@ -2379,7 +2391,6 @@
             document.getElementById("assign-quest-modal").classList.add("hidden");
         }
 
-        // ✅ FIXED BUG: เมื่อกด Assign บันทึกเวลาล้าสุด และล้างการแจ้งเตือนเก่า เพื่อให้ภารกิจเด้งให้เด็กทำซ้ำได้ทันที
         function saveQuestAssignment() {
             const id = document.getElementById("assign-quest-id").value;
             const quest = parentQuestsList.find(q => q.id === id);
@@ -2415,7 +2426,6 @@
             alert(`แจกภารกิจ "${quest.title}" ให้เด็กๆ เรียบร้อยแล้ว! ✨`);
         }
 
-        // ✅ FIXED BUG: แสดงภารกิจให้เด็กตามรอบเวลาการ Assign
         function renderParentQuestsList() {
             const container = document.getElementById("parent-quests-list");
             if (!container) return;
@@ -3337,11 +3347,41 @@
             }
         }
 
+        function updateStorageProgressBar() {
+            let totalBytes = 0;
+            for (let x in localStorage) {
+                if (localStorage.hasOwnProperty(x)) {
+                    totalBytes += ((localStorage[x].length + x.length) * 2);
+                }
+            }
+            
+            const maxBytes = 5 * 1024 * 1024; 
+            const currentMB = (totalBytes / (1024 * 1024)).toFixed(2);
+            let percentage = (totalBytes / maxBytes) * 100;
+            if (percentage > 100) percentage = 100;
+
+            const storageText = document.getElementById("storage-text");
+            const storageProgress = document.getElementById("storage-progress");
+
+            if (storageText) storageText.innerText = `${currentMB} / 5.00 MB`;
+            if (storageProgress) {
+                storageProgress.style.width = `${percentage}%`;
+                if (percentage > 85) {
+                    storageProgress.className = "bg-rose-500 h-full transition-all duration-500 rounded-full";
+                } else if (percentage > 60) {
+                    storageProgress.className = "bg-amber-500 h-full transition-all duration-500 rounded-full";
+                } else {
+                    storageProgress.className = "bg-indigo-500 h-full transition-all duration-500 rounded-full";
+                }
+            }
+        }
+
         function openKeyModal() { 
             if (!isParentUser) {
                 alert("เข้าใช้งานได้เฉพาะพ่อนะ และ แม่พัด เท่านั้นครับ!");
                 return;
             }
+            updateStorageProgressBar();
             document.getElementById("key-modal").classList.remove("hidden"); 
         }
         
@@ -3378,7 +3418,9 @@
 
             if (fbConfig) {
                 localStorage.setItem("firebase_config", fbConfig);
-                initFirebase();
+                alert("บันทึกการตั้งค่าเรียบร้อยแล้ว! ระบบจะรีเฟรชหน้าเพื่อโหลดข้อมูลใหม่");
+                window.location.reload();
+                return;
             }
 
             alert("บันทึกการตั้งค่าเรียบร้อยแล้ว!");
@@ -3510,6 +3552,7 @@
             document.getElementById("vocab-form").reset();
             document.getElementById("assign-poon").checked = true;
             document.getElementById("assign-ploern").checked = true;
+            document.getElementById("input-img").value = ""; 
             document.getElementById("img-preview-container").classList.add("hidden");
             currentResizedBase64 = null;
             document.getElementById("add-modal").classList.remove("hidden");
@@ -3528,6 +3571,7 @@
             document.getElementById("input-en").value = item.en;
             document.getElementById("input-th").value = item.th;
             document.getElementById("input-phonetic").value = item.phonetic || item.th;
+            document.getElementById("input-img").value = ""; 
 
             const assignees = item.assignees || ["พูน", "เพลิน"];
             document.getElementById("assign-poon").checked = assignees.includes("พูน");
@@ -3567,6 +3611,7 @@
         function closeModal() {
             document.getElementById("add-modal").classList.add("hidden");
             document.getElementById("vocab-form").reset();
+            document.getElementById("input-img").value = ""; 
             document.getElementById("img-preview-container").classList.add("hidden");
             currentResizedBase64 = null;
             stopAILoading();
@@ -3609,7 +3654,7 @@
 
             startAILoading("Gemini กำลังสร้าง...");
 
-            const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
 
             try {
                 const response = await fetch(textUrl, {
