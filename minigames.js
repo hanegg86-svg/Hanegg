@@ -721,11 +721,29 @@ function triggerStoryCompletionModal() {
 }
 
 // ==========================================
-// --- MATH HERO TD GAME ENGINE ---
+// --- MATH HERO TD GAME ENGINE (WITH SFX) ---
 // ==========================================
+
+// 🔊 ระบบเล่นเสียง Effect (SFX Helper)
+function playTDSFX(soundType) {
+    const sounds = {
+        slash: "https://actions.google.com/sounds/v1/weapons/sword_slash.ogg",
+        wrong: "https://actions.google.com/sounds/v1/cartoon/boing.ogg",
+        ult: "https://actions.google.com/sounds/v1/explosions/medium_combustion.ogg",
+        coin: "https://actions.google.com/sounds/v1/cartoon/clink_clank.ogg",
+        win: "https://actions.google.com/sounds/v1/human_voices/applause.ogg"
+    };
+
+    if (sounds[soundType]) {
+        const audio = new Audio(sounds[soundType]);
+        audio.volume = 0.5;
+        audio.play().catch(e => console.log("Audio play blocked by browser:", e));
+    }
+}
+
 let tdCanvas, tdCtx, tdChoiceBtns, tdQuestionDisplay, tdUltBtn, tdUltCountDisplay;
 let tdHp = 10, tdScore = 0, tdWave = 1, tdTotalKillsInWave = 0, tdUltimateCount = 1, tdIsGameCleared = false;
-let tdCoins = 0, tdSlowTimer = 0, tdFreezeTimer = 0; // 🪙 เพิ่มระบบเหรียญและบัฟชั่วคราว
+let tdCoins = 0, tdSlowTimer = 0, tdFreezeTimer = 0;
 let tdWrongCount = 0, tdShakeTimer = 0;
 let tdEnemies = [], tdParticles = [], tdSlashes = [], tdSpawnTimer = 0, tdCurrentTarget = null, tdCurrentChoices = [];
 let tdWaveNoticeTimer = 120, tdWaveNoticeText = "WAVE 1", tdAnimationRequestId = null;
@@ -735,7 +753,6 @@ const tdPath = [
     {x: 420, y: 80}, {x: 420, y: 230}, {x: 500, y: 230}
 ];
 const tdHero = { x: 535, y: 230, slashAnim: 0 };
-
 
 class TDEnemy {
     constructor() {
@@ -794,6 +811,7 @@ class TDEnemy {
                 this.dead = true;
                 tdHp--;
                 document.getElementById('td-hp').innerText = tdHp;
+                playTDSFX('wrong');
             }
             return;
         }
@@ -804,7 +822,6 @@ class TDEnemy {
 
         let currentSpeed = this.baseSpeed;
 
-        // ❄️ คำนวณความเร็วตามเอฟเฟกต์ สโลว์ / แช่แข็ง
         if (tdFreezeTimer > 0) {
             currentSpeed = 0;
         } else if (tdSlowTimer > 0) {
@@ -892,8 +909,8 @@ function initMathTDGame() {
     tdUltCountDisplay = document.getElementById('td-ult-count');
 
     tdHp = 10; tdScore = 0; tdWave = 1; tdTotalKillsInWave = 0; tdIsGameCleared = false;
-    tdCoins = 0; // 🪙 เริ่มต้น 0 เหรียญ
-    tdUltimateCount = 1; // 💣 ให้ระเบิด 1 ลูกแค่ตอนเริ่มเกม
+    tdCoins = 0;
+    tdUltimateCount = 1;
     tdSlowTimer = 0; tdFreezeTimer = 0;
     tdWrongCount = 0; tdShakeTimer = 0; tdEnemies = []; tdParticles = []; tdSlashes = []; tdSpawnTimer = 0;
     tdCurrentTarget = null; tdWaveNoticeTimer = 120; tdWaveNoticeText = "WAVE 1";
@@ -915,7 +932,7 @@ function updateTDCoinsUI() {
 }
 
 // ==========================================
-// --- SHOP HELPER FUNCTIONS (ระบบซื้อตัวช่วย) ---
+// --- SHOP HELPER FUNCTIONS ---
 // ==========================================
 function buyTDSlow() {
     if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
@@ -923,7 +940,8 @@ function buyTDSlow() {
     }
     if (tdCoins < 100) { alert("เหรียญไม่พอครับ! (ต้องใช้ 100 เหรียญ)"); return; }
     tdCoins -= 100;
-    tdSlowTimer = 300; // ช้าลง 5 วินาที
+    tdSlowTimer = 300;
+    playTDSFX('coin');
     updateTDCoinsUI();
 }
 
@@ -933,7 +951,8 @@ function buyTDFreeze() {
     }
     if (tdCoins < 150) { alert("เหรียญไม่พอครับ! (ต้องใช้ 150 เหรียญ)"); return; }
     tdCoins -= 150;
-    tdFreezeTimer = 210; // หยุดนิ่ง 3.5 วินาที
+    tdFreezeTimer = 210;
+    playTDSFX('coin');
     updateTDCoinsUI();
 }
 
@@ -945,6 +964,7 @@ function buyTDHeart() {
     tdCoins -= 200;
     tdHp += 1;
     document.getElementById('td-hp').innerText = tdHp;
+    playTDSFX('coin');
     updateTDCoinsUI();
 }
 
@@ -955,6 +975,7 @@ function buyTDUltimate() {
     if (tdCoins < 300) { alert("เหรียญไม่พอครับ! (ต้องใช้ 300 เหรียญ)"); return; }
     tdCoins -= 300;
     tdUltimateCount += 1;
+    playTDSFX('coin');
     updateTDUltUI();
     updateTDCoinsUI();
 }
@@ -1025,13 +1046,15 @@ function useTDUltimate() {
     updateTDUltUI();
     tdShakeTimer = 20;
 
+    playTDSFX('ult');
+
     createTDExplosion(tdHero.x, tdHero.y, 40, '#FFD166');
     const killedCount = tdEnemies.length;
     tdEnemies.forEach(e => createTDExplosion(e.x, e.y, 20, '#FF70A6'));
 
     tdEnemies = []; tdCurrentTarget = null;
     tdScore += killedCount * 10;
-    tdCoins += killedCount * 10; // 🪙 ได้รับเหรียญเมื่อระเบิดศัตรู
+    tdCoins += killedCount * 10;
     tdTotalKillsInWave += killedCount;
 
     document.getElementById('td-score').innerText = tdScore;
@@ -1092,6 +1115,8 @@ function selectTDChoice(index) {
     const selectedValue = tdCurrentChoices[index];
 
     if (selectedValue === tdCurrentTarget.answer) {
+        playTDSFX('slash');
+
         tdHero.slashAnim = Math.PI;
         createTDSlashWave(tdHero.x, tdHero.y, tdCurrentTarget.x, tdCurrentTarget.y);
         createTDExplosion(tdCurrentTarget.x, tdCurrentTarget.y);
@@ -1100,7 +1125,7 @@ function selectTDChoice(index) {
         if (idx !== -1) tdEnemies.splice(idx, 1);
 
         tdScore += 10;
-        tdCoins += 10; // 🪙 ได้รับ 10 เหรียญเมื่อฆ่ามอนสเตอร์ได้
+        tdCoins += 10;
         tdTotalKillsInWave++;
         
         document.getElementById('td-score').innerText = tdScore;
@@ -1112,6 +1137,8 @@ function selectTDChoice(index) {
             if (tdWave >= 10) tdIsGameCleared = true; else nextTDWave();
         }
     } else {
+        playTDSFX('wrong');
+
         if (tdCurrentTarget) tdCurrentTarget.penaltyTimer = 90;
         tdShakeTimer = 15;
         tdWrongCount++;
@@ -1130,8 +1157,6 @@ function selectTDChoice(index) {
 function nextTDWave() {
     tdWave++; 
     tdTotalKillsInWave = 0; 
-    // ❌ ลบ tdHp++; ออกแล้ว เพื่อไม่ให้เพิ่มหัวใจเมื่อผ่าน Level/Wave
-    // (หากต้องการเพิ่มหัวใจ ต้องกดซื้อผ่านร้านค้า 200 เหรียญเท่านั้น)
 
     document.getElementById('td-wave').innerText = tdWave;
     document.getElementById('td-kills').innerText = tdTotalKillsInWave;
@@ -1140,7 +1165,6 @@ function nextTDWave() {
     tdWaveNoticeText = `WAVE ${tdWave} CLEAR!`;
     tdWaveNoticeTimer = 120;
 }
-
 
 function drawTDPath() {
     tdCtx.beginPath();
@@ -1160,6 +1184,8 @@ function triggerTDCompletionModal(finalScore) {
     else if (finalScore >= 500) starsEarned = 1;
 
     if (starsEarned > 0) {
+        playTDSFX('win');
+
         totalStars += starsEarned;
         saveUserStars();
         addEXPToUser(starsEarned * 50);
@@ -1184,7 +1210,6 @@ function triggerTDCompletionModal(finalScore) {
 function tdGameLoop() {
     tdCtx.clearRect(0, 0, tdCanvas.width, tdCanvas.height);
 
-    // ⏱️ นับถอยหลังบัฟ Slow / Freeze
     if (tdSlowTimer > 0) tdSlowTimer--;
     if (tdFreezeTimer > 0) tdFreezeTimer--;
 
