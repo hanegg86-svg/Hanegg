@@ -724,20 +724,41 @@ function triggerStoryCompletionModal() {
 // --- MATH HERO TD GAME ENGINE (WITH SFX) ---
 // ==========================================
 
-// 🔊 ระบบเล่นเสียง Effect (SFX Helper)
-function playTDSFX(soundType) {
-    const sounds = {
-        slash: "https://actions.google.com/sounds/v1/weapons/sword_slash.ogg",
-        wrong: "https://actions.google.com/sounds/v1/cartoon/boing.ogg",
-        ult: "https://actions.google.com/sounds/v1/explosions/medium_combustion.ogg",
-        coin: "https://actions.google.com/sounds/v1/cartoon/clink_clank.ogg",
-        win: "https://actions.google.com/sounds/v1/human_voices/applause.ogg"
-    };
+// 🔊 สร้าง Object เสียงไว้ล่วงหน้าเพื่อลดดีเลย์และผ่านตัวกรอง Autoplay บน Android
+const tdAudioPool = {
+    slash: new Audio("https://actions.google.com/sounds/v1/weapons/sword_slash.ogg"),
+    wrong: new Audio("https://actions.google.com/sounds/v1/cartoon/boing.ogg"),
+    ult: new Audio("https://actions.google.com/sounds/v1/explosions/medium_combustion.ogg"),
+    coin: new Audio("https://actions.google.com/sounds/v1/cartoon/clink_clank.ogg"),
+    win: new Audio("https://actions.google.com/sounds/v1/human_voices/applause.ogg")
+};
 
-    if (sounds[soundType]) {
-        const audio = new Audio(sounds[soundType]);
-        audio.volume = 0.5;
-        audio.play().catch(e => console.log("Audio play blocked by browser:", e));
+let isAudioUnlocked = false;
+
+// 🔓 ฟังก์ชันปลดล็อกระบบเสียงสำหรับ Android
+function unlockAndroidAudio() {
+    if (isAudioUnlocked) return;
+    
+    Object.values(tdAudioPool).forEach(audio => {
+        audio.volume = 0;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.volume = 0.5;
+            }).catch(() => {});
+        }
+    });
+    isAudioUnlocked = true;
+}
+
+// 🔊 ฟังก์ชันเล่นเสียง SFX
+function playTDSFX(soundType) {
+    const sound = tdAudioPool[soundType];
+    if (sound) {
+        sound.currentTime = 0;
+        sound.play().catch(e => console.log("Audio play blocked by browser:", e));
     }
 }
 
@@ -901,6 +922,8 @@ class TDEnemy {
 }
 
 function initMathTDGame() {
+    unlockAndroidAudio(); // 🔓 ปลดล็อกระบบเสียงสำหรับ Android ทันทีเมื่อเข้าเกม
+
     tdCanvas = document.getElementById('tdCanvas');
     tdCtx = tdCanvas.getContext('2d');
     tdChoiceBtns = document.querySelectorAll('.td-choice-btn');
@@ -935,6 +958,7 @@ function updateTDCoinsUI() {
 // --- SHOP HELPER FUNCTIONS ---
 // ==========================================
 function buyTDSlow() {
+    unlockAndroidAudio();
     if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
         alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`); return;
     }
@@ -946,6 +970,7 @@ function buyTDSlow() {
 }
 
 function buyTDFreeze() {
+    unlockAndroidAudio();
     if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
         alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`); return;
     }
@@ -957,6 +982,7 @@ function buyTDFreeze() {
 }
 
 function buyTDHeart() {
+    unlockAndroidAudio();
     if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
         alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`); return;
     }
@@ -969,6 +995,7 @@ function buyTDHeart() {
 }
 
 function buyTDUltimate() {
+    unlockAndroidAudio();
     if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
         alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`); return;
     }
@@ -1036,6 +1063,7 @@ function createTDSlashWave(startX, startY, targetX, targetY) {
 }
 
 function useTDUltimate() {
+    unlockAndroidAudio();
     if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
         alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
         return;
@@ -1106,6 +1134,7 @@ function generateTDChoices(correctAnswer) {
 }
 
 function selectTDChoice(index) {
+    unlockAndroidAudio();
     if (!tdCurrentTarget || tdIsGameCleared) return;
     if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
         alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
