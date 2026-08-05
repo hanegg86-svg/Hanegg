@@ -95,6 +95,7 @@ function saveQuestAssignment() {
     alert(`แจกภารกิจ "${quest.title}" ให้เด็กๆ เรียบร้อยแล้ว! ✨`);
 }
 
+// --- FIX BUG: แก้ไขฟังก์ชันแสดงรายการภารกิจ เพื่อลบภารกิจที่ตรวจผ่านแล้วออกจากหน้าฝั่งเด็ก ---
 function renderParentQuestsList() {
     const container = document.getElementById("parent-quests-list");
     if (!container) return;
@@ -106,16 +107,15 @@ function renderParentQuestsList() {
             const isForUser = assignees.includes(currentUser);
             if (!isForUser) return false;
 
-            const existingPending = notificationsList.find(n => 
-                n.type === 'SUBMIT_QUEST' && n.user === currentUser && n.details && n.details.questTitle === q.title && n.status === 'pending'
+            // 1. ถ้า พ่อนะ/แม่พัด กดตรวจผ่าน (approved) แล้วสำหรับเด็กคนนี้ ให้ซ่อนทันที
+            const isApproved = notificationsList.some(n => 
+                n.type === 'SUBMIT_QUEST' && 
+                n.user === currentUser && 
+                n.details && n.details.questTitle === q.title && 
+                n.status === 'approved'
             );
-            if (existingPending) return true;
+            if (isApproved) return false;
 
-            const lastApproved = notificationsList.find(n => 
-                n.type === 'SUBMIT_QUEST' && n.user === currentUser && n.details && n.details.questTitle === q.title && n.status === 'approved'
-            );
-            if (lastApproved && q.lastAssignedAt && lastApproved.timestamp < q.lastAssignedAt) return true;
-            if (lastApproved && !q.lastAssignedAt) return false;
             return true;
         });
     }
@@ -133,7 +133,13 @@ function renderParentQuestsList() {
                 <button onclick="deleteParentQuest('${q.id}')" class="bg-rose-50 text-rose-700 hover:bg-rose-100 p-2 rounded-xl text-xs font-bold border border-rose-200">🗑️ ลบ</button>
             `;
         } else {
-            const existingNotify = notificationsList.find(n => n.type === 'SUBMIT_QUEST' && n.user === currentUser && n.details && n.details.questTitle === q.title && n.status === 'pending');
+            const existingNotify = notificationsList.find(n => 
+                n.type === 'SUBMIT_QUEST' && 
+                n.user === currentUser && 
+                n.details && n.details.questTitle === q.title && 
+                n.status === 'pending'
+            );
+            
             if (existingNotify) {
                 actionButtonHtml = `<span class="bg-amber-100 text-amber-800 font-bold py-1.5 px-2.5 rounded-xl text-[11px] border border-amber-200">⏳ รอพ่อนะ/แม่พัด ตรวจ</span>`;
             } else {
