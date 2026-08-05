@@ -1,35 +1,45 @@
+// --- MINI GAMES SWITCHER ---
 function switchMiniGame(subGame) {
     currentMiniGame = subGame;
 
     const btnVocab = document.getElementById("game-subtab-vocab");
     const btnMath = document.getElementById("game-subtab-math");
     const btnStory = document.getElementById("game-subtab-story");
+    const btnTd = document.getElementById("game-subtab-td");
+
     const vocabContainer = document.getElementById("game-vocab-container");
     const mathContainer = document.getElementById("game-math-container");
     const storyContainer = document.getElementById("game-story-container");
+    const tdContainer = document.getElementById("game-td-container");
+
     const langSwitchBox = document.getElementById("lang-switch-box");
 
     const activeClass = "flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition";
     const inactiveClass = "flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition";
 
-    btnVocab.className = inactiveClass; btnMath.className = inactiveClass; btnStory.className = inactiveClass;
-    vocabContainer.classList.add("hidden"); vocabContainer.classList.remove("flex");
-    mathContainer.classList.add("hidden"); mathContainer.classList.remove("flex");
-    storyContainer.classList.add("hidden"); storyContainer.classList.remove("flex");
+    [btnVocab, btnMath, btnStory, btnTd].forEach(b => { if (b) b.className = inactiveClass; });
+    [vocabContainer, mathContainer, storyContainer, tdContainer].forEach(c => {
+        if (c) { c.classList.add("hidden"); c.classList.remove("flex"); }
+    });
+
     langSwitchBox.classList.add("hidden");
 
     if (subGame === 'vocab') {
-        btnVocab.className = activeClass;
+        if (btnVocab) btnVocab.className = activeClass;
         vocabContainer.classList.remove("hidden"); vocabContainer.classList.add("flex");
         langSwitchBox.classList.remove("hidden");
     } else if (subGame === 'math') {
-        btnMath.className = activeClass;
+        if (btnMath) btnMath.className = activeClass;
         mathContainer.classList.remove("hidden"); mathContainer.classList.add("flex");
         generateMathPuzzle();
     } else if (subGame === 'story') {
-        btnStory.className = activeClass;
+        if (btnStory) btnStory.className = activeClass;
         storyContainer.classList.remove("hidden"); storyContainer.classList.add("flex");
         initStoryTabState();
+    } else if (subGame === 'td') {
+        if (btnTd) btnTd.className = activeClass;
+        tdContainer.classList.remove("hidden"); tdContainer.classList.add("flex");
+        initMathTDGame();
     }
     checkDailyLimitStatus();
 }
@@ -236,6 +246,7 @@ function restartSession() {
     document.getElementById("completion-modal").classList.add("hidden");
     if (currentMiniGame === 'math') { mathQuestionIndex = 1; generateMathPuzzle(); } 
     else if (currentMiniGame === 'story') { openStoryCreator(); } 
+    else if (currentMiniGame === 'td') { initMathTDGame(); } 
     else { setCorrectAnswers = 0; shuffleArray(filteredVocabList); currentIndex = 0; updateCard(); }
 }
 
@@ -400,6 +411,7 @@ function previewAndResizeImage(event) {
     reader.readAsDataURL(file);
 }
 
+// --- MATH COMBINATION GAME VARIABLES ---
 let mathDifficulty = 'easy'; let mathQuestionIndex = 1; let mathInitialNumbers = []; let mathCurrentNumbers = []; let mathTargetNumber = 0; let mathSelectedNum1Idx = null; let mathSelectedOp = null; let mathSelectedNum2Idx = null;
 
 function setMathDifficulty(diff) {
@@ -516,6 +528,7 @@ function triggerMathCompletionModal() {
     sendInAppNotification('COMPLETED_MATH', { diff: mathDifficulty, score: 5 });
 }
 
+// --- AI STORYTELLER VARIABLES ---
 let selectedStoryHero = 'พูนและเพลิน', selectedStoryTheme = 'อวกาศ', selectedStoryPet = 'หุ่นยนต์จิ๋ว', selectedStoryLang = 'TH', generatedStoryData = null, currentStoryPage = 0, cameraMediaStream = null;
 
 function initStoryTabState() { selectStoryLang('TH'); selectStoryHero(currentUser === 'เพลิน' ? 'เพลิน' : 'พูน'); selectStoryTheme('อวกาศ'); selectStoryPet('หุ่นยนต์จิ๋ว'); openStoryCreator(); }
@@ -699,4 +712,501 @@ function triggerStoryCompletionModal() {
     document.getElementById("summary-total-count").innerText = "พิชิตเกมนิทานถ่ายรูป AI!";
     document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} ถ่ายรูปหาไอเทมอ่านนิทานเรื่อง "${generatedStoryData.title}" จบเรียบร้อย!`;
     document.getElementById("completion-modal").classList.remove("hidden");
+}
+
+// ==========================================
+// --- MATH HERO TD GAME ENGINE ---
+// ==========================================
+let tdCanvas, tdCtx, tdChoiceBtns, tdQuestionDisplay, tdUltBtn, tdUltCountDisplay;
+let tdHp = 10, tdScore = 0, tdWave = 1, tdTotalKillsInWave = 0, tdUltimateCount = 1, tdIsGameCleared = false;
+let tdWrongCount = 0, tdShakeTimer = 0;
+let tdEnemies = [], tdParticles = [], tdSlashes = [], tdSpawnTimer = 0, tdCurrentTarget = null, tdCurrentChoices = [];
+let tdWaveNoticeTimer = 120, tdWaveNoticeText = "WAVE 1", tdAnimationRequestId = null;
+
+const tdPath = [
+    {x: -30, y: 220}, {x: 180, y: 220}, {x: 180, y: 100},
+    {x: 420, y: 100}, {x: 420, y: 280}, {x: 500, y: 280}
+];
+const tdHero = { x: 535, y: 280, slashAnim: 0 };
+
+class TDEnemy {
+    constructor() {
+        this.x = tdPath[0].x;
+        this.y = tdPath[0].y;
+        this.pathIndex = 0;
+        this.baseSpeed = 0.6 + (tdWave - 1) * 0.12;
+        this.speed = this.baseSpeed;
+        this.size = 22;
+        this.id = Math.random();
+        
+        const qData = this.generateMathProblem(tdWave);
+        this.question = qData.question;
+        this.answer = qData.answer;
+
+        this.progress = 0;
+        this.dead = false;
+        this.penaltyTimer = 0;
+    }
+
+    generateMathProblem(currentWave) {
+        let availableOps = ['+'];
+        if (currentWave >= 3) availableOps.push('-');
+        if (currentWave >= 6) availableOps.push('×');
+        if (currentWave >= 8) availableOps.push('÷');
+
+        const op = availableOps[Math.floor(Math.random() * availableOps.length)];
+        let num1, num2, question, answer;
+
+        if (op === '+') {
+            const max = 10 + currentWave * 3;
+            num1 = Math.floor(Math.random() * max) + 1;
+            num2 = Math.floor(Math.random() * max) + 1;
+            question = `${num1} + ${num2}`; answer = num1 + num2;
+        } else if (op === '-') {
+            const max = 15 + currentWave * 3;
+            num1 = Math.floor(Math.random() * max) + 5;
+            num2 = Math.floor(Math.random() * (num1 - 1)) + 1;
+            question = `${num1} - ${num2}`; answer = num1 - num2;
+        } else if (op === '×') {
+            num1 = Math.floor(Math.random() * 10) + 2;
+            num2 = Math.floor(Math.random() * 10) + 2;
+            question = `${num1} × ${num2}`; answer = num1 * num2;
+        } else if (op === '÷') {
+            num2 = Math.floor(Math.random() * 9) + 2;
+            answer = Math.floor(Math.random() * 10) + 2;
+            num1 = num2 * answer;
+            question = `${num1} ÷ ${num2}`;
+        }
+        return { question, answer };
+    }
+
+    update(aheadEnemy) {
+        if (this.pathIndex >= tdPath.length - 1) {
+            if (!this.dead) {
+                this.dead = true;
+                tdHp--;
+                document.getElementById('td-hp').innerText = tdHp;
+            }
+            return;
+        }
+
+        const target = tdPath[this.pathIndex + 1];
+        const dx = target.x - this.x, dy = target.y - this.y;
+        const dist = Math.hypot(dx, dy);
+
+        let currentSpeed = this.baseSpeed;
+        if (this.penaltyTimer > 0) {
+            currentSpeed *= 4.0;
+            this.penaltyTimer--;
+        }
+
+        if (aheadEnemy) {
+            const distToAhead = Math.hypot(aheadEnemy.x - this.x, aheadEnemy.y - this.y);
+            const minGap = 110;
+            if (distToAhead < minGap && this.penaltyTimer <= 0) {
+                currentSpeed = Math.max(0, aheadEnemy.speed * (distToAhead / minGap));
+            }
+        }
+        this.speed = currentSpeed;
+
+        if (dist < this.speed) {
+            this.x = target.x; this.y = target.y;
+            this.pathIndex++;
+        } else {
+            this.x += (dx / dist) * this.speed;
+            this.y += (dy / dist) * this.speed;
+        }
+        this.progress = this.pathIndex * 1000 + (1000 - dist);
+    }
+
+    draw(isTarget) {
+        tdCtx.save();
+        tdCtx.translate(this.x, this.y);
+
+        if (this.penaltyTimer > 0) {
+            tdCtx.shadowColor = '#FF70A6'; tdCtx.shadowBlur = 18;
+        }
+
+        tdCtx.beginPath();
+        tdCtx.roundRect(-this.size, -this.size, this.size * 2, this.size * 2, 12);
+        tdCtx.fillStyle = (this.penaltyTimer > 0) ? '#FF477E' : (isTarget ? '#FFD166' : '#FF85A1');
+        tdCtx.fill();
+        tdCtx.lineWidth = isTarget ? 4 : 2;
+        tdCtx.strokeStyle = '#FFFFFF';
+        tdCtx.stroke();
+
+        tdCtx.fillStyle = '#FFD166';
+        tdCtx.beginPath();
+        tdCtx.moveTo(-12, -this.size); tdCtx.lineTo(-18, -this.size - 10); tdCtx.lineTo(-6, -this.size - 2); tdCtx.fill();
+        tdCtx.beginPath();
+        tdCtx.moveTo(12, -this.size); tdCtx.lineTo(18, -this.size - 10); tdCtx.lineTo(6, -this.size - 2); tdCtx.fill();
+
+        tdCtx.fillStyle = '#FFFFFF';
+        tdCtx.beginPath(); tdCtx.arc(-8, -4, 6, 0, Math.PI * 2); tdCtx.arc(8, -4, 6, 0, Math.PI * 2); tdCtx.fill();
+        tdCtx.fillStyle = '#2D3748';
+        tdCtx.beginPath(); tdCtx.arc(-8, -4, 3, 0, Math.PI * 2); tdCtx.arc(8, -4, 3, 0, Math.PI * 2); tdCtx.fill();
+        tdCtx.beginPath(); tdCtx.arc(0, 6, 5, 0, Math.PI); tdCtx.strokeStyle = '#2D3748'; tdCtx.lineWidth = 2; tdCtx.stroke();
+        tdCtx.restore();
+
+        const textMargin = 10;
+        tdCtx.font = 'bold 20px Quicksand, Arial';
+        const displayQuestion = (this.penaltyTimer > 0) ? "!! SPEED 4x !!" : this.question;
+        const textWidth = tdCtx.measureText(displayQuestion).width;
+
+        tdCtx.fillStyle = (this.penaltyTimer > 0) ? '#FF477E' : (isTarget ? 'rgba(255, 209, 102, 0.95)' : 'rgba(255, 255, 255, 0.9)');
+        tdCtx.beginPath();
+        tdCtx.roundRect(this.x - (textWidth / 2) - textMargin, this.y - 60, textWidth + (textMargin * 2), 30, 8);
+        tdCtx.fill();
+        if (isTarget || this.penaltyTimer > 0) {
+            tdCtx.strokeStyle = '#FFFFFF'; tdCtx.lineWidth = 2; tdCtx.stroke();
+        }
+
+        tdCtx.fillStyle = (isTarget && this.penaltyTimer <= 0) ? '#2D3748' : (this.penaltyTimer > 0 ? '#FFFFFF' : '#4A5568');
+        tdCtx.textAlign = 'center';
+        tdCtx.fillText(displayQuestion, this.x, this.y - 38);
+    }
+}
+
+function initMathTDGame() {
+    tdCanvas = document.getElementById('tdCanvas');
+    tdCtx = tdCanvas.getContext('2d');
+    tdChoiceBtns = document.querySelectorAll('.td-choice-btn');
+    tdQuestionDisplay = document.getElementById('td-target-question');
+    tdUltBtn = document.getElementById('td-ultimate-btn');
+    tdUltCountDisplay = document.getElementById('td-ult-count');
+
+    tdHp = 10; tdScore = 0; tdWave = 1; tdTotalKillsInWave = 0; tdUltimateCount = 1; tdIsGameCleared = false;
+    tdWrongCount = 0; tdShakeTimer = 0; tdEnemies = []; tdParticles = []; tdSlashes = []; tdSpawnTimer = 0;
+    tdCurrentTarget = null; tdWaveNoticeTimer = 120; tdWaveNoticeText = "WAVE 1";
+
+    document.getElementById('td-hp').innerText = tdHp;
+    document.getElementById('td-wave').innerText = tdWave;
+    document.getElementById('td-kills').innerText = tdTotalKillsInWave;
+    document.getElementById('td-score').innerText = tdScore;
+
+    updateTDUltUI();
+    if (tdAnimationRequestId) cancelAnimationFrame(tdAnimationRequestId);
+    tdGameLoop();
+}
+
+function drawTDHero() {
+    tdCtx.save();
+    tdCtx.translate(tdHero.x, tdHero.y);
+
+    let swordAngle = -Math.PI / 3;
+    if (tdHero.slashAnim > 0) {
+        swordAngle += Math.sin(tdHero.slashAnim) * 1.8;
+        tdHero.slashAnim -= 0.15;
+    }
+
+    tdCtx.fillStyle = '#FF70A6';
+    tdCtx.beginPath(); tdCtx.moveTo(0, -10); tdCtx.lineTo(25, -20); tdCtx.lineTo(20, 20); tdCtx.lineTo(0, 10); tdCtx.fill();
+
+    tdCtx.fillStyle = '#E2E8F0';
+    tdCtx.beginPath(); tdCtx.moveTo(-15, -15); tdCtx.lineTo(-5, -15); tdCtx.lineTo(-5, 15); tdCtx.lineTo(-10, 22); tdCtx.lineTo(-15, 15); tdCtx.closePath(); tdCtx.fill();
+    tdCtx.strokeStyle = '#FFD166'; tdCtx.lineWidth = 2; tdCtx.stroke();
+
+    tdCtx.fillStyle = '#4EA8DE';
+    tdCtx.beginPath(); tdCtx.arc(0, 0, 18, 0, Math.PI * 2); tdCtx.fill();
+    tdCtx.strokeStyle = '#FFFFFF'; tdCtx.lineWidth = 2; tdCtx.stroke();
+
+    tdCtx.fillStyle = '#708090';
+    tdCtx.beginPath(); tdCtx.arc(-2, -2, 14, 0, Math.PI * 2); tdCtx.fill();
+    tdCtx.fillStyle = '#FFD166'; tdCtx.fillRect(-12, -5, 10, 4);
+
+    tdCtx.fillStyle = '#FF70A6';
+    tdCtx.beginPath(); tdCtx.moveTo(-2, -16); tdCtx.lineTo(8, -25); tdCtx.lineTo(12, -14); tdCtx.fill();
+
+    tdCtx.save();
+    tdCtx.rotate(swordAngle);
+    tdCtx.shadowColor = '#4EA8DE'; tdCtx.shadowBlur = 10;
+
+    tdCtx.fillStyle = '#FFFFFF';
+    tdCtx.beginPath(); tdCtx.moveTo(0, -5); tdCtx.lineTo(40, -5); tdCtx.lineTo(48, 0); tdCtx.lineTo(40, 5); tdCtx.lineTo(0, 5); tdCtx.closePath(); tdCtx.fill();
+    tdCtx.fillStyle = '#FFD166'; tdCtx.fillRect(-3, -10, 6, 20);
+    tdCtx.fillStyle = '#708090'; tdCtx.fillRect(-10, -3, 8, 6);
+    tdCtx.restore();
+
+    tdCtx.restore();
+}
+
+function createTDExplosion(x, y, count = 15, color = '#FF70A6') {
+    for (let i = 0; i < count; i++) {
+        tdParticles.push({
+            x: x, y: y,
+            vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12,
+            life: 1.0, color: color
+        });
+    }
+}
+
+function createTDSlashWave(startX, startY, targetX, targetY) {
+    tdSlashes.push({ x1: startX, y1: startY, x2: targetX, y2: targetY, life: 1.0 });
+}
+
+function useTDUltimate() {
+    if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
+        alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
+        return;
+    }
+    if (tdUltimateCount <= 0 || tdEnemies.length === 0 || tdIsGameCleared) return;
+
+    tdUltimateCount--;
+    updateTDUltUI();
+    tdShakeTimer = 20;
+
+    createTDExplosion(tdHero.x, tdHero.y, 40, '#FFD166');
+    const killedCount = tdEnemies.length;
+    tdEnemies.forEach(e => createTDExplosion(e.x, e.y, 20, '#FF70A6'));
+
+    tdEnemies = []; tdCurrentTarget = null;
+    tdScore += killedCount * 10;
+    tdTotalKillsInWave += killedCount;
+
+    document.getElementById('td-score').innerText = tdScore;
+    document.getElementById('td-kills').innerText = tdTotalKillsInWave;
+
+    if (tdTotalKillsInWave >= 10) {
+        if (tdWave >= 10) tdIsGameCleared = true; else nextTDWave();
+    }
+}
+
+function updateTDUltUI() {
+    if (tdUltCountDisplay) tdUltCountDisplay.innerText = tdUltimateCount;
+    if (tdUltBtn) tdUltBtn.disabled = (tdUltimateCount <= 0);
+}
+
+function updateTDTargetAndChoices() {
+    if (tdEnemies.length === 0) {
+        tdCurrentTarget = null;
+        tdQuestionDisplay.innerText = tdIsGameCleared ? "ชนะแล้ว!" : "รอศัตรู...";
+        tdChoiceBtns.forEach(btn => btn.innerText = "-");
+        return;
+    }
+
+    const isCurrentTargetAlive = tdCurrentTarget && tdEnemies.some(e => e.id === tdCurrentTarget.id && !e.dead);
+    if (!isCurrentTargetAlive) {
+        const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
+        tdCurrentTarget = sortedEnemies[0];
+        tdQuestionDisplay.innerText = `เป้าหมาย: ${tdCurrentTarget.question} = ?`;
+        generateTDChoices(tdCurrentTarget.answer);
+    }
+}
+
+function generateTDChoices(correctAnswer) {
+    const choices = new Set();
+    choices.add(correctAnswer);
+
+    while (choices.size < 3) {
+        const offset = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+        const wrongAnswer = correctAnswer + offset;
+        if (wrongAnswer >= 0) choices.add(wrongAnswer);
+    }
+
+    tdCurrentChoices = Array.from(choices).sort(() => Math.random() - 0.5);
+    tdChoiceBtns.forEach((btn, index) => {
+        btn.innerText = tdCurrentChoices[index];
+        btn.style.backgroundColor = '#38bdf8';
+    });
+}
+
+function selectTDChoice(index) {
+    if (!tdCurrentTarget || tdIsGameCleared) return;
+    if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
+        alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
+        return;
+    }
+
+    const selectedValue = tdCurrentChoices[index];
+
+    if (selectedValue === tdCurrentTarget.answer) {
+        tdHero.slashAnim = Math.PI;
+        createTDSlashWave(tdHero.x, tdHero.y, tdCurrentTarget.x, tdCurrentTarget.y);
+        createTDExplosion(tdCurrentTarget.x, tdCurrentTarget.y);
+
+        const idx = tdEnemies.findIndex(e => e.id === tdCurrentTarget.id);
+        if (idx !== -1) tdEnemies.splice(idx, 1);
+
+        tdScore += 10;
+        tdTotalKillsInWave++;
+        document.getElementById('td-score').innerText = tdScore;
+        document.getElementById('td-kills').innerText = tdTotalKillsInWave;
+
+        tdCurrentTarget = null;
+        if (tdTotalKillsInWave >= 10) {
+            if (tdWave >= 10) tdIsGameCleared = true; else nextTDWave();
+        }
+    } else {
+        if (tdCurrentTarget) tdCurrentTarget.penaltyTimer = 90;
+        tdShakeTimer = 15;
+        tdWrongCount++;
+        if (tdWrongCount % 3 === 0) {
+            tdHp--;
+            document.getElementById('td-hp').innerText = tdHp;
+        }
+
+        tdChoiceBtns[index].style.backgroundColor = '#f43f5e';
+        setTimeout(() => {
+            tdChoiceBtns[index].style.backgroundColor = '#38bdf8';
+        }, 300);
+    }
+}
+
+function nextTDWave() {
+    tdWave++; tdTotalKillsInWave = 0; tdHp++;
+    if ((tdWave - 1) % 3 === 0) { tdUltimateCount++; updateTDUltUI(); }
+
+    document.getElementById('td-wave').innerText = tdWave;
+    document.getElementById('td-kills').innerText = tdTotalKillsInWave;
+    document.getElementById('td-hp').innerText = tdHp;
+
+    tdWaveNoticeText = `WAVE ${tdWave} CLEAR!`;
+    tdWaveNoticeTimer = 120;
+}
+
+function drawTDPath() {
+    tdCtx.beginPath();
+    tdCtx.moveTo(tdPath[0].x, tdPath[0].y);
+    for (let i = 1; i < tdPath.length; i++) tdCtx.lineTo(tdPath[i].x, tdPath[i].y);
+    tdCtx.strokeStyle = '#E2E8F0';
+    tdCtx.lineWidth = 32;
+    tdCtx.lineCap = 'round';
+    tdCtx.lineJoin = 'round';
+    tdCtx.stroke();
+}
+
+function triggerTDCompletionModal(finalScore) {
+    let starsEarned = 0;
+    if (finalScore >= 1000) starsEarned = 3;
+    else if (finalScore >= 800) starsEarned = 2;
+    else if (finalScore >= 500) starsEarned = 1;
+
+    if (starsEarned > 0) {
+        totalStars += starsEarned;
+        saveUserStars();
+        addEXPToUser(starsEarned * 50);
+        incrementTodayRounds();
+
+        document.getElementById("summary-total-count").innerText = `${finalScore} คะแนน (พิชิต Math TD)`;
+        document.getElementById("summary-stars-earned").innerText = `⭐ ${starsEarned} ดวง`;
+        document.getElementById("summary-stars-earned").className = "text-sm text-amber-500 font-bold";
+        document.getElementById("summary-exp-earned").innerText = `+${starsEarned * 50} EXP ✨`;
+        document.getElementById("summary-saved-badge").innerText = "✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
+        document.getElementById("summary-saved-badge").className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-2.5 rounded-xl border border-emerald-200";
+
+        document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} ทำคะแนน Math TD ได้ ${finalScore} คะแนน รับไปเลย ${starsEarned} ดาว!`;
+        document.getElementById("completion-modal").classList.remove("hidden");
+
+        sendInAppNotification('COMPLETED_MATH_TD', { score: finalScore, stars: starsEarned });
+    } else {
+        alert(`ทำคะแนนได้ ${finalScore} คะแนน (ต้องได้ 500 คะแนนขึ้นไปถึงจะได้รับดาว พยายามอีกนิดนะครับ!)`);
+    }
+}
+
+function tdGameLoop() {
+    tdCtx.clearRect(0, 0, tdCanvas.width, tdCanvas.height);
+
+    tdCtx.save();
+    if (tdShakeTimer > 0) {
+        const shakeX = (Math.random() - 0.5) * 14;
+        const shakeY = (Math.random() - 0.5) * 14;
+        tdCtx.translate(shakeX, shakeY);
+        tdShakeTimer--;
+    }
+
+    drawTDPath();
+    drawTDHero();
+
+    if (!tdIsGameCleared) {
+        const spawnRate = Math.max(180 - (tdWave - 1) * 12, 70);
+        tdSpawnTimer++;
+        if (tdSpawnTimer > spawnRate) {
+            tdEnemies.push(new TDEnemy());
+            tdSpawnTimer = 0;
+        }
+    }
+
+    for (let i = 0; i < tdEnemies.length; i++) {
+        const aheadEnemy = tdEnemies[i - 1] || null;
+        tdEnemies[i].update(aheadEnemy);
+    }
+
+    for (let i = tdEnemies.length - 1; i >= 0; i--) {
+        if (tdEnemies[i].dead) {
+            if (tdCurrentTarget && tdCurrentTarget.id === tdEnemies[i].id) tdCurrentTarget = null;
+            tdEnemies.splice(i, 1);
+        }
+    }
+
+    updateTDTargetAndChoices();
+
+    tdEnemies.forEach(enemy => {
+        const isTarget = tdCurrentTarget && enemy.id === tdCurrentTarget.id;
+        enemy.draw(isTarget);
+    });
+
+    for (let i = tdSlashes.length - 1; i >= 0; i--) {
+        const s = tdSlashes[i];
+        tdCtx.beginPath(); tdCtx.moveTo(s.x1, s.y1); tdCtx.lineTo(s.x2, s.y2);
+        tdCtx.strokeStyle = `rgba(78, 168, 222, ${s.life})`;
+        tdCtx.lineWidth = 8 * s.life;
+        tdCtx.stroke();
+        s.life -= 0.15;
+        if (s.life <= 0) tdSlashes.splice(i, 1);
+    }
+
+    for (let i = tdParticles.length - 1; i >= 0; i--) {
+        const p = tdParticles[i];
+        p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+        tdCtx.fillStyle = p.color;
+        tdCtx.globalAlpha = Math.max(0, p.life);
+        tdCtx.fillRect(p.x, p.y, 5, 5);
+        tdCtx.globalAlpha = 1.0;
+        if (p.life <= 0) tdParticles.splice(i, 1);
+    }
+
+    if (tdWaveNoticeTimer > 0 && !tdIsGameCleared) {
+        tdCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        tdCtx.fillRect(0, 150, tdCanvas.width, 80);
+        tdCtx.fillStyle = '#FF70A6';
+        tdCtx.font = 'bold 36px Quicksand, Arial';
+        tdCtx.textAlign = 'center';
+        tdCtx.fillText(tdWaveNoticeText, tdCanvas.width / 2, 202);
+        tdWaveNoticeTimer--;
+    }
+
+    tdCtx.restore();
+
+    if (tdIsGameCleared && tdEnemies.length === 0) {
+        tdCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        tdCtx.fillRect(0, 0, tdCanvas.width, tdCanvas.height);
+        tdCtx.fillStyle = '#FF70A6';
+        tdCtx.font = 'bold 44px Quicksand, Arial';
+        tdCtx.textAlign = 'center';
+        tdCtx.fillText('🏆 VICTORY! 🏆', tdCanvas.width / 2, tdCanvas.height / 2 - 20);
+        tdCtx.fillStyle = '#4A5568';
+        tdCtx.font = '20px Quicksand, Arial';
+        tdCtx.fillText('คุณคือปรมาจารย์คณิตศาสตร์!', tdCanvas.width / 2, tdCanvas.height / 2 + 20);
+        tdCtx.fillText(`Final Score: ${tdScore}`, tdCanvas.width / 2, tdCanvas.height / 2 + 55);
+
+        triggerTDCompletionModal(tdScore);
+        return;
+    }
+
+    if (tdHp > 0) {
+        tdAnimationRequestId = requestAnimationFrame(tdGameLoop);
+    } else {
+        tdCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        tdCtx.fillRect(0, 0, tdCanvas.width, tdCanvas.height);
+        tdCtx.fillStyle = '#FF477E';
+        tdCtx.font = 'bold 40px Quicksand, Arial';
+        tdCtx.textAlign = 'center';
+        tdCtx.fillText('GAME OVER', tdCanvas.width / 2, tdCanvas.height / 2 - 20);
+        tdCtx.fillStyle = '#4A5568';
+        tdCtx.font = '20px Quicksand, Arial';
+        tdCtx.fillText(`Wave Reached: ${tdWave}/10`, tdCanvas.width / 2, tdCanvas.height / 2 + 20);
+        tdCtx.fillText(`Final Score: ${tdScore}`, tdCanvas.width / 2, tdCanvas.height / 2 + 50);
+
+        triggerTDCompletionModal(tdScore);
+    }
 }

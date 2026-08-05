@@ -426,6 +426,11 @@ function renderNotifications() {
                     <div class="flex justify-between items-center text-[10px] font-bold bg-white/80 p-1 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-rose-600' : 'text-indigo-800'}">
                         <span>Status: ${n.status === 'approved' ? '✅ ตรวจผ่านแล้ว! ได้รับดาวเรียบร้อย' : n.status === 'rejected' ? '❌ ไม่ผ่าน' : '⏳ รอพ่อนะ/แม่พัด ตรวจ'}</span>${deleteBtnHtml}
                     </div>`}</div>`;
+        } else if (n.type === 'COMPLETED_MATH_TD') {
+            return `<div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-start gap-2.5 shadow-2xs">
+                <span class="text-2xl bg-white p-1.5 rounded-xl border border-slate-200">${avatars[n.user] || '👦'}</span><div class="flex-1">
+                <div class="flex justify-between items-center mb-0.5"><span class="font-bold text-xs text-slate-800 font-kids">${n.user} เล่นเกม Math TD ได้คะแนนสูง! ⚔️</span><span class="text-[9px] font-bold text-slate-400">${n.time}</span></div>
+                <p class="text-[11px] text-slate-600 font-medium">คะแนนรวม <span class="font-bold text-indigo-600">${n.details.score}</span> | ได้รับ <span class="font-bold text-amber-500">⭐ ${n.details.stars} ดวง</span></p></div>${deleteBtnHtml}</div>`;
         } else {
             return `<div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-start gap-2.5 shadow-2xs">
                 <span class="text-2xl bg-white p-1.5 rounded-xl border border-slate-200">${avatars[n.user] || '👦'}</span><div class="flex-1">
