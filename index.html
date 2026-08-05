@@ -558,11 +558,11 @@
 
             </div>
 
-            <!-- SUB-GAME 4: MATH HERO TD MINIGAME -->
-            <div id="game-td-container" class="w-full max-w-sm hidden flex-col items-center space-y-3">
+            <!-- SUB-GAME 4: MATH HERO TD MINIGAME (COMPACT RESPONSIVE LAYOUT) -->
+            <div id="game-td-container" class="w-full max-w-sm hidden flex-col items-center gap-1.5">
                 
                 <!-- Status Bar (HP, Wave, Kills, Coins, Score) -->
-                <div id="td-stats" class="w-full flex justify-around items-center p-2.5 bg-white rounded-2xl shadow-xs text-xs font-bold text-slate-700 border border-slate-100">
+                <div id="td-stats" class="w-full flex justify-between items-center px-3 py-1.5 bg-white rounded-xl shadow-2xs text-[11px] font-bold text-slate-700 border border-slate-100">
                     <div>❤️ HP: <span id="td-hp" class="text-rose-500">10</span></div>
                     <div>🌊 Wave: <span id="td-wave" class="text-indigo-600">1</span>/10</div>
                     <div>👾 Kills: <span id="td-kills" class="text-emerald-600">0</span>/10</div>
@@ -570,46 +570,48 @@
                     <div>Score: <span id="td-score" class="text-slate-500 font-kids">0</span></div>
                 </div>
 
+                <!-- Canvas Game Display -->
                 <div class="w-full relative">
-                    <canvas id="tdCanvas" width="600" height="400" class="w-full h-auto bg-slate-100 rounded-3xl border border-slate-200 shadow-inner block"></canvas>
+                    <canvas id="tdCanvas" width="600" height="320" class="w-full h-auto bg-slate-100 rounded-2xl border border-slate-200 shadow-inner block"></canvas>
                 </div>
 
-                <div id="td-ui-layer" class="w-full bg-white p-3.5 rounded-3xl border border-slate-100 shadow-xs flex flex-col items-center gap-2">
-                    <div id="td-target-question" class="text-sm font-bold text-indigo-600 font-kids">เป้าหมาย: -</div>
-                    <div class="choice-container flex gap-2 w-full">
-                        <button class="td-choice-btn flex-1 py-2.5 rounded-2xl bg-sky-500 active:scale-95 text-white font-extrabold text-lg shadow-2xs transition" onclick="selectTDChoice(0)">-</button>
-                        <button class="td-choice-btn flex-1 py-2.5 rounded-2xl bg-sky-500 active:scale-95 text-white font-extrabold text-lg shadow-2xs transition" onclick="selectTDChoice(1)">-</button>
-                        <button class="td-choice-btn flex-1 py-2.5 rounded-2xl bg-sky-500 active:scale-95 text-white font-extrabold text-lg shadow-2xs transition" onclick="selectTDChoice(2)">-</button>
+                <!-- Question & Choice Area -->
+                <div id="td-ui-layer" class="w-full bg-white px-3 py-2 rounded-2xl border border-slate-100 shadow-2xs flex flex-col items-center gap-1.5">
+                    <div id="td-target-question" class="text-xs font-bold text-indigo-600 font-kids">เป้าหมาย: -</div>
+                    <div class="choice-container flex gap-1.5 w-full">
+                        <button class="td-choice-btn flex-1 py-1.5 rounded-xl bg-sky-500 active:scale-95 text-white font-extrabold text-base shadow-2xs transition" onclick="selectTDChoice(0)">-</button>
+                        <button class="td-choice-btn flex-1 py-1.5 rounded-xl bg-sky-500 active:scale-95 text-white font-extrabold text-base shadow-2xs transition" onclick="selectTDChoice(1)">-</button>
+                        <button class="td-choice-btn flex-1 py-1.5 rounded-xl bg-sky-500 active:scale-95 text-white font-extrabold text-base shadow-2xs transition" onclick="selectTDChoice(2)">-</button>
                     </div>
-                    <button id="td-ultimate-btn" onclick="useTDUltimate()" class="w-full py-2.5 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-400 active:scale-95 text-white font-bold text-xs shadow-2xs transition">
+                    <button id="td-ultimate-btn" onclick="useTDUltimate()" class="w-full py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-400 active:scale-95 text-white font-bold text-xs shadow-2xs transition">
                         💣 ระเบิดล้างจอ (เหลือ <span id="td-ult-count">1</span>)
                     </button>
                 </div>
 
-                <!-- 🛒 SHOP / ITEM HELPERS (ร้านค้าตัวช่วยในเกม Math TD) -->
-                <div class="w-full bg-amber-50/80 border border-amber-200/80 p-3 rounded-2xl flex flex-col gap-2">
-                    <div class="text-[11px] font-extrabold text-amber-900 flex items-center gap-1 font-kids">
-                        🛒 ร้านค้าตัวช่วย (ใช้เหรียญทอง):
+                <!-- 🛒 SHOP / ITEM HELPERS (แบบประหยัดพื้นที่พอดีจอมือถือ) -->
+                <div class="w-full bg-amber-50/90 border border-amber-200/80 px-2.5 py-1.5 rounded-2xl flex flex-col gap-1">
+                    <div class="text-[10px] font-extrabold text-amber-900 flex items-center justify-between font-kids">
+                        <span>🛒 ร้านค้าตัวช่วย (ใช้เหรียญทอง):</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="buyTDSlow()" class="py-2 px-2.5 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl text-left flex flex-col shadow-2xs transition active:scale-95">
-                            <span class="text-[11px] font-bold text-slate-800">🐌 ชะลอศัตรู 50%</span>
-                            <span class="text-[10px] text-amber-600 font-extrabold">🪙 100 เหรียญ</span>
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <button onclick="buyTDSlow()" class="py-1 px-2 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-lg text-left flex items-center justify-between shadow-2xs transition active:scale-95">
+                            <span class="text-[10px] font-bold text-slate-800">🐌 ชะลอ 50%</span>
+                            <span class="text-[9px] text-amber-600 font-extrabold whitespace-nowrap">🪙 100</span>
                         </button>
 
-                        <button onclick="buyTDFreeze()" class="py-2 px-2.5 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl text-left flex flex-col shadow-2xs transition active:scale-95">
-                            <span class="text-[11px] font-bold text-slate-800">❄️ แช่แข็งศัตรู</span>
-                            <span class="text-[10px] text-amber-600 font-extrabold">🪙 150 เหรียญ</span>
+                        <button onclick="buyTDFreeze()" class="py-1 px-2 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-lg text-left flex items-center justify-between shadow-2xs transition active:scale-95">
+                            <span class="text-[10px] font-bold text-slate-800">❄️ แช่แข็ง</span>
+                            <span class="text-[9px] text-amber-600 font-extrabold whitespace-nowrap">🪙 150</span>
                         </button>
 
-                        <button onclick="buyTDHeart()" class="py-2 px-2.5 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl text-left flex flex-col shadow-2xs transition active:scale-95">
-                            <span class="text-[11px] font-bold text-slate-800">❤️ เพิ่มหัวใจ +1</span>
-                            <span class="text-[10px] text-amber-600 font-extrabold">🪙 200 เหรียญ</span>
+                        <button onclick="buyTDHeart()" class="py-1 px-2 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-lg text-left flex items-center justify-between shadow-2xs transition active:scale-95">
+                            <span class="text-[10px] font-bold text-slate-800">❤️ หัวใจ +1</span>
+                            <span class="text-[9px] text-amber-600 font-extrabold whitespace-nowrap">🪙 200</span>
                         </button>
 
-                        <button onclick="buyTDUltimate()" class="py-2 px-2.5 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl text-left flex flex-col shadow-2xs transition active:scale-95">
-                            <span class="text-[11px] font-bold text-slate-800">💣 ซื้อระเบิด +1</span>
-                            <span class="text-[10px] text-amber-600 font-extrabold">🪙 300 เหรียญ</span>
+                        <button onclick="buyTDUltimate()" class="py-1 px-2 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-lg text-left flex items-center justify-between shadow-2xs transition active:scale-95">
+                            <span class="text-[10px] font-bold text-slate-800">💣 ระเบิด +1</span>
+                            <span class="text-[9px] text-amber-600 font-extrabold whitespace-nowrap">🪙 300</span>
                         </button>
                     </div>
                 </div>
@@ -664,8 +666,8 @@
             </div>
         </div>
 
-        <!-- Floating Action Button -->
-        <button id="btn-add-vocab" onclick="openAddModal()" class="fixed bottom-20 right-5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4 rounded-full shadow-lg z-40 border-2 border-white active:scale-95 transition-all flex items-center justify-center hidden">
+        <!-- Floating Action Button (ขยับขึ้นเล็กน้อยหลบปุ่มร้านค้า) -->
+        <button id="btn-add-vocab" onclick="openAddModal()" class="fixed bottom-24 right-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4 rounded-full shadow-lg z-40 border-2 border-white active:scale-95 transition-all flex items-center justify-center hidden">
             <i data-lucide="plus" class="w-7 h-7"></i>
         </button>
 

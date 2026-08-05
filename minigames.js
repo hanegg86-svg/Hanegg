@@ -731,10 +731,11 @@ let tdEnemies = [], tdParticles = [], tdSlashes = [], tdSpawnTimer = 0, tdCurren
 let tdWaveNoticeTimer = 120, tdWaveNoticeText = "WAVE 1", tdAnimationRequestId = null;
 
 const tdPath = [
-    {x: -30, y: 220}, {x: 180, y: 220}, {x: 180, y: 100},
-    {x: 420, y: 100}, {x: 420, y: 280}, {x: 500, y: 280}
+    {x: -30, y: 180}, {x: 180, y: 180}, {x: 180, y: 80},
+    {x: 420, y: 80}, {x: 420, y: 230}, {x: 500, y: 230}
 ];
-const tdHero = { x: 535, y: 280, slashAnim: 0 };
+const tdHero = { x: 535, y: 230, slashAnim: 0 };
+
 
 class TDEnemy {
     constructor() {
