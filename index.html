@@ -588,30 +588,30 @@
                     </button>
                 </div>
 
-                <!-- 🛒 SHOP / ITEM HELPERS (แบบประหยัดพื้นที่พอดีจอมือถือ) -->
-                <div class="w-full bg-amber-50/90 border border-amber-200/80 px-2.5 py-1.5 rounded-2xl flex flex-col gap-1">
-                    <div class="text-[10px] font-extrabold text-amber-900 flex items-center justify-between font-kids">
-                        <span>🛒 ร้านค้าตัวช่วย (ใช้เหรียญทอง):</span>
+                <!-- 🛒 SHOP / ITEM HELPERS (ปุ่มสัญลักษณ์ + เหรียญทอง) -->
+                <div class="w-full bg-amber-50/90 border border-amber-200/80 px-2 py-1.5 rounded-2xl flex flex-col gap-1">
+                    <div class="text-[10px] font-extrabold text-amber-900 flex items-center justify-between px-1 font-kids">
+                        <span>🛒 ร้านค้าตัวช่วย:</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-1.5">
-                        <button onclick="buyTDSlow()" class="py-1 px-2 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-lg text-left flex items-center justify-between shadow-2xs transition active:scale-95">
-                            <span class="text-[10px] font-bold text-slate-800">🐌 ชะลอ 50%</span>
-                            <span class="text-[9px] text-amber-600 font-extrabold whitespace-nowrap">🪙 100</span>
+                    <div class="grid grid-cols-4 gap-1">
+                        <button onclick="buyTDSlow()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
+                            <span class="text-sm">🐌</span>
+                            <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 100</span>
                         </button>
 
-                        <button onclick="buyTDFreeze()" class="py-1 px-2 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-lg text-left flex items-center justify-between shadow-2xs transition active:scale-95">
-                            <span class="text-[10px] font-bold text-slate-800">❄️ แช่แข็ง</span>
-                            <span class="text-[9px] text-amber-600 font-extrabold whitespace-nowrap">🪙 150</span>
+                        <button onclick="buyTDFreeze()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
+                            <span class="text-sm">❄️</span>
+                            <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 150</span>
                         </button>
 
-                        <button onclick="buyTDHeart()" class="py-1 px-2 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-lg text-left flex items-center justify-between shadow-2xs transition active:scale-95">
-                            <span class="text-[10px] font-bold text-slate-800">❤️ หัวใจ +1</span>
-                            <span class="text-[9px] text-amber-600 font-extrabold whitespace-nowrap">🪙 200</span>
+                        <button onclick="buyTDHeart()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
+                            <span class="text-sm">❤️</span>
+                            <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 200</span>
                         </button>
 
-                        <button onclick="buyTDUltimate()" class="py-1 px-2 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-lg text-left flex items-center justify-between shadow-2xs transition active:scale-95">
-                            <span class="text-[10px] font-bold text-slate-800">💣 ระเบิด +1</span>
-                            <span class="text-[9px] text-amber-600 font-extrabold whitespace-nowrap">🪙 300</span>
+                        <button onclick="buyTDUltimate()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
+                            <span class="text-sm">💣</span>
+                            <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 300</span>
                         </button>
                     </div>
                 </div>
@@ -666,7 +666,7 @@
             </div>
         </div>
 
-        <!-- Floating Action Button (ขยับขึ้นเล็กน้อยหลบปุ่มร้านค้า) -->
+        <!-- Floating Action Button -->
         <button id="btn-add-vocab" onclick="openAddModal()" class="fixed bottom-24 right-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4 rounded-full shadow-lg z-40 border-2 border-white active:scale-95 transition-all flex items-center justify-center hidden">
             <i data-lucide="plus" class="w-7 h-7"></i>
         </button>

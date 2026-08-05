@@ -1128,8 +1128,10 @@ function selectTDChoice(index) {
 }
 
 function nextTDWave() {
-    tdWave++; tdTotalKillsInWave = 0; tdHp++;
-    // ❌ ไม่แจก Ult ฟรีเมื่อผ่าน Wave อีกต่อไป (ต้องกดซื้อ 300 เหรียญเท่านั้น)
+    tdWave++; 
+    tdTotalKillsInWave = 0; 
+    // ❌ ลบ tdHp++; ออกแล้ว เพื่อไม่ให้เพิ่มหัวใจเมื่อผ่าน Level/Wave
+    // (หากต้องการเพิ่มหัวใจ ต้องกดซื้อผ่านร้านค้า 200 เหรียญเท่านั้น)
 
     document.getElementById('td-wave').innerText = tdWave;
     document.getElementById('td-kills').innerText = tdTotalKillsInWave;
@@ -1138,6 +1140,7 @@ function nextTDWave() {
     tdWaveNoticeText = `WAVE ${tdWave} CLEAR!`;
     tdWaveNoticeTimer = 120;
 }
+
 
 function drawTDPath() {
     tdCtx.beginPath();
