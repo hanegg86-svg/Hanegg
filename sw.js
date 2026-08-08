@@ -1,7 +1,7 @@
 // Path: ./sw.js
 
-// ปรับเวอร์ชันเป็น v6 เพื่อบังคับให้ Service Worker เคลียร์แคชเก่าและโหลดโหมดจับคู่คำศัพท์ใหม่ทันที
-const CACHE_NAME = 'kids-vocab-v6';
+// ปรับเวอร์ชันเป็น v7 เพื่อบังคับให้ Service Worker เคลียร์แคชเก่าและโหลดระบบ Bomb Bubble ใหม่
+const CACHE_NAME = 'kids-vocab-v7';
 
 // รายการไฟล์ที่ต้องการให้ Service Worker ทำการแคชไว้ใช้งานออฟไลน์
 const ASSETS_TO_CACHE = [
@@ -26,7 +26,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching updated app assets v6');
+      console.log('[Service Worker] Caching updated app assets v7');
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );
@@ -48,7 +48,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// 3. Fetch Event: พยายามดึงข้อมูลจาก Network ก่อน หากไม่มีเน็ตให้ดึงจาก Cache (Network First falling back to Cache)
+// 3. Fetch Event: พยายามดึงข้อมูลจาก Network ก่อน หากไม่มีเน็ตให้ดึงจาก Cache
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 

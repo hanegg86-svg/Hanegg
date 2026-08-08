@@ -1,7 +1,17 @@
 // ==========================================
 // --- MATH COMBINATION GAME VARIABLES ---
 // ==========================================
-let mathDifficulty = 'easy'; let mathQuestionIndex = 1; let mathInitialNumbers = []; let mathCurrentNumbers = []; let mathTargetNumber = 0; let mathSelectedNum1Idx = null; let mathSelectedOp = null; let mathSelectedNum2Idx = null;
+let mathDifficulty = 'easy'; 
+let mathQuestionIndex = 1; 
+let mathInitialNumbers = []; 
+let mathCurrentNumbers = []; 
+let mathTargetNumber = 0; 
+let mathSelectedNum1Idx = null; 
+let mathSelectedOp = null; 
+let mathSelectedNum2Idx = null;
+
+// --- Variable สำหรับ Bomb Mode ---
+let isBombActive = false; 
 
 function setMathDifficulty(diff) {
     mathDifficulty = diff;
@@ -30,6 +40,7 @@ function generateMathPuzzle() {
     mathTargetNumber = tempNums[0];
     if (mathTargetNumber <= 0 || mathTargetNumber > 100) { generateMathPuzzle(); return; }
     mathInitialNumbers = [...nums]; mathCurrentNumbers = [...nums];
+    isBombActive = false;
     resetMathSelection(); renderMathBoard();
 }
 
@@ -45,16 +56,29 @@ function renderMathBoard() {
     container.innerHTML = "";
     mathCurrentNumbers.forEach((num, index) => {
         const btn = document.createElement("button");
-        btn.className = `w-11 h-11 rounded-full font-bold text-base text-white shadow-xs flex items-center justify-center bubble-btn font-kids `;
-        if (mathSelectedNum1Idx === index || mathSelectedNum2Idx === index) btn.className += "bg-indigo-600 ring-2 ring-indigo-300 scale-105";
-        else btn.className += "bg-indigo-500 hover:bg-indigo-600";
-        btn.innerText = num; btn.onclick = () => selectMathNumber(index);
+        btn.className = `w-11 h-11 rounded-full font-bold text-base text-white shadow-xs flex items-center justify-center bubble-btn font-kids transition-all transform `;
+        
+        if (isBombActive) {
+            btn.className += "bg-rose-500 hover:bg-rose-600 animate-pulse scale-105 ring-2 ring-rose-300";
+        } else if (mathSelectedNum1Idx === index || mathSelectedNum2Idx === index) {
+            btn.className += "bg-indigo-600 ring-2 ring-indigo-300 scale-105";
+        } else {
+            btn.className += "bg-indigo-500 hover:bg-indigo-600";
+        }
+        
+        btn.innerText = num; 
+        btn.onclick = () => selectMathNumber(index);
         container.appendChild(btn);
     });
     updateMathFormulaDisplay();
 }
 
 function selectMathNumber(index) {
+    if (isBombActive) {
+        useBombOnNumber(index);
+        return;
+    }
+
     if (mathSelectedNum1Idx === null) mathSelectedNum1Idx = index;
     else if (mathSelectedNum1Idx === index) { mathSelectedNum1Idx = null; mathSelectedOp = null; mathSelectedNum2Idx = null; } 
     else if (mathSelectedOp === null) mathSelectedNum1Idx = index;
@@ -63,13 +87,41 @@ function selectMathNumber(index) {
     renderMathBoard();
 }
 
+function toggleBombMode() {
+    if (mathCurrentNumbers.length <= 1) {
+        alert("⚠️ ไม่สามารถระเบิดได้แล้วครับ ต้องเหลือตัวเลขอย่างน้อย 1 ตัว!");
+        return;
+    }
+    isBombActive = !isBombActive;
+    resetMathSelection();
+    renderMathBoard();
+}
+
+function useBombOnNumber(index) {
+    const removedNum = mathCurrentNumbers[index];
+    mathCurrentNumbers.splice(index, 1);
+    isBombActive = false;
+    resetMathSelection();
+    renderMathBoard();
+    
+    alert(`💥 ระเบิดตัวเลข ${removedNum} เรียบร้อยแล้ว!`);
+    checkMathWinCondition();
+}
+
 function selectMathOperator(op) {
+    if (isBombActive) isBombActive = false;
     if (mathSelectedNum1Idx === null) { alert("กรุณาแตะเลือกตัวเลขแรกก่อนครับ!"); return; }
     mathSelectedOp = op; renderMathBoard();
 }
 
 function updateMathFormulaDisplay() {
     const formulaEl = document.getElementById("math-formula-text");
+    if (isBombActive) {
+        formulaEl.innerText = "💣 แตะเลือกตัวเลขที่ต้องการระเบิดทิ้ง!";
+        formulaEl.className = "text-rose-600 font-bold text-sm animate-pulse font-kids";
+        return;
+    }
+
     let num1Str = mathSelectedNum1Idx !== null ? mathCurrentNumbers[mathSelectedNum1Idx] : "";
     let opStr = mathSelectedOp !== null ? mathSelectedOp : "";
     let num2Str = mathSelectedNum2Idx !== null ? mathCurrentNumbers[mathSelectedNum2Idx] : "";
@@ -101,7 +153,7 @@ function checkMathWinCondition() {
 }
 
 function resetMathSelection() { mathSelectedNum1Idx = null; mathSelectedOp = null; mathSelectedNum2Idx = null; }
-function resetCurrentMathQuestion() { mathCurrentNumbers = [...mathInitialNumbers]; resetMathSelection(); renderMathBoard(); }
+function resetCurrentMathQuestion() { isBombActive = false; mathCurrentNumbers = [...mathInitialNumbers]; resetMathSelection(); renderMathBoard(); }
 function skipMathQuestion() { if (confirm("ต้องการข้ามข้อนี้ใช่หรือไม่?")) generateMathPuzzle(); }
 
 function triggerMathCompletionModal() {
