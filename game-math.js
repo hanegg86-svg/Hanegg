@@ -10,8 +10,9 @@ let mathSelectedNum1Idx = null;
 let mathSelectedOp = null; 
 let mathSelectedNum2Idx = null;
 
-// --- Variable สำหรับ Bomb Mode ---
+// --- Variable สำหรับ Bomb Mode & Quota ---
 let isBombActive = false; 
+let mathBombQuota = 2; // จำกัดการใช้ระเบิด 2 ครั้งต่อเกม (5 ข้อ)
 
 function setMathDifficulty(diff) {
     mathDifficulty = diff;
@@ -22,7 +23,9 @@ function setMathDifficulty(diff) {
     if (diff === 'easy') { easyBtn.className = activeClass + "bg-emerald-500"; diffTag.innerText = "บวกลบ (4 ตัว)"; diffTag.className = "text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full font-kids"; } 
     else if (diff === 'medium') { medBtn.className = activeClass + "bg-indigo-500"; diffTag.innerText = "บวกลบคูณหาร (4 ตัว)"; diffTag.className = "text-[10px] font-bold text-indigo-800 bg-indigo-100 px-2.5 py-0.5 rounded-full font-kids"; } 
     else { hardBtn.className = activeClass + "bg-rose-500"; diffTag.innerText = "บวกลบคูณหาร (5 ตัว)"; diffTag.className = "text-[10px] font-bold text-rose-800 bg-rose-100 px-2.5 py-0.5 rounded-full font-kids"; }
-    mathQuestionIndex = 1; generateMathPuzzle();
+    mathQuestionIndex = 1; 
+    mathBombQuota = 2; // รีเซ็ตโควต้าระเบิดเมื่อเปลี่ยนระดับความยาก
+    generateMathPuzzle();
 }
 
 function generateMathPuzzle() {
@@ -41,6 +44,12 @@ function generateMathPuzzle() {
     if (mathTargetNumber <= 0 || mathTargetNumber > 100) { generateMathPuzzle(); return; }
     mathInitialNumbers = [...nums]; mathCurrentNumbers = [...nums];
     isBombActive = false;
+    
+    // รีเซ็ตโควต้าระเบิดเป็น 2 ครั้ง ถ้าเป็นข้อแรกของเกม
+    if (mathQuestionIndex === 1) {
+        mathBombQuota = 2;
+    }
+
     resetMathSelection(); renderMathBoard();
 }
 
@@ -48,6 +57,12 @@ function renderMathBoard() {
     document.getElementById("math-target-number").innerText = mathTargetNumber;
     document.getElementById("math-progress-text").innerText = `ข้อที่: ${mathQuestionIndex} / 5`;
     document.getElementById("math-numbers-left-tag").innerText = `เหลือ ${mathCurrentNumbers.length} ตัว`;
+
+    // อัปเดตข้อความจำนวนระเบิดที่เหลือบนปุ่ม
+    const bombBtnText = document.getElementById("math-bomb-btn-text");
+    if (bombBtnText) {
+        bombBtnText.innerText = `💣 ระเบิด (${mathBombQuota})`;
+    }
 
     const mulBtn = document.getElementById("math-op-mul"), divBtn = document.getElementById("math-op-div");
     if (mathDifficulty === 'easy') { mulBtn.classList.add("hidden"); divBtn.classList.add("hidden"); } else { mulBtn.classList.remove("hidden"); divBtn.classList.remove("hidden"); }
@@ -88,6 +103,10 @@ function selectMathNumber(index) {
 }
 
 function toggleBombMode() {
+    if (mathBombQuota <= 0) {
+        alert("⚠️ หนูใช้สิทธิ์ตัวช่วยระเบิดครบ 2 ครั้งของรอบนี้แล้วครับ!");
+        return;
+    }
     if (mathCurrentNumbers.length <= 1) {
         alert("⚠️ ไม่สามารถระเบิดได้แล้วครับ ต้องเหลือตัวเลขอย่างน้อย 1 ตัว!");
         return;
@@ -98,13 +117,16 @@ function toggleBombMode() {
 }
 
 function useBombOnNumber(index) {
+    if (mathBombQuota <= 0) return;
+
     const removedNum = mathCurrentNumbers[index];
     mathCurrentNumbers.splice(index, 1);
+    mathBombQuota--; // หักโควต้าระเบิดออก 1 ครั้ง
     isBombActive = false;
     resetMathSelection();
     renderMathBoard();
     
-    alert(`💥 ระเบิดตัวเลข ${removedNum} เรียบร้อยแล้ว!`);
+    alert(`💥 ระเบิดตัวเลข ${removedNum} เรียบร้อย! (เหลือระเบิดอีก ${mathBombQuota} ครั้ง)`);
     checkMathWinCondition();
 }
 
@@ -157,7 +179,9 @@ function resetCurrentMathQuestion() { isBombActive = false; mathCurrentNumbers =
 function skipMathQuestion() { if (confirm("ต้องการข้ามข้อนี้ใช่หรือไม่?")) generateMathPuzzle(); }
 
 function triggerMathCompletionModal() {
-    totalStars += 1; saveUserStars(); addEXPToUser(100); incrementTodayRounds(); mathQuestionIndex = 1;
+    totalStars += 1; saveUserStars(); addEXPToUser(100); incrementTodayRounds(); 
+    mathQuestionIndex = 1; 
+    mathBombQuota = 2; // รีเซ็ตโควต้าระเบิดหลังจบเกม
     document.getElementById("summary-total-count").innerText = "5 / 5 ข้อ";
     document.getElementById("summary-stars-earned").innerText = "⭐ 1 ดวง";
     document.getElementById("summary-stars-earned").className = "text-sm text-amber-500 font-bold";
