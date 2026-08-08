@@ -505,7 +505,11 @@ function useTDUltimate() {
     const targetKills = getTargetKillsForWave(tdWave);
     if (tdTotalKillsInWave >= targetKills) {
         if (tdWave >= 13) {
-            setTimeout(() => { tdIsGameCleared = true; }, 100);
+            setTimeout(() => { 
+                tdIsGameCleared = true; 
+                tdEnemies.forEach(e => createTDExplosion(e.x, e.y, 20, '#FFD166'));
+                tdEnemies = []; 
+            }, 100);
         } else {
             nextTDWave();
         }
@@ -597,7 +601,11 @@ function selectTDChoice(index) {
         const targetKills = getTargetKillsForWave(tdWave);
         if (tdTotalKillsInWave >= targetKills) {
             if (tdWave >= 13) {
-                setTimeout(() => { tdIsGameCleared = true; }, 100);
+                setTimeout(() => { 
+                    tdIsGameCleared = true; 
+                    tdEnemies.forEach(e => createTDExplosion(e.x, e.y, 20, '#FFD166'));
+                    tdEnemies = []; 
+                }, 100);
             } else {
                 nextTDWave();
             }
@@ -648,7 +656,11 @@ function selectTDChoice(index) {
             const targetKills = getTargetKillsForWave(tdWave);
             if (tdTotalKillsInWave >= targetKills) {
                 if (tdWave >= 13) {
-                    setTimeout(() => { tdIsGameCleared = true; }, 100);
+                    setTimeout(() => { 
+                        tdIsGameCleared = true; 
+                        tdEnemies.forEach(e => createTDExplosion(e.x, e.y, 20, '#FFD166'));
+                        tdEnemies = []; 
+                    }, 100);
                 } else {
                     nextTDWave();
                 }
