@@ -1,7 +1,7 @@
 // Path: ./sw.js
 
-// เปลี่ยนเวอร์ชันของ CACHE_NAME เพื่อให้เบราว์เซอร์ล้างแคชเก่าแล้วโหลดไฟล์โครงสร้างใหม่
-const CACHE_NAME = 'kids-vocab-v4';
+// ปรับเวอร์ชันเป็น v5 เพื่อบังคับให้ Service Worker เคลียร์แคชเก่าและโหลด UI/เกมใหม่ทันที
+const CACHE_NAME = 'kids-vocab-v5';
 
 // รายการไฟล์ที่ต้องการให้ Service Worker ทำการแคชไว้ใช้งานออฟไลน์
 const ASSETS_TO_CACHE = [
@@ -26,13 +26,13 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching modular app assets');
+      console.log('[Service Worker] Caching updated app assets v5');
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );
 });
 
-// 2. Activate Event: เคลียร์ Cache เวอร์ชันเก่าทิ้งเมื่อมีการอัปเดตระบบ
+// 2. Activate Event: เคลียร์ Cache เวอร์ชันเก่าทิ้งทันทีเมื่อมีการอัปเดตระบบ
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
