@@ -1,989 +1,629 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kids Vocab, Math & Story AI - Family Theme</title>
+// ==========================================
+// --- MATH HERO TD GAME ENGINE (FULL CODE) ---
+// ==========================================
+let tdCanvas, tdCtx, tdChoiceBtns, tdQuestionDisplay, tdUltBtn, tdUltCountDisplay;
+let tdHp = 10, tdScore = 0, tdWave = 1, tdTotalKillsInWave = 0, tdUltimateCount = 1, tdIsGameCleared = false;
+let tdCoins = 0, tdSlowTimer = 0, tdFreezeTimer = 0;
+let tdMultiShotUnlocked = false; 
+let tdWrongCount = 0, tdShakeTimer = 0;
+let tdEnemies = [], tdParticles = [], tdSlashes = [], tdSpawnTimer = 0, tdCurrentTarget = null, tdCurrentChoices = [];
+let tdWaveNoticeTimer = 120, tdWaveNoticeText = "WAVE 1", tdAnimationRequestId = null;
 
-    <!-- PWA Settings & Web App Configuration -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#6366f1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Kids Vocab">
+// ตัวแปรระดับความยาก ('easy' หรือ 'hard')
+let tdDifficulty = 'easy';
+
+const tdPath = [
+    {x: -30, y: 180}, {x: 180, y: 180}, {x: 180, y: 80},
+    {x: 420, y: 80}, {x: 420, y: 230}, {x: 500, y: 230}
+];
+const tdHero = { x: 535, y: 230, slashAnim: 0 };
+
+// ฟังก์ชันวาดสี่เหลี่ยมขอบมนแบบปลอดภัยสำหรับเบราว์เซอร์มือถือทุกรุ่น
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+}
+
+// ฟังก์ชันสลับระดับความยาก (Easy / Hard)
+function setTDDifficulty(diff) {
+    tdDifficulty = diff;
+    const easyBtn = document.getElementById("td-diff-easy");
+    const hardBtn = document.getElementById("td-diff-hard");
     
-    <!-- iOS App Icon -->
-    <link rel="apple-touch-icon" href="Icon.png">
+    const activeClass = "flex-1 py-1 rounded-xl text-[11px] font-black text-white shadow-xs transition ";
+    const inactiveClass = "flex-1 py-1 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-200 transition";
 
-    <!-- Tailwind CSS CDN & Fonts -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;600;700&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Firebase SDKs (Modular via CDN) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, set, push, update, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        window.firebaseModules = { initializeApp, getDatabase, ref, onValue, set, push, update, get, remove };
-    </script>
-
-    <style>
-        body { font-family: 'Anuphan', sans-serif; font-size: 15px; } 
-        .font-kids { font-family: 'Fredoka', 'Anuphan', sans-serif; }
-        .touch-btn { -webkit-tap-highlight-color: transparent; }
-        .card-flip { perspective: 1000px; }
-        .card-inner { transition: transform 0.6s; transform-style: preserve-3d; }
-        .card-flipped { transform: rotateY(180deg); }
-        .card-front, .card-back { backface-visibility: hidden; }
-        .card-back { transform: rotateY(180deg); }
-        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #818cf8; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .listening-pulse { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        @keyframes bounce-gentle { 0%, 100% { transform: translateY(-5%); } 50% { transform: translateY(0); } }
-        .bounce-anim { animation: bounce-gentle 2s infinite; }
-
-        .letter-box {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 2.2rem;
-            height: 2.6rem;
-            padding: 0 4px;
-            margin: 2px;
-            background-color: #e0e7ff;
-            border: 2px solid #6366f1;
-            border-radius: 0.5rem;
-            font-weight: 900;
-            font-size: 1.5rem;
-            color: #312e81;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    if (easyBtn && hardBtn) {
+        if (diff === 'easy') {
+            easyBtn.className = activeClass + "bg-emerald-500";
+            hardBtn.className = inactiveClass;
+        } else {
+            hardBtn.className = activeClass + "bg-rose-500";
+            easyBtn.className = inactiveClass;
         }
+    }
+    initMathTDGame();
+}
 
-        .blank-box {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 2.2rem;
-            height: 2.6rem;
-            margin: 3px;
-            border-bottom: 4px solid #6366f1;
-            font-weight: 900;
-            font-size: 1.5rem;
-            color: #4f46e5;
-        }
+function getTargetKillsForWave(wave) {
+    if (wave <= 2) return 7;      
+    if (wave <= 4) return 8;      
+    return 10;                     
+}
 
-        .letter-space {
-            width: 0.8rem;
-            display: inline-block;
-        }
-
-        .bubble-btn {
-            transition: all 0.15s ease;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .bubble-btn:active {
-            transform: scale(0.92);
-        }
-
-        #ios-splash-screen {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(135deg, #4f46e5, #a855f7, #ec4899);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
-        }
-        #ios-splash-screen.fade-out {
-            opacity: 0;
-            visibility: hidden;
-        }
-    </style>
-</head>
-<body class="bg-slate-50 text-slate-700 min-h-screen flex flex-col justify-between select-none touch-btn relative pb-20">
-
-    <!-- iOS Splash Screen Overlay -->
-    <div id="ios-splash-screen">
-        <div id="splash-icon-container" class="w-44 h-44 rounded-3xl shadow-2xl mb-4 bg-white/20 backdrop-blur-md border-2 border-white/30 flex items-center justify-center animate-pulse overflow-hidden">
-            <img src="Icon.png" alt="App Cover" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('splash-fallback-icon').classList.remove('hidden');">
-            <span id="splash-fallback-icon" class="text-7xl hidden">🎪</span>
-        </div>
-        <div class="text-white font-kids font-bold text-xl tracking-wider">Kids Vocab, Math & Story AI</div>
-        <div class="text-indigo-100 text-xs mt-1">กำลังโหลดความสนุก...</div>
-    </div>
-
-    <!-- Header / Score Bar -->
-    <header class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-3.5 text-white shadow-md max-w-xl w-full mx-auto sticky top-0 z-30 rounded-b-2xl flex justify-between items-center">
-        <div class="flex items-center gap-2">
-            <button onclick="openProfileModal()" class="bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded-2xl text-xs font-bold text-white shadow-sm border border-white/20 flex items-center gap-2 min-h-[40px] transition active:scale-95">
-                <div class="w-7 h-7 rounded-xl overflow-hidden bg-white/80 flex items-center justify-center border border-white/30 text-slate-800">
-                    <img id="user-avatar-img" class="w-full h-full object-cover hidden" alt="Avatar">
-                    <span id="user-avatar" class="text-sm">👤</span>
-                </div>
-                <div class="flex flex-col items-start leading-tight">
-                    <span id="user-name" class="max-w-[75px] truncate font-bold font-kids sm:max-w-none">เลือกผู้ใช้</span>
-                    <span id="user-level-tag" class="text-[9px] text-yellow-200 font-bold hidden font-kids">Lv.1</span>
-                </div>
-            </button>
-            
-            <div class="flex items-center gap-1 bg-black/20 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 min-h-[38px]">
-                <span class="text-sm">⭐</span>
-                <span id="score" class="text-sm font-bold text-yellow-300 font-kids">0</span>
-            </div>
-        </div>
-
-        <div id="lang-switch-box" class="flex bg-black/20 p-1 rounded-2xl border border-white/10 hidden">
-            <button id="mode-en-btn" onclick="switchSubjectMode('EN')" class="px-2.5 py-1 rounded-xl text-xs font-black bg-white text-indigo-900 shadow transition">🇬🇧 EN</button>
-            <button id="mode-th-btn" onclick="switchSubjectMode('TH')" class="px-2.5 py-1 rounded-xl text-xs font-black text-white hover:bg-white/20 transition">🇹🇭 TH</button>
-        </div>
-
-        <div class="flex items-center gap-1.5">
-            <button onclick="openNotifyModal()" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-2xl shadow-sm border border-white/20 min-w-[38px] min-h-[38px] flex items-center justify-center relative transition active:scale-95">
-                <i data-lucide="bell" class="w-4 h-4"></i>
-                <span id="notify-badge" class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-rose-500 rounded-full border-2 border-white hidden animate-ping"></span>
-                <span id="notify-dot" class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-rose-500 rounded-full border-2 border-white hidden"></span>
-            </button>
-
-            <button id="btn-key" onclick="openKeyModal()" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-2xl shadow-sm border border-white/20 min-w-[38px] min-h-[38px] items-center justify-center transition active:scale-95 hidden">
-                <i data-lucide="key" class="w-4 h-4"></i>
-            </button>
-        </div>
-    </header>
-
-    <!-- EXP Progress Bar -->
-    <div id="exp-bar-container" class="w-full max-w-xl mx-auto px-4 pt-3 hidden">
-        <div class="bg-white p-2.5 rounded-2xl border border-indigo-100 shadow-xs flex items-center gap-2.5">
-            <span id="exp-level-text" class="text-xs font-bold text-indigo-600 font-kids whitespace-nowrap bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">Lv.1</span>
-            <div class="flex-1 bg-slate-100 h-3 rounded-full overflow-hidden relative">
-                <div id="exp-progress" class="bg-gradient-to-r from-sky-400 via-indigo-500 to-purple-500 h-full w-0 transition-all duration-500 rounded-full"></div>
-            </div>
-            <span id="exp-val-text" class="text-[10px] font-bold text-slate-500 font-kids whitespace-nowrap">0/200 EXP</span>
-        </div>
-    </div>
-
-    <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col justify-center items-center p-4 relative max-w-xl mx-auto w-full">
+class TDEnemy {
+    constructor() {
+        this.x = tdPath[0].x;
+        this.y = tdPath[0].y;
+        this.pathIndex = 0;
         
-        <!-- TAB 1: PARENT QUESTS TAB -->
-        <div id="main-quest-tab" class="w-full flex flex-col items-center space-y-4">
+        // Easy: ความเร็ว 0.7 เท่า | Hard: ความเร็วปกติ
+        const speedMultiplier = (tdDifficulty === 'easy') ? 0.7 : 1.0;
+        this.baseSpeed = (0.6 + (tdWave - 1) * 0.12) * speedMultiplier;
+        this.speed = this.baseSpeed;
+        this.size = 22;
+        this.id = Math.random();
+        
+        const qData = this.generateMathProblem(tdWave);
+        this.question = qData.question;
+        this.answer = qData.answer;
+
+        this.progress = 0;
+        this.dead = false;
+        this.penaltyTimer = 0;
+    }
+
+    generateMathProblem(currentWave) {
+        let availableOps = ['+'];
+        
+        // Easy: บวก และ ลบ เท่านั้น
+        if (tdDifficulty === 'easy') {
+            if (currentWave >= 2) availableOps.push('-');
+        } else {
+            // Hard: มีครบ บวก, ลบ, คูณ, หาร
+            if (currentWave >= 3) availableOps.push('-');
+            if (currentWave >= 6) availableOps.push('×');
+            if (currentWave >= 8) availableOps.push('÷');
+        }
+
+        const op = availableOps[Math.floor(Math.random() * availableOps.length)];
+        let num1, num2, question, answer;
+
+        if (op === '+') {
+            const max = 10 + currentWave * 3;
+            num1 = Math.floor(Math.random() * max) + 1;
+            num2 = Math.floor(Math.random() * max) + 1;
+            question = `${num1} + ${num2}`; answer = num1 + num2;
+        } else if (op === '-') {
+            const max = 15 + currentWave * 3;
+            num1 = Math.floor(Math.random() * max) + 5;
+            num2 = Math.floor(Math.random() * (num1 - 1)) + 1;
+            question = `${num1} - ${num2}`; answer = num1 - num2;
+        } else if (op === '×') {
+            num1 = Math.floor(Math.random() * 10) + 2;
+            num2 = Math.floor(Math.random() * 10) + 2;
+            question = `${num1} × ${num2}`; answer = num1 * num2;
+        } else if (op === '÷') {
+            num2 = Math.floor(Math.random() * 9) + 2;
+            answer = Math.floor(Math.random() * 10) + 2;
+            num1 = num2 * answer;
+            question = `${num1} ÷ ${num2}`;
+        }
+        return { question, answer };
+    }
+
+    update(aheadEnemy) {
+        if (this.pathIndex >= tdPath.length - 1) {
+            if (!this.dead) {
+                this.dead = true;
+                if (!tdIsGameCleared && tdHp > 0) {
+                    tdHp--;
+                    const hpEl = document.getElementById('td-hp');
+                    if (hpEl) hpEl.innerText = tdHp;
+                }
+            }
+            return;
+        }
+
+        const target = tdPath[this.pathIndex + 1];
+        const dx = target.x - this.x, dy = target.y - this.y;
+        const dist = Math.hypot(dx, dy);
+
+        let currentSpeed = this.baseSpeed;
+
+        if (tdFreezeTimer > 0) {
+            currentSpeed = 0;
+        } else if (tdSlowTimer > 0) {
+            currentSpeed *= 0.5;
+        }
+
+        // เมื่อตอบผิด มอนสเตอร์จะพุ่งเร็วขึ้น 2 เท่า
+        if (this.penaltyTimer > 0 && tdFreezeTimer <= 0) {
+            currentSpeed *= 2.0;
+            this.penaltyTimer--;
+        }
+
+        if (aheadEnemy) {
+            const distToAhead = Math.hypot(aheadEnemy.x - this.x, aheadEnemy.y - this.y);
+            const minGap = 110;
+            if (distToAhead < minGap && this.penaltyTimer <= 0) {
+                currentSpeed = Math.max(0, aheadEnemy.speed * (distToAhead / minGap));
+            }
+        }
+        this.speed = currentSpeed;
+
+        if (dist < this.speed) {
+            this.x = target.x; this.y = target.y;
+            this.pathIndex++;
+        } else {
+            this.x += (dx / dist) * this.speed;
+            this.y += (dy / dist) * this.speed;
+        }
+        this.progress = this.pathIndex * 1000 + (1000 - dist);
+    }
+
+    draw(isTarget) {
+        tdCtx.save();
+        tdCtx.translate(this.x, this.y);
+
+        if (this.penaltyTimer > 0) {
+            tdCtx.shadowColor = '#FF70A6'; tdCtx.shadowBlur = 18;
+        }
+
+        drawRoundedRect(tdCtx, -this.size, -this.size, this.size * 2, this.size * 2, 12);
+        tdCtx.fillStyle = (this.penaltyTimer > 0) ? '#FF477E' : (isTarget ? '#FFD166' : '#FF85A1');
+        tdCtx.fill();
+        tdCtx.lineWidth = isTarget ? 4 : 2;
+        tdCtx.strokeStyle = '#FFFFFF';
+        tdCtx.stroke();
+
+        tdCtx.fillStyle = '#FFD166';
+        tdCtx.beginPath();
+        tdCtx.moveTo(-12, -this.size); tdCtx.lineTo(-18, -this.size - 10); tdCtx.lineTo(-6, -this.size - 2); tdCtx.fill();
+        tdCtx.beginPath();
+        tdCtx.moveTo(12, -this.size); tdCtx.lineTo(18, -this.size - 10); tdCtx.lineTo(6, -this.size - 2); tdCtx.fill();
+
+        tdCtx.fillStyle = '#FFFFFF';
+        tdCtx.beginPath(); tdCtx.arc(-8, -4, 6, 0, Math.PI * 2); tdCtx.arc(8, -4, 6, 0, Math.PI * 2); tdCtx.fill();
+        tdCtx.fillStyle = '#2D3748';
+        tdCtx.beginPath(); tdCtx.arc(-8, -4, 3, 0, Math.PI * 2); tdCtx.arc(8, -4, 3, 0, Math.PI * 2); tdCtx.fill();
+        tdCtx.beginPath(); tdCtx.arc(0, 6, 5, 0, Math.PI); tdCtx.strokeStyle = '#2D3748'; tdCtx.lineWidth = 2; tdCtx.stroke();
+        tdCtx.restore();
+
+        const textMargin = 10;
+        tdCtx.font = 'bold 20px Quicksand, Arial';
+        const displayQuestion = (this.penaltyTimer > 0) ? "!! SPEED 2x !!" : this.question;
+        const textWidth = tdCtx.measureText(displayQuestion).width;
+
+        tdCtx.fillStyle = (this.penaltyTimer > 0) ? '#FF477E' : (isTarget ? 'rgba(255, 209, 102, 0.95)' : 'rgba(255, 255, 255, 0.9)');
+        drawRoundedRect(tdCtx, this.x - (textWidth / 2) - textMargin, this.y - 60, textWidth + (textMargin * 2), 30, 8);
+        tdCtx.fill();
+        if (isTarget || this.penaltyTimer > 0) {
+            tdCtx.strokeStyle = '#FFFFFF'; tdCtx.lineWidth = 2; tdCtx.stroke();
+        }
+
+        tdCtx.fillStyle = (isTarget && this.penaltyTimer <= 0) ? '#2D3748' : (this.penaltyTimer > 0 ? '#FFFFFF' : '#4A5568');
+        tdCtx.textAlign = 'center';
+        tdCtx.fillText(displayQuestion, this.x, this.y - 38);
+    }
+}
+
+function initMathTDGame() {
+    tdCanvas = document.getElementById('tdCanvas');
+    if (!tdCanvas) return;
+    tdCtx = tdCanvas.getContext('2d');
+    tdChoiceBtns = document.querySelectorAll('.td-choice-btn');
+    tdQuestionDisplay = document.getElementById('td-target-question');
+    tdUltBtn = document.getElementById('td-ultimate-btn');
+    tdUltCountDisplay = document.getElementById('td-ult-count');
+
+    tdHp = 10; tdScore = 0; tdWave = 1; tdTotalKillsInWave = 0; tdIsGameCleared = false;
+    tdCoins = 0;
+    tdUltimateCount = 1;
+    tdMultiShotUnlocked = false; 
+    tdSlowTimer = 0; tdFreezeTimer = 0;
+    tdWrongCount = 0; tdShakeTimer = 0; tdEnemies = []; tdParticles = []; tdSlashes = []; tdSpawnTimer = 0;
+    tdCurrentTarget = null; tdWaveNoticeTimer = 120; tdWaveNoticeText = "WAVE 1";
+
+    const hpEl = document.getElementById('td-hp'); if (hpEl) hpEl.innerText = tdHp;
+    const waveEl = document.getElementById('td-wave'); if (waveEl) waveEl.innerText = tdWave;
+    const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
+    const scoreEl = document.getElementById('td-score'); if (scoreEl) scoreEl.innerText = tdScore;
+
+    updateTDCoinsUI();
+    updateTDUltUI();
+    if (tdAnimationRequestId) cancelAnimationFrame(tdAnimationRequestId);
+    tdGameLoop();
+}
+
+function updateTDCoinsUI() {
+    const coinEl = document.getElementById('td-coins');
+    if (coinEl) coinEl.innerText = tdCoins;
+}
+
+function buyTDSlow() {
+    if (tdCoins < 100) { alert("เหรียญไม่พอครับ! (ต้องใช้ 100 เหรียญ)"); return; }
+    tdCoins -= 100;
+    tdSlowTimer = 300;
+    updateTDCoinsUI();
+}
+
+function buyTDFreeze() {
+    if (tdCoins < 150) { alert("เหรียญไม่พอครับ! (ต้องใช้ 150 เหรียญ)"); return; }
+    tdCoins -= 150;
+    tdFreezeTimer = 210;
+    updateTDCoinsUI();
+}
+
+function buyTDHeart() {
+    if (tdCoins < 200) { alert("เหรียญไม่พอครับ! (ต้องใช้ 200 เหรียญ)"); return; }
+    tdCoins -= 200;
+    tdHp += 1;
+    const hpEl = document.getElementById('td-hp'); if (hpEl) hpEl.innerText = tdHp;
+    updateTDCoinsUI();
+}
+
+function buyTDUltimate() {
+    if (tdCoins < 300) { alert("เหรียญไม่พอครับ! (ต้องใช้ 300 เหรียญ)"); return; }
+    tdCoins -= 300;
+    tdUltimateCount += 1;
+    updateTDUltUI();
+    updateTDCoinsUI();
+}
+
+function buyTDUpgradeTower() {
+    if (tdCoins < 400) { alert("เหรียญไม่พอครับ!"); return; }
+    tdCoins -= 400;
+    tdMultiShotUnlocked = true;
+    updateTDCoinsUI();
+}
+
+function drawTDHero() {
+    tdCtx.save();
+    tdCtx.translate(tdHero.x, tdHero.y);
+
+    let swordAngle = -Math.PI / 3;
+    if (tdHero.slashAnim > 0) {
+        swordAngle += Math.sin(tdHero.slashAnim) * 1.8;
+        tdHero.slashAnim -= 0.15;
+    }
+
+    tdCtx.fillStyle = '#FF70A6';
+    tdCtx.beginPath(); tdCtx.moveTo(0, -10); tdCtx.lineTo(25, -20); tdCtx.lineTo(20, 20); tdCtx.lineTo(0, 10); tdCtx.fill();
+
+    tdCtx.fillStyle = '#E2E8F0';
+    tdCtx.beginPath(); tdCtx.moveTo(-15, -15); tdCtx.lineTo(-5, -15); tdCtx.lineTo(-5, 15); tdCtx.lineTo(-10, 22); tdCtx.lineTo(-15, 15); tdCtx.closePath(); tdCtx.fill();
+    tdCtx.strokeStyle = '#FFD166'; tdCtx.lineWidth = 2; tdCtx.stroke();
+
+    tdCtx.fillStyle = '#4EA8DE';
+    tdCtx.beginPath(); tdCtx.arc(0, 0, 18, 0, Math.PI * 2); tdCtx.fill();
+    tdCtx.strokeStyle = '#FFFFFF'; tdCtx.lineWidth = 2; tdCtx.stroke();
+
+    tdCtx.fillStyle = '#708090';
+    tdCtx.beginPath(); tdCtx.arc(-2, -2, 14, 0, Math.PI * 2); tdCtx.fill();
+    tdCtx.fillStyle = '#FFD166'; tdCtx.fillRect(-12, -5, 10, 4);
+
+    tdCtx.fillStyle = '#FF70A6';
+    tdCtx.beginPath(); tdCtx.moveTo(-2, -16); tdCtx.lineTo(8, -25); tdCtx.lineTo(12, -14); tdCtx.fill();
+
+    tdCtx.save();
+    tdCtx.rotate(swordAngle);
+    tdCtx.shadowColor = '#4EA8DE'; tdCtx.shadowBlur = 10;
+
+    tdCtx.fillStyle = '#FFFFFF';
+    tdCtx.beginPath(); tdCtx.moveTo(0, -5); tdCtx.lineTo(40, -5); tdCtx.lineTo(48, 0); tdCtx.lineTo(40, 5); tdCtx.lineTo(0, 5); tdCtx.closePath(); tdCtx.fill();
+    tdCtx.fillStyle = '#FFD166'; tdCtx.fillRect(-3, -10, 6, 20);
+    tdCtx.fillStyle = '#708090'; tdCtx.fillRect(-10, -3, 8, 6);
+    tdCtx.restore();
+
+    tdCtx.restore();
+}
+
+function createTDExplosion(x, y, count = 15, color = '#FF70A6') {
+    for (let i = 0; i < count; i++) {
+        tdParticles.push({
+            x: x, y: y,
+            vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12,
+            life: 1.0, color: color
+        });
+    }
+}
+
+function createTDSlashWave(startX, startY, targetX, targetY) {
+    tdSlashes.push({ x1: startX, y1: startY, x2: targetX, y2: targetY, life: 1.0 });
+}
+
+function useTDUltimate() {
+    if (tdUltimateCount <= 0 || tdEnemies.length === 0 || tdIsGameCleared || tdHp <= 0) return;
+
+    tdUltimateCount--;
+    updateTDUltUI();
+    tdShakeTimer = 20;
+
+    createTDExplosion(tdHero.x, tdHero.y, 40, '#FFD166');
+    const killedCount = tdEnemies.length;
+    tdEnemies.forEach(e => createTDExplosion(e.x, e.y, 20, '#FF70A6'));
+
+    tdEnemies = []; tdCurrentTarget = null;
+    tdScore += killedCount * 10;
+    tdCoins += killedCount * 10;
+    tdTotalKillsInWave += killedCount;
+
+    const scoreEl = document.getElementById('td-score'); if (scoreEl) scoreEl.innerText = tdScore;
+    const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
+    updateTDCoinsUI();
+
+    const targetKills = getTargetKillsForWave(tdWave);
+    if (tdTotalKillsInWave >= targetKills) {
+        if (tdWave >= 10) tdIsGameCleared = true; else nextTDWave();
+    }
+}
+
+function updateTDUltUI() {
+    if (tdUltCountDisplay) tdUltCountDisplay.innerText = tdUltimateCount;
+    if (tdUltBtn) tdUltBtn.disabled = (tdUltimateCount <= 0);
+}
+
+function updateTDTargetAndChoices() {
+    if (tdEnemies.length === 0) {
+        tdCurrentTarget = null;
+        if (tdQuestionDisplay) tdQuestionDisplay.innerText = tdIsGameCleared ? "ชนะแล้ว!" : (tdHp <= 0 ? "จบเกมแล้ว" : "รอศัตรู...");
+        if (tdChoiceBtns) tdChoiceBtns.forEach(btn => btn.innerText = "-");
+        return;
+    }
+
+    const isCurrentTargetAlive = tdCurrentTarget && tdEnemies.some(e => e.id === tdCurrentTarget.id && !e.dead);
+    if (!isCurrentTargetAlive) {
+        const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
+        tdCurrentTarget = sortedEnemies[0];
+        if (tdQuestionDisplay) tdQuestionDisplay.innerText = `เป้าหมาย: ${tdCurrentTarget.question} = ?`;
+        generateTDChoices(tdCurrentTarget.answer);
+    }
+}
+
+function generateTDChoices(correctAnswer) {
+    const choices = new Set();
+    choices.add(correctAnswer);
+
+    while (choices.size < 3) {
+        const offset = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+        const wrongAnswer = correctAnswer + offset;
+        if (wrongAnswer >= 0) choices.add(wrongAnswer);
+    }
+
+    tdCurrentChoices = Array.from(choices).sort(() => Math.random() - 0.5);
+    if (tdChoiceBtns) {
+        tdChoiceBtns.forEach((btn, index) => {
+            btn.innerText = tdCurrentChoices[index];
+            btn.style.backgroundColor = '#38bdf8';
+        });
+    }
+}
+
+function selectTDChoice(index) {
+    if (!tdCurrentTarget || tdIsGameCleared || tdHp <= 0) return;
+
+    const selectedValue = tdCurrentChoices[index];
+
+    if (selectedValue === tdCurrentTarget.answer) {
+        tdHero.slashAnim = Math.PI;
+
+        createTDSlashWave(tdHero.x, tdHero.y, tdCurrentTarget.x, tdCurrentTarget.y);
+        createTDExplosion(tdCurrentTarget.x, tdCurrentTarget.y);
+
+        let killedInThisShot = 1;
+        const mainTargetId = tdCurrentTarget.id;
+        const idx = tdEnemies.findIndex(e => e.id === mainTargetId);
+        if (idx !== -1) tdEnemies.splice(idx, 1);
+
+        if (tdMultiShotUnlocked && tdEnemies.length > 0) {
+            const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
+            const secondTarget = sortedEnemies[0];
+            createTDSlashWave(tdHero.x, tdHero.y, secondTarget.x, secondTarget.y);
+            createTDExplosion(secondTarget.x, secondTarget.y);
             
-            <div id="hero-avatar-box" class="bg-gradient-to-br from-sky-50 via-indigo-50/50 to-pink-50/30 p-4 rounded-3xl border border-indigo-100 shadow-xs w-full flex flex-col items-center">
-                <div class="relative group my-1">
-                    <div class="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-b from-indigo-100 to-purple-200 shadow-md flex items-center justify-center overflow-hidden relative">
-                        <img id="hero-avatar-img" class="w-full h-full object-cover hidden" alt="Hero Avatar">
-                        <span id="hero-avatar-emoji" class="text-7xl bounce-anim">👦</span>
-                    </div>
-                    <span id="hero-level-badge" class="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-purple-600 border-2 border-white text-white font-bold text-xs px-3 py-0.5 rounded-full shadow-sm font-kids whitespace-nowrap">
-                        Lv.1
-                    </span>
-                </div>
-                <h2 id="hero-user-name" class="text-lg font-bold font-kids text-slate-800 mt-2 flex items-center gap-1.5">
-                    น้องพูน
-                </h2>
-                <div id="hero-exp-container" class="w-48 bg-white/80 p-1.5 rounded-full border border-indigo-100 shadow-2xs mt-1 flex items-center gap-2">
-                    <div class="flex-1 bg-slate-200 h-2 rounded-full overflow-hidden">
-                        <div id="hero-exp-progress" class="bg-gradient-to-r from-sky-400 via-indigo-500 to-purple-500 h-full w-0 transition-all duration-500 rounded-full"></div>
-                    </div>
-                    <span id="hero-exp-text" class="text-[9px] font-bold text-indigo-700 font-kids pr-1">0/200</span>
-                </div>
-            </div>
-
-            <div id="parent-manage-stars-box" class="bg-indigo-50/80 border-2 border-indigo-200 rounded-3xl p-4 shadow-sm w-full hidden">
-                <div class="font-bold text-xs text-indigo-900 mb-2 flex items-center gap-1 font-kids">
-                    🌟 จัดการดาวสะสมให้ลูกๆ (พ่อนะ / แม่พัด)
-                </div>
-                <div class="space-y-2.5 bg-white p-3 rounded-2xl border border-indigo-100">
-                    <div class="flex gap-2 items-center">
-                        <label class="text-xs font-bold text-slate-600">เลือกเด็ก:</label>
-                        <select id="manage-star-child" class="flex-1 border border-slate-200 rounded-xl p-1.5 text-xs font-bold text-indigo-900 focus:outline-none">
-                            <option value="พูน">👦 พูน</option>
-                            <option value="เพลิน">👧 เพลิน</option>
-                        </select>
-                        <input type="number" id="manage-star-count" min="1" max="100" placeholder="จำนวนดาว" class="w-20 border border-slate-200 rounded-xl p-1.5 text-xs text-center font-bold focus:outline-none">
-                    </div>
-                    <input type="text" id="manage-star-reason" placeholder="เหตุผล (เช่น ช่วยทำความสะอาดบ้าน, ดื้อ)" class="w-full border border-slate-200 rounded-xl p-1.5 text-xs focus:outline-none">
-                    <div class="flex gap-2 pt-1">
-                        <button onclick="adjustChildStars(true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-2 rounded-xl text-xs shadow-sm flex items-center justify-center gap-1">
-                            ➕ เพิ่มดาว
-                        </button>
-                        <button onclick="adjustChildStars(false)" class="flex-1 bg-rose-500 hover:bg-rose-600 active:scale-95 text-white font-bold py-2 rounded-xl text-xs shadow-sm flex items-center justify-center gap-1">
-                            ➖ ลดดาว
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white border border-slate-100 rounded-3xl p-4 shadow-xs w-full">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-bold text-slate-700 flex items-center gap-1.5 font-kids">
-                        📋 ภารกิจพิเศษรับดาว
-                    </h3>
-                    <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full font-bold border border-indigo-100 font-kids">
-                        สะสมแลกรางวัล 🎁
-                    </span>
-                </div>
-
-                <div id="parent-create-quest-box" class="bg-indigo-50/50 p-3 rounded-2xl border border-indigo-100 mb-3 hidden">
-                    <div class="font-bold text-xs text-indigo-900 mb-2">➕ สร้างภารกิจใหม่ (สำหรับ พ่อนะ / แม่พัด)</div>
-                    <div class="space-y-2">
-                        <input type="text" id="new-quest-title" placeholder="ชื่อภารกิจ (เช่น ช่วยล้างจาน, ทำการบ้านเสร็จ)" class="w-full border border-slate-200 rounded-xl p-2 text-xs focus:outline-none focus:border-indigo-500">
-                        <div class="flex gap-2">
-                            <input type="number" id="new-quest-stars" min="1" placeholder="ดาวรางวัล (เช่น 2)" class="w-1/2 border border-slate-200 rounded-xl p-2 text-xs text-center font-bold focus:outline-none focus:border-indigo-500">
-                            <div class="w-1/2 flex items-center gap-2 text-xs font-bold text-slate-600">
-                                <label><input type="checkbox" id="quest-assign-poon" checked> 👦พูน</label>
-                                <label><input type="checkbox" id="quest-assign-ploern" checked> 👧เพลิน</label>
-                            </div>
-                        </div>
-                        <button onclick="createNewParentQuest()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-xs shadow-sm">
-                            บันทึกภารกิจ 💾
-                        </button>
-                    </div>
-                </div>
-
-                <div id="parent-quests-list" class="space-y-2.5 max-h-[40vh] overflow-y-auto pr-1">
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 2: MINI GAMES HUB TAB -->
-        <div id="main-game-tab" class="w-full hidden flex-col items-center space-y-3">
-            
-            <div class="w-full bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs flex gap-1">
-                <button id="game-subtab-vocab" onclick="switchMiniGame('vocab')" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition">🎴 ท่องศัพท์</button>
-                <button id="game-subtab-math" onclick="switchMiniGame('math')" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">🔢 คิดเลข</button>
-                <button id="game-subtab-story" onclick="switchMiniGame('story')" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">📖 นิทาน AI</button>
-                <button id="game-subtab-td" onclick="switchMiniGame('td')" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">⚔️ Math TD</button>
-            </div>
-
-            <!-- SUB-GAME 1: VOCABULARY GAME -->
-            <div id="game-vocab-container" class="w-full flex flex-col items-center">
-                <div id="flashcard-section" class="w-full flex flex-col items-center">
-                    <div id="parent-controls" class="w-full max-w-sm flex justify-between items-center mb-2 px-1 hidden">
-                        <span id="target-assigned-badge" class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full font-bold border border-indigo-100">🎯 เรียนได้ทุกคน</span>
-                        <div class="flex gap-2">
-                            <button onclick="editCurrentCard()" class="bg-sky-50 text-sky-700 hover:bg-sky-100 px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1 border border-sky-200 transition">
-                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> แก้ไข
-                            </button>
-                            <button onclick="deleteCurrentCard()" class="bg-rose-50 text-rose-700 hover:bg-rose-100 px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1 border border-rose-200 transition">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> ลบ
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="card-container" class="w-full max-w-sm h-80 card-flip cursor-pointer" onclick="flipCard()">
-                        <div id="card-inner" class="card-inner w-full h-full relative shadow-sm rounded-3xl bg-white border border-slate-100 flex flex-col items-center justify-center p-6 text-center">
-                            <div class="card-front absolute inset-0 flex flex-col items-center justify-center p-4">
-                                <div id="card-img-container" class="w-32 h-32 mb-3 flex items-center justify-center overflow-hidden rounded-2xl bg-indigo-50/50 border border-indigo-100">
-                                    <span id="card-emoji" class="text-7xl">🍎</span>
-                                    <img id="card-img" class="w-full h-full object-cover hidden" alt="vocab image">
-                                </div>
-                                <div id="card-word-main" class="flex flex-wrap justify-center items-center gap-1 mb-1 max-w-full"></div>
-                                <p class="text-xs text-slate-400 mt-2">กดที่การ์ดเพื่อดูคำแปล</p>
-                            </div>
-                            <div class="card-back absolute inset-0 flex flex-col items-center justify-center p-4 bg-indigo-50/80 rounded-3xl border border-indigo-200">
-                                <div id="card-img-container-back" class="w-24 h-24 mb-2 flex items-center justify-center overflow-hidden rounded-2xl bg-white shadow-xs">
-                                    <span id="card-emoji-back" class="text-5xl">🍎</span>
-                                    <img id="card-img-back" class="w-full h-full object-cover hidden" alt="vocab image">
-                                </div>
-                                <h2 id="card-word-sub" class="text-2xl font-extrabold text-indigo-900 mb-1 font-kids">แอปเปิ้ล</h2>
-                                <p id="card-phonetic" class="text-base font-medium text-indigo-600 mb-2">[ แอบ-เปิ้ล ]</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3 mt-6 w-full max-w-sm justify-center">
-                        <button onclick="speakCurrentWord()" class="flex-1 bg-sky-500 active:bg-sky-600 text-white font-bold py-3 px-4 rounded-2xl shadow-sm flex items-center justify-center gap-2 text-base min-h-[50px] transition active:scale-95">
-                            <i data-lucide="volume-2"></i> ฟังเสียงอ่าน
-                        </button>
-                        <button onclick="addStar()" class="bg-emerald-500 active:bg-emerald-600 text-white font-bold py-3 px-5 rounded-2xl shadow-sm flex items-center justify-center gap-2 text-base min-h-[50px] transition active:scale-95">
-                            <i data-lucide="check-circle"></i> จำได้แล้ว!
-                        </button>
-                    </div>
-                </div>
-
-                <div id="spelling-section" class="w-full max-w-sm hidden flex-col items-center">
-                    <div id="daily-limit-banner" class="w-full bg-rose-50 border border-rose-200 rounded-2xl p-4 text-center mb-4 hidden shadow-xs">
-                        <div class="text-3xl mb-1">🛑</div>
-                        <div class="font-extrabold text-rose-900 text-base mb-1 font-kids">หนูเล่นครบโควต้ารวมวันนี้แล้วครับ!</div>
-                        <div class="text-xs text-rose-700 font-bold">พ่อนะ และ แม่พัด กำหนดโควต้ารวมไว้ <span id="limit-rounds-text">3</span> รอบ เพื่อพักสายตา พรุ่งนี้ค่อยมาเล่นใหม่นะ! 🎈</div>
-                    </div>
-
-                    <div id="spelling-card-box" class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs w-full text-center flex flex-col items-center">
-                        <div class="w-full flex justify-between items-center mb-3 bg-indigo-50/60 px-3 py-1.5 rounded-full border border-indigo-100">
-                            <span id="set-progress-text" class="text-xs font-bold text-indigo-900 font-kids">ชุดที่ 1 (คำที่ 1/5)</span>
-                            <span id="daily-quota-text" class="text-[10px] font-extrabold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-full font-kids">โควต้ารวม 0/3 รอบ</span>
-                        </div>
-
-                        <div class="w-24 h-24 mb-3 flex items-center justify-center overflow-hidden rounded-2xl bg-indigo-50/50">
-                            <span id="spell-card-emoji" class="text-6xl">🍎</span>
-                            <img id="spell-card-img" class="w-full h-full object-cover hidden" alt="vocab image">
-                        </div>
-                        
-                        <h3 id="spell-card-title" class="text-2xl font-black text-indigo-900 mb-1 font-kids">Apple</h3>
-                        <div id="spell-card-subtitle" class="flex flex-wrap justify-center items-center gap-1 mb-4 w-full"></div>
-
-                        <div class="w-full space-y-3">
-                            <div class="relative">
-                                <input type="text" id="spell-input" placeholder="พิมพ์คำตอบ..." class="w-full border-2 border-indigo-100 rounded-2xl p-3 text-center text-xl font-bold tracking-widest focus:outline-none focus:border-indigo-500">
-                            </div>
-
-                            <div id="speech-status" class="text-xs text-indigo-700 h-1 font-medium"></div>
-
-                            <div class="flex gap-2">
-                                <button onclick="speakCurrentWordPrompt()" class="bg-sky-50 active:bg-sky-100 text-sky-800 font-bold py-3 px-4 rounded-2xl min-h-[48px] flex items-center justify-center gap-1.5 border border-sky-200 transition">
-                                    <i data-lucide="volume-2" class="w-5 h-5"></i>
-                                    <span>ฟังเสียง 🔊</span>
-                                </button>
-                                <button id="btn-check-answer" onclick="checkSpellingAnswer()" class="flex-1 bg-emerald-500 active:bg-emerald-600 text-white font-bold py-3 rounded-2xl min-h-[48px] text-base shadow-sm transition active:scale-95">
-                                    ตรวจคำตอบ ✨
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SUB-GAME 2: MATH MINIGAME -->
-            <div id="game-math-container" class="w-full max-w-sm hidden flex-col items-center space-y-3">
-                <div class="w-full flex justify-between items-center">
-                    <div class="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 gap-1 flex-1 mr-2">
-                        <button id="math-diff-easy" onclick="setMathDifficulty('easy')" class="flex-1 py-1 rounded-xl text-[11px] font-black bg-emerald-500 text-white shadow-xs transition">🟢 ง่าย</button>
-                        <button id="math-diff-medium" onclick="setMathDifficulty('medium')" class="flex-1 py-1 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-200 transition">🟡 ปานกลาง</button>
-                        <button id="math-diff-hard" onclick="setMathDifficulty('hard')" class="flex-1 py-1 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-200 transition">🔴 ยาก</button>
-                    </div>
-                    <button onclick="skipMathQuestion()" class="bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white text-xs font-bold py-2 px-3 rounded-2xl shadow-xs bubble-btn whitespace-nowrap">
-                        ข้ามข้อนี้ →
-                    </button>
-                </div>
-
-                <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs w-full text-center flex flex-col items-center">
-                    <div class="w-full flex justify-between items-center mb-3 bg-indigo-50/60 px-3 py-1.5 rounded-full border border-indigo-100">
-                        <span id="math-progress-text" class="text-xs font-bold text-indigo-900 font-kids">ข้อที่ 1 / 5</span>
-                        <span id="math-diff-tag" class="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full font-kids">บวกลบ (4 ตัว)</span>
-                    </div>
-
-                    <div class="text-center mb-3">
-                        <p class="text-[11px] font-bold text-indigo-800 mb-1">เป้าหมายที่ต้องผสมให้ได้</p>
-                        <div class="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full shadow-md flex items-center justify-center border-4 border-white mx-auto">
-                            <span id="math-target-number" class="text-3xl font-black text-white font-kids">18</span>
-                        </div>
-                    </div>
-
-                    <div class="w-full bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-2.5 min-h-[48px] flex items-center justify-center text-center mb-3">
-                        <span id="math-formula-text" class="text-slate-400 font-bold text-xs">แตะตัวเลขและเครื่องหมายเพื่อผสม</span>
-                    </div>
-
-                    <div class="w-full mb-3">
-                        <div class="flex justify-between items-center mb-1.5 px-1">
-                            <span class="text-xs font-bold text-slate-700">ตัวเลขของคุณ:</span>
-                            <span id="math-numbers-left-tag" class="text-[10px] font-bold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">เหลือ 4 ตัว</span>
-                        </div>
-                        <div id="math-numbers-container" class="flex flex-wrap justify-center gap-2 min-h-[52px] items-center">
-                        </div>
-                    </div>
-
-                    <div class="w-full mb-4">
-                        <p class="text-[11px] font-bold text-slate-600 text-center mb-1.5">เครื่องหมาย:</p>
-                        <div class="flex justify-center gap-2">
-                            <button onclick="selectMathOperator('+')" class="w-10 h-10 bg-pink-500 active:bg-pink-600 text-white font-black text-xl rounded-full shadow-xs flex items-center justify-center bubble-btn">+</button>
-                            <button onclick="selectMathOperator('-')" class="w-10 h-10 bg-pink-500 active:bg-pink-600 text-white font-black text-xl rounded-full shadow-xs flex items-center justify-center bubble-btn">-</button>
-                            <button id="math-op-mul" onclick="selectMathOperator('×')" class="w-10 h-10 bg-pink-500 active:bg-pink-600 text-white font-black text-xl rounded-full shadow-xs flex items-center justify-center bubble-btn">×</button>
-                            <button id="math-op-div" onclick="selectMathOperator('÷')" class="w-10 h-10 bg-pink-500 active:bg-pink-600 text-white font-black text-xl rounded-full shadow-xs flex items-center justify-center bubble-btn">÷</button>
-                        </div>
-                    </div>
-
-                    <div class="w-full flex gap-2">
-                        <button onclick="resetCurrentMathQuestion()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-2xl text-xs bubble-btn">
-                            ล้างใหม่ 🔄
-                        </button>
-                        <button onclick="executeMathCombination()" class="flex-1 bg-emerald-500 active:bg-emerald-600 text-white font-bold py-2.5 rounded-2xl text-xs shadow-sm bubble-btn">
-                            ผสมเลขเลย! ✨
-                        </button>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- SUB-GAME 3: AI STORYTELLER -->
-            <div id="game-story-container" class="w-full max-w-sm hidden flex-col items-center">
-                
-                <div id="story-creator-box" class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs w-full">
-                    <div class="text-center mb-3">
-                        <h3 class="text-base font-bold text-slate-800 flex items-center justify-center gap-2 font-kids">
-                            📖 นิทานตามล่าหาไอเทม AI 📷
-                        </h3>
-                        <p class="text-xs text-slate-500 font-medium mt-1">ผจญภัย 10 หน้า ตามหาของจริงรอบบ้านแล้วใช้กล้องถ่ายส่องให้ AI ตรวจ!</p>
-                    </div>
-
-                    <div class="mb-3 bg-indigo-50/50 p-2.5 rounded-2xl border border-indigo-100">
-                        <label class="block text-xs font-bold text-indigo-900 mb-1.5">🌐 ภาษาของนิทาน (Language)</label>
-                        <div class="flex bg-slate-200/60 p-1 rounded-xl gap-1">
-                            <button onclick="selectStoryLang('TH')" id="story-lang-th" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-xs transition">🇹🇭 ภาษาไทย</button>
-                            <button onclick="selectStoryLang('EN')" id="story-lang-en" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-700 transition">🇬🇧 English</button>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">1. ใครเป็นพระเอก/นางเอก?</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <button onclick="selectStoryHero('พูน')" id="story-hero-poon" class="p-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex flex-col items-center transition">
-                                <span class="text-2xl">👦🏻</span>
-                                <span class="text-xs font-bold text-slate-700 mt-1">พี่พูน</span>
-                            </button>
-                            <button onclick="selectStoryHero('เพลิน')" id="story-hero-ploern" class="p-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex flex-col items-center transition">
-                                <span class="text-2xl">👧🏻</span>
-                                <span class="text-xs font-bold text-slate-700 mt-1">น้องเพลิน</span>
-                            </button>
-                            <button onclick="selectStoryHero('พูนและเพลิน')" id="story-hero-both" class="p-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex flex-col items-center transition">
-                                <span class="text-2xl">👫</span>
-                                <span class="text-xs font-bold text-slate-700 mt-1">ทั้งคู่</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">2. เลือกสถานที่ผจญภัย</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="selectStoryTheme('อวกาศ')" id="story-theme-space" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2 text-xs font-bold text-slate-700">
-                                <span class="text-xl">🚀</span> ท่องอวกาศ
-                            </button>
-                            <button onclick="selectStoryTheme('เมืองเวทมนตร์')" id="story-theme-magic" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2 text-xs font-bold text-slate-700">
-                                <span class="text-xl">🏰</span> เมืองเวทมนตร์
-                            </button>
-                            <button onclick="selectStoryTheme('ดินแดนไดโนเสาร์')" id="story-theme-dino" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2 text-xs font-bold text-slate-700">
-                                <span class="text-xl">🦖</span> ดินแดนไดโนเสาร์
-                            </button>
-                            <button onclick="selectStoryTheme('เมืองใต้ทะเล')" id="story-theme-ocean" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2 text-xs font-bold text-slate-700">
-                                <span class="text-xl">🌊</span> เมืองใต้ทะเล
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">3. เพื่อนร่วมทางสุดพิเศษ</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <button onclick="selectStoryPet('เจ้าหมาน้อย')" id="story-pet-dog" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center text-xs font-bold text-slate-700">
-                                <span class="text-lg">🐶</span> เจ้าโฮ่ง
-                            </button>
-                            <button onclick="selectStoryPet('หุ่นยนต์จิ๋ว')" id="story-pet-robot" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center text-xs font-bold text-slate-700">
-                                <span class="text-lg">🤖</span> หุ่นยนต์
-                            </button>
-                            <button onclick="selectStoryPet('เจ้าแมวเหมียว')" id="story-pet-cat" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center text-xs font-bold text-slate-700">
-                                <span class="text-lg">🐱</span> เจ้าเหมียว
-                            </button>
-                        </div>
-                    </div>
-
-                    <button id="btn-generate-story" onclick="generateAIStory()" class="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-95 active:scale-95 text-white font-bold py-3 rounded-2xl shadow-sm flex items-center justify-center gap-2 text-base transition">
-                        ✨ เนรมิตเกมนิทานถ่ายรูปส่องของ 📸
-                    </button>
-                </div>
-
-                <div id="story-reader-box" class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs w-full hidden flex-col items-center">
-                    <div class="w-full flex justify-between items-center mb-3 bg-indigo-50/60 px-3 py-1.5 rounded-full border border-indigo-100">
-                        <span id="story-title-display" class="text-xs font-bold text-indigo-950 truncate max-w-[200px] font-kids">ชื่อเรื่องนิทาน</span>
-                        <span id="story-page-indicator" class="text-[10px] font-bold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded-full font-kids">หน้า 1 / 10</span>
-                    </div>
-
-                    <div class="w-full h-40 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-center overflow-hidden mb-3 shadow-inner relative">
-                        <span id="story-image-emoji" class="text-7xl bounce-anim">🚀</span>
-                    </div>
-
-                    <div class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-3.5 min-h-[90px] mb-3 flex items-center justify-center text-center">
-                        <p id="story-text-display" class="text-xs sm:text-sm font-medium text-slate-800 leading-relaxed">
-                            เนื้อเรื่องจะแสดงที่นี่...
-                        </p>
-                    </div>
-
-                    <div id="story-item-mission-box" class="w-full bg-indigo-50 border border-indigo-200 p-3 rounded-2xl mb-3 flex flex-col items-center text-center hidden">
-                        <span class="text-xs font-bold text-indigo-950 mb-1">🔍 ภารกิจถ่ายรูปตามหาไอเทมจริง!</span>
-                        <p id="story-item-target-text" class="text-sm font-extrabold text-emerald-600 mb-2 font-kids">ต้องถ่ายรูป: ส้ม หรือ ผลไม้สีส้ม</p>
-                        <button onclick="startCameraForStory()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 active:scale-95 text-white font-bold py-2.5 rounded-xl shadow-xs flex items-center justify-center gap-2 text-xs transition">
-                            📷 เปิดกล้องส่องถ่ายรูปไอเทมนี้เลย!
-                        </button>
-                    </div>
-
-                    <div class="w-full flex gap-2 mb-3">
-                        <button onclick="speakStoryPageText()" class="flex-1 bg-sky-500 active:bg-sky-600 text-white font-bold py-2 rounded-2xl shadow-xs flex items-center justify-center gap-1.5 text-xs">
-                            <i data-lucide="volume-2" class="w-4 h-4"></i> ฟังเสียงอ่าน 🔊
-                        </button>
-                    </div>
-
-                    <div class="w-full flex justify-between gap-2 border-t border-slate-100 pt-3">
-                        <button onclick="prevStoryPage()" id="btn-prev-story" class="bg-slate-100 text-slate-600 font-bold py-2 px-3 rounded-xl text-xs flex items-center gap-1">
-                            ← หน้าก่อน
-                        </button>
-                        <button onclick="openStoryCreator()" class="bg-indigo-50 text-indigo-700 font-bold py-2 px-3 rounded-xl text-xs">
-                            🔄 แต่งเรื่องใหม่
-                        </button>
-                        <button onclick="nextStoryPage()" id="btn-next-story" class="bg-indigo-600 text-white font-bold py-2 px-3 rounded-xl text-xs shadow-xs flex items-center gap-1">
-                            ถัดไป →
-                        </button>
-                    </div>
-                </div>
-
-                <div id="story-camera-box" class="w-full bg-white border border-slate-100 rounded-3xl p-5 shadow-xs flex-col items-center hidden">
-                    <div class="text-center mb-2">
-                        <h3 class="text-base font-bold text-slate-800 flex items-center justify-center gap-1 font-kids">
-                            📷 ส่องถ่ายรูปหาไอเทมให้ AI ตรวจ!
-                        </h3>
-                        <p class="text-xs text-slate-500 font-bold">เป้าหมาย: <span id="camera-target-name" class="text-emerald-600 font-bold text-sm">ส้ม</span></p>
-                    </div>
-
-                    <div class="w-full h-64 bg-black rounded-2xl overflow-hidden relative border border-slate-200 shadow-inner">
-                        <video id="camera-stream" autoplay playsinline class="w-full h-full object-cover"></video>
-                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div class="w-44 h-44 border-4 border-dashed border-indigo-400 opacity-80 rounded-3xl animate-pulse"></div>
-                        </div>
-                    </div>
-
-                    <div class="w-full flex gap-2 mt-3">
-                        <button onclick="closeCameraForStory()" class="bg-slate-100 text-slate-600 font-bold py-2.5 px-4 rounded-2xl text-xs">
-                            ยกเลิก ✖️
-                        </button>
-                        <button id="btn-take-photo" onclick="captureAndAnalyzeStoryImage()" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 active:scale-95 text-white font-bold py-2.5 rounded-2xl shadow-xs flex items-center justify-center gap-2 text-xs">
-                            ✨ ถ่ายรูปให้ AI วิเคราะห์! 📸
-                        </button>
-                    </div>
-
-                    <div id="camera-loading" class="mt-2 text-center hidden">
-                        <span class="spinner"></span>
-                        <p class="text-xs text-indigo-700 font-bold mt-1">Gemini AI กำลังดูรูป...</p>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- SUB-GAME 4: MATH HERO TD MINIGAME (COMPACT RESPONSIVE LAYOUT) -->
-            <div id="game-td-container" class="w-full max-w-sm hidden flex-col items-center gap-1.5">
-                
-                <!-- ปุ่มเลือกความยาก Math TD (Easy / Hard) -->
-                <div class="w-full flex bg-slate-100 p-1 rounded-2xl border border-slate-200 gap-1 mb-0.5">
-                    <button id="td-diff-easy" onclick="setTDDifficulty('easy')" class="flex-1 py-1 rounded-xl text-[11px] font-black bg-emerald-500 text-white shadow-xs transition">🟢 Easy (บวกลบ)</button>
-                    <button id="td-diff-hard" onclick="setTDDifficulty('hard')" class="flex-1 py-1 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-200 transition">🔴 Hard (บวกลบคูณหาร)</button>
-                </div>
-
-                <!-- Status Bar (HP, Wave, Kills, Coins, Score) -->
-                <div id="td-stats" class="w-full flex justify-between items-center px-3 py-1.5 bg-white rounded-xl shadow-2xs text-[11px] font-bold text-slate-700 border border-slate-100">
-                    <div>❤️ HP: <span id="td-hp" class="text-rose-500">10</span></div>
-                    <div>🌊 Wave: <span id="td-wave" class="text-indigo-600">1</span>/10</div>
-                    <div>👾 Kills: <span id="td-kills" class="text-emerald-600">0</span>/10</div>
-                    <div>🪙 <span id="td-coins" class="text-amber-500 font-extrabold">0</span></div>
-                    <div>Score: <span id="td-score" class="text-slate-500 font-kids">0</span></div>
-                </div>
-
-                <!-- Canvas Game Display -->
-                <div class="w-full relative">
-                    <canvas id="tdCanvas" width="600" height="320" class="w-full h-auto bg-slate-100 rounded-2xl border border-slate-200 shadow-inner block"></canvas>
-                </div>
-
-                <!-- Question & Choice Area -->
-                <div id="td-ui-layer" class="w-full bg-white px-3 py-2 rounded-2xl border border-slate-100 shadow-2xs flex flex-col items-center gap-1.5">
-                    <div id="td-target-question" class="text-xs font-bold text-indigo-600 font-kids">เป้าหมาย: -</div>
-                    <div class="choice-container flex gap-1.5 w-full">
-                        <button class="td-choice-btn flex-1 py-1.5 rounded-xl bg-sky-500 active:scale-95 text-white font-extrabold text-base shadow-2xs transition" onclick="selectTDChoice(0)">-</button>
-                        <button class="td-choice-btn flex-1 py-1.5 rounded-xl bg-sky-500 active:scale-95 text-white font-extrabold text-base shadow-2xs transition" onclick="selectTDChoice(1)">-</button>
-                        <button class="td-choice-btn flex-1 py-1.5 rounded-xl bg-sky-500 active:scale-95 text-white font-extrabold text-base shadow-2xs transition" onclick="selectTDChoice(2)">-</button>
-                    </div>
-                    <button id="td-ultimate-btn" onclick="useTDUltimate()" class="w-full py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-400 active:scale-95 text-white font-bold text-xs shadow-2xs transition">
-                        💣 ระเบิดล้างจอ (เหลือ <span id="td-ult-count">1</span>)
-                    </button>
-                </div>
-
-                <!-- 🛒 SHOP / ITEM HELPERS (ปุ่มสัญลักษณ์ + เหรียญทอง) -->
-                <div class="w-full bg-amber-50/90 border border-amber-200/80 px-2 py-1.5 rounded-2xl flex flex-col gap-1">
-                    <div class="text-[10px] font-extrabold text-amber-900 flex items-center justify-between px-1 font-kids">
-                        <span>🛒 ร้านค้าตัวช่วย:</span>
-                    </div>
-                    <div class="grid grid-cols-4 gap-1">
-                        <button onclick="buyTDSlow()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
-                            <span class="text-sm">🐌</span>
-                            <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 100</span>
-                        </button>
-
-                        <button onclick="buyTDFreeze()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
-                            <span class="text-sm">❄️</span>
-                            <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 150</span>
-                        </button>
-
-                        <button onclick="buyTDHeart()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
-                            <span class="text-sm">❤️</span>
-                            <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 200</span>
-                        </button>
-
-                        <button onclick="buyTDUltimate()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
-                            <span class="text-sm">💣</span>
-                            <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 300</span>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- TAB 3: REWARDS SHOP & INVENTORY TAB -->
-        <div id="main-shop-tab" class="w-full max-w-sm hidden flex-col items-center">
-            <div class="bg-white w-full rounded-3xl p-5 shadow-xs border border-slate-100">
-                
-                <div class="flex bg-slate-100 p-1 rounded-2xl mb-4 border border-slate-200">
-                    <button id="shop-tab-btn" onclick="switchRewardTab('shop')" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition">🎁 ร้านค้าแลกรางวัล</button>
-                    <button id="inventory-tab-btn" onclick="switchRewardTab('inventory')" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 transition">🎒 กระเป๋าของฉัน</button>
-                </div>
-
-                <div id="reward-shop-view">
-                    <div class="text-center mb-3">
-                        <p class="text-xs text-slate-500">สะสมดาวจากการทำภารกิจเพื่อแลกรางวัล!</p>
-                        <div class="mt-1 bg-amber-50 py-1 px-4 rounded-full inline-block border border-amber-200 font-bold text-amber-800 text-xs">
-                            ดาวสะสม: <span id="quest-user-stars" class="text-amber-500 text-base font-kids">⭐ 0</span>
-                        </div>
-                    </div>
-
-                    <div id="parent-add-reward-section" class="mb-3 bg-indigo-50/50 p-3 rounded-2xl border border-indigo-100 hidden">
-                        <div class="font-bold text-xs text-indigo-900 mb-2">➕ เพิ่มรางวัลใหม่ (สำหรับ พ่อนะ / แม่พัด)</div>
-                        <div class="space-y-2">
-                            <input type="text" id="new-reward-name" placeholder="ชื่อของรางวัล (เช่น ไอศกรีม 1 ถ้วย)" class="w-full border border-slate-200 rounded-xl p-2 text-xs focus:outline-none focus:border-indigo-500">
-                            <div class="flex gap-2">
-                                <input type="number" id="new-reward-stars" min="1" placeholder="จำนวนดาว" class="w-1/2 border border-slate-200 rounded-xl p-2 text-xs text-center font-bold focus:outline-none focus:border-indigo-500">
-                                <button onclick="addNewRewardItem()" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs">
-                                    บันทึกรางวัล 💾
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="rewards-list-container" class="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
-                    </div>
-                </div>
-
-                <div id="reward-inventory-view" class="hidden">
-                    <div class="text-center mb-3">
-                        <h4 class="text-sm font-bold text-slate-800 font-kids">🎒 ของรางวัลที่ได้รับแล้ว</h4>
-                        <p class="text-[11px] text-slate-400">นำรางวัลนี้ไปขอพ่อนะและแม่พัดเพื่อรับจริงได้เลย!</p>
-                    </div>
-                    <div id="inventory-list-container" class="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- Floating Action Button -->
-        <button id="btn-add-vocab" onclick="openAddModal()" class="fixed bottom-24 right-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4 rounded-full shadow-lg z-40 border-2 border-white active:scale-95 transition-all flex items-center justify-center hidden">
-            <i data-lucide="plus" class="w-7 h-7"></i>
-        </button>
-
-    </main>
-
-    <!-- Bottom Navigation Bar -->
-    <nav class="fixed bottom-0 left-0 right-0 max-w-xl mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200 p-2 shadow-2xl flex items-center justify-around z-40 rounded-t-2xl font-bold text-[11px]">
-        <button onclick="switchMainTab('quest')" id="nav-btn-quest" class="flex flex-col items-center gap-0.5 text-indigo-600 flex-1 py-1 transition">
-            <span class="text-xl">🏠</span><span>เควส</span>
-        </button>
-        <button onclick="switchMainTab('game')" id="nav-btn-game" class="flex flex-col items-center gap-0.5 text-slate-400 flex-1 py-1 transition">
-            <span class="text-xl">🎮</span><span>เกมเรียนรู้</span>
-        </button>
-        <button onclick="switchMainTab('shop')" id="nav-btn-shop" class="flex flex-col items-center gap-0.5 text-slate-400 flex-1 py-1 transition">
-            <span class="text-xl">🎁</span><span>ร้านค้า</span>
-        </button>
-    </nav>
-
-    <!-- Modal Assign Quest -->
-    <div id="assign-quest-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white w-full max-w-xs rounded-3xl p-5 shadow-xl relative border border-slate-100">
-            <h3 class="text-base font-bold text-slate-800 mb-2 text-center font-kids">🎯 มอบหมายภารกิจ</h3>
-            <p id="assign-quest-title" class="text-xs font-bold text-indigo-800 text-center mb-4 bg-indigo-50 p-2.5 rounded-xl border border-indigo-100"></p>
-            
-            <input type="hidden" id="assign-quest-id">
-            
-            <div class="space-y-2 mb-5">
-                <label class="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
-                    <input type="checkbox" id="reassign-poon" class="w-4 h-4 text-indigo-600 rounded">
-                    👦 น้องพูน
-                </label>
-                <label class="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer text-xs font-bold text-slate-700 hover:bg-slate-100 transition">
-                    <input type="checkbox" id="reassign-ploern" class="w-4 h-4 text-indigo-600 rounded">
-                    👧 น้องเพลิน
-                </label>
-            </div>
-
-            <div class="flex gap-2">
-                <button onclick="closeAssignModal()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 rounded-xl text-xs">ยกเลิก</button>
-                <button onclick="saveQuestAssignment()" class="flex-1 bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs shadow-xs">บันทึก 💾</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Notification Feed Modal -->
-    <div id="notify-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl relative border border-slate-100 max-h-[80vh] flex flex-col">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2 font-kids">
-                    <i data-lucide="bell" class="w-4 h-4"></i> บันทึก & คำขอแจ้งเตือน 🎈
-                </h3>
-                <button onclick="closeNotifyModal()" class="text-slate-400 hover:text-slate-600 p-1">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            
-            <div id="notify-parent-actions" class="mb-3 hidden">
-                <button onclick="clearAllNotifications()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold py-2 rounded-xl text-xs border border-rose-200 transition">
-                    🗑️ ล้างประวัติการแจ้งเตือนทั้งหมด
-                </button>
-            </div>
-
-            <div id="notify-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1">
-                <div class="text-center text-xs text-slate-400 py-8">ยังไม่มีรายการแจ้งเตือนล่าสุด</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Completion Modal -->
-    <div id="completion-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl text-center border border-slate-100 relative overflow-hidden">
-            <div class="text-5xl mb-2 bounce-anim">🌟</div>
-            <h3 class="text-xl font-bold font-kids text-indigo-900 mb-1">ทำกิจกรรมสำเร็จแล้ว! 🎉</h3>
-            <p id="completion-subtitle" class="text-xs font-bold text-indigo-600 mb-4">ได้รับ 1 ดาวสะสม!</p>
-
-            <div class="bg-indigo-50/50 rounded-2xl p-3.5 border border-indigo-100 mb-4 space-y-1.5">
-                <div class="flex justify-between items-center text-xs font-bold text-slate-700">
-                    <span>สถานะกิจกรรม:</span>
-                    <span id="summary-total-count" class="text-emerald-600">สำเร็จ!</span>
-                </div>
-                <div class="flex justify-between items-center text-xs font-bold text-slate-700">
-                    <span>ดาวที่ได้รับในรอบนี้:</span>
-                    <span id="summary-stars-earned" class="text-amber-500">⭐ 1 ดวง</span>
-                </div>
-                <div class="flex justify-between items-center text-xs font-bold text-slate-700 pt-1 border-t border-indigo-100">
-                    <span>EXP ที่ได้รับ:</span>
-                    <span id="summary-exp-earned" class="text-purple-600 font-bold">+100 EXP ✨</span>
-                </div>
-            </div>
-
-            <div class="space-y-2.5">
-                <div id="summary-saved-badge" class="bg-emerald-50 text-emerald-800 text-[11px] font-bold p-2.5 rounded-xl border border-emerald-200">
-                    ✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!
-                </div>
-                <button onclick="restartSession()" class="w-full bg-indigo-600 active:bg-indigo-700 text-white font-bold py-3 rounded-2xl shadow-xs flex items-center justify-center gap-2 text-sm transition active:scale-95">
-                    <i data-lucide="rotate-ccw"></i> ทำกิจกรรมถัดไป 🔄
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- User Selection Modal -->
-    <div id="profile-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl text-center border border-slate-100">
-            <h3 class="text-lg font-bold font-kids text-slate-800 mb-4">ใครกำลังใช้งานอยู่เอ่ย? 🎈</h3>
-            <div class="grid grid-cols-2 gap-3 mb-2">
-                <button onclick="selectProfile('พ่อนะ', true)" class="p-3.5 bg-blue-50/60 border border-blue-200 rounded-2xl flex flex-col items-center hover:bg-blue-100 active:scale-95 transition">
-                    <span class="text-3xl mb-1">👨‍💼</span>
-                    <span class="font-bold text-blue-900 text-sm">พ่อนะ</span>
-                    <span class="text-[9px] text-blue-500">(ใส่รหัสผ่าน)</span>
-                </button>
-                <button onclick="selectProfile('แม่พัด', true)" class="p-3.5 bg-pink-50/60 border border-pink-200 rounded-2xl flex flex-col items-center hover:bg-pink-100 active:scale-95 transition">
-                    <span class="text-3xl mb-1">👩‍💼</span>
-                    <span class="font-bold text-pink-900 text-sm">แม่พัด</span>
-                    <span class="text-[9px] text-pink-500">(ใส่รหัสผ่าน)</span>
-                </button>
-                <button onclick="selectProfile('พูน', false)" class="p-3.5 bg-indigo-50/60 border border-indigo-200 rounded-2xl flex flex-col items-center hover:bg-indigo-100 active:scale-95 transition">
-                    <span class="text-3xl mb-1">👦</span>
-                    <span class="font-bold text-indigo-900 text-sm">พูน</span>
-                    <span class="text-[9px] text-indigo-600">สะกดคำศัพท์</span>
-                </button>
-                <button onclick="selectProfile('เพลิน', false)" class="p-3.5 bg-amber-50/60 border border-amber-200 rounded-2xl flex flex-col items-center hover:bg-amber-100 active:scale-95 transition">
-                    <span class="text-3xl mb-1">👧</span>
-                    <span class="font-bold text-amber-900 text-sm">เพลิน</span>
-                    <span class="text-[9px] text-amber-600">สะกดคำศัพท์</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- PIN Verification Modal -->
-    <div id="pin-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white w-full max-w-xs rounded-3xl p-5 shadow-xl text-center border border-slate-100">
-            <h3 class="text-base font-bold font-kids text-slate-800 mb-1">ใส่รหัสผ่าน 🔒</h3>
-            <p id="pin-target-name" class="text-xs text-slate-400 mb-3">สำหรับ พ่อนะ / แม่พัด</p>
-            <input type="password" id="pin-input" maxlength="4" placeholder="1234" class="w-full text-center text-xl tracking-widest border border-slate-200 rounded-xl p-2.5 mb-4 focus:outline-none focus:border-indigo-500 font-mono">
-            <div class="flex gap-2">
-                <button onclick="closePinModal()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-2 rounded-xl text-xs">ยกเลิก</button>
-                <button onclick="verifyPin()" class="flex-1 bg-indigo-600 text-white font-bold py-2 rounded-xl text-xs">ยืนยัน</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Level & Avatar Settings -->
-    <div id="level-avatar-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl relative border border-slate-100 max-h-[85vh] flex flex-col">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="text-sm font-bold font-kids text-slate-800 flex items-center gap-1.5">
-                    🎮 รูปตัวละครตาม Level
-                </h3>
-                <button onclick="closeLevelAvatarModal()" class="text-slate-400 hover:text-slate-600 p-1">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-
-            <div class="space-y-3 overflow-y-auto flex-1 pr-1">
-                <div class="bg-indigo-50/50 p-2.5 rounded-2xl border border-indigo-100 flex items-center justify-between">
-                    <span class="text-xs font-bold text-indigo-900">🎯 กำหนด Level สูงสุด (Max Lv):</span>
-                    <input type="number" id="input-max-level" min="1" max="50" class="w-16 border border-slate-200 rounded-xl p-1 text-center font-bold text-xs" onchange="updateMaxLevelSetting()">
-                </div>
-
-                <div class="flex bg-slate-100 p-1 rounded-2xl border border-slate-200">
-                    <button id="lvl-btn-poon" onclick="switchLevelConfigChild('พูน')" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs">👦 น้องพูน</button>
-                    <button id="lvl-btn-ploern" onclick="switchLevelConfigChild('เพลิน')" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600">👧 น้องเพลิน</button>
-                </div>
-
-                <div id="level-avatar-list" class="space-y-2">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add / Edit Word Modal -->
-    <div id="add-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center hidden">
-        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-xl max-h-[90vh] overflow-y-auto relative border border-slate-100">
-            <div class="flex justify-between items-center mb-3">
-                <h3 id="modal-title" class="text-base font-bold font-kids text-slate-800">เพิ่มคำศัพท์ใหม่ 📝</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <form id="vocab-form" onsubmit="handleFormSubmit(event)" class="space-y-3">
-                <input type="hidden" id="edit-index" value="-1">
-                
-                <div class="bg-indigo-50/50 p-3 rounded-2xl border border-indigo-100">
-                    <label class="block text-xs font-bold text-indigo-900 mb-1.5">🎯 คำศัพท์นี้สำหรับผู้เรียนคนไหน?</label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
-                            <input type="checkbox" id="assign-poon" checked class="w-4 h-4 text-indigo-600 rounded">
-                            👦 พูน
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
-                            <input type="checkbox" id="assign-ploern" checked class="w-4 h-4 text-indigo-600 rounded">
-                            👧 เพลิน
-                        </label>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label id="label-en" class="block text-xs font-bold text-slate-600">คำศัพท์ภาษาอังกฤษ (EN)</label>
-                        <button type="button" onclick="askGeminiAI()" id="ai-btn" class="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg font-bold flex items-center gap-1 border border-indigo-100">
-                            <i data-lucide="sparkles" class="w-3 h-3"></i> แปล Gemini ✨
-                        </button>
-                    </div>
-                    <input type="text" id="input-en" required placeholder="e.g. Banana" class="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:border-indigo-500 text-sm">
-                </div>
-                <div class="grid grid-cols-2 gap-2.5">
-                    <div>
-                        <label id="label-th" class="block text-xs font-bold text-slate-600 mb-1">ภาษาไทย (TH)</label>
-                        <input type="text" id="input-th" required placeholder="เช่น กล้วย" class="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:border-indigo-500 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">คำอ่านไทย</label>
-                        <input type="text" id="input-phonetic" placeholder="เช่น กล้วย" class="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:border-indigo-500 text-sm">
-                    </div>
-                </div>
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="block text-xs font-bold text-slate-600">รูปภาพคำศัพท์</label>
-                        <button type="button" onclick="openGeminiForImage()" class="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg font-bold flex items-center gap-1 border border-indigo-100">
-                            ✨ เปิด Gemini เจนรูป
-                        </button>
-                    </div>
-                    <input type="file" id="input-img" accept="image/*" onchange="previewAndResizeImage(event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                    <div id="img-preview-container" class="mt-2 hidden flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                        <img id="img-preview" class="w-14 h-14 object-cover rounded-lg" src="" alt="preview">
-                        <span id="img-size-info" class="text-[11px] text-slate-500 font-medium"></span>
-                    </div>
-                </div>
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="closeModal()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 rounded-xl text-xs">ยกเลิก</button>
-                    <button type="submit" class="flex-1 bg-indigo-600 active:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-xs">บันทึกคำศัพท์</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- API Key & Cloud Settings Modal -->
-    <div id="key-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl relative max-h-[90vh] overflow-y-auto border border-slate-100">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="text-base font-bold font-kids text-slate-800 flex items-center gap-2">
-                    <i data-lucide="key" class="w-4 h-4"></i> ตั้งค่า Cloud & AI
-                </h3>
-                <button onclick="closeKeyModal()" class="text-slate-400 hover:text-slate-600 p-1">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            
-            <div class="space-y-3">
-                <button onclick="openLevelAvatarModal()" class="w-full bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-950 font-bold p-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-2xs">
-                    <span>🎮</span> ตั้งค่า Level & รูปตัวละคร (พูน/เพลิน)
-                </button>
-
-                <div class="bg-indigo-50/50 p-3 rounded-2xl border border-indigo-100">
-                    <label class="block text-xs font-bold text-indigo-900 mb-1">🛑 จำกัดโควต้ารวมเล่นทุกเกมต่อวัน (รอบ/วัน)</label>
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" id="input-enable-daily-limit" class="w-4 h-4 text-indigo-600 rounded">
-                        <span class="text-xs font-bold text-slate-600">เปิดโควต้ารวม</span>
-                        <input type="number" id="input-daily-limit-rounds" min="1" max="50" placeholder="3" class="w-14 border border-slate-200 rounded-xl p-1 text-center font-bold text-xs">
-                        <span class="text-xs text-slate-500 font-bold">รอบ/วัน</span>
-                    </div>
-                </div>
-
-                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                    <div class="flex justify-between items-center mb-1.5">
-                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1">
-                            <i data-lucide="hard-drive" class="w-3.5 h-3.5"></i> พื้นที่ Local Storage
-                        </span>
-                        <span id="storage-text" class="text-[10px] font-bold text-slate-500">0.00 / 5.00 MB</span>
-                    </div>
-                    <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-                        <div id="storage-progress" class="bg-indigo-500 h-full w-0 transition-all duration-500"></div>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">Firebase Config (JSON)</label>
-                    <textarea id="input-firebase-config" rows="3" placeholder='{"apiKey": "...", "databaseURL": "...", ...}' class="w-full border border-slate-200 rounded-xl p-2 text-xs font-mono focus:outline-none focus:border-indigo-500"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">Gemini API Key</label>
-                    <input type="password" id="input-api-key" placeholder="AIzaSy..." class="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:border-indigo-500 text-xs font-mono">
-                </div>
-                <div class="border-t border-slate-100 pt-3">
-                    <label class="block text-xs font-bold text-slate-600 mb-1">รหัสผ่าน PIN ผู้ปกครอง</label>
-                    <input type="password" id="input-parent-pin" maxlength="4" placeholder="1234" class="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:border-indigo-500 text-xs font-mono tracking-widest text-center">
-                </div>
-                <div class="flex gap-2 pt-1">
-                    <button type="button" onclick="saveApiKey()" class="w-full bg-indigo-600 active:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs">บันทึกการตั้งค่า</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- External Script Files -->
-    <script src="./core.js"></script>
-    <script src="./quest-shop.js"></script>
-    
-    <!-- แยกไฟล์มินิเกมวางระดับเดียวกันทั้งหมด -->
-    <script src="./minigames-main.js"></script>
-    <script src="./game-vocab.js"></script>
-    <script src="./game-math.js"></script>
-    <script src="./game-story.js"></script>
-    <script src="./game-td.js"></script>
-
-    <script>
-        lucide.createIcons();
-        initData();
-    </script>
-</body>
-</html>
+            const secondIdx = tdEnemies.findIndex(e => e.id === secondTarget.id);
+            if (secondIdx !== -1) tdEnemies.splice(secondIdx, 1);
+            killedInThisShot++;
+        }
+
+        tdScore += killedInThisShot * 10;
+        tdCoins += killedInThisShot * 10;
+        tdTotalKillsInWave += killedInThisShot;
+        
+        const scoreEl = document.getElementById('td-score'); if (scoreEl) scoreEl.innerText = tdScore;
+        const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
+        updateTDCoinsUI();
+
+        tdCurrentTarget = null;
+        const targetKills = getTargetKillsForWave(tdWave);
+        if (tdTotalKillsInWave >= targetKills) {
+            if (tdWave >= 10) tdIsGameCleared = true; else nextTDWave();
+        }
+    } else {
+        if (tdCurrentTarget) tdCurrentTarget.penaltyTimer = 35;
+        tdShakeTimer = 15;
+        tdWrongCount++;
+        if (tdWrongCount % 3 === 0 && tdHp > 0) {
+            tdHp--;
+            const hpEl = document.getElementById('td-hp'); if (hpEl) hpEl.innerText = tdHp;
+        }
+
+        if (tdChoiceBtns && tdChoiceBtns[index]) {
+            tdChoiceBtns[index].style.backgroundColor = '#f43f5e';
+            setTimeout(() => {
+                if (tdChoiceBtns[index]) tdChoiceBtns[index].style.backgroundColor = '#38bdf8';
+            }, 300);
+        }
+    }
+}
+
+function nextTDWave() {
+    tdWave++; 
+    tdTotalKillsInWave = 0; 
+
+    const waveEl = document.getElementById('td-wave'); if (waveEl) waveEl.innerText = tdWave;
+    const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
+    const hpEl = document.getElementById('td-hp'); if (hpEl) hpEl.innerText = tdHp;
+
+    tdWaveNoticeText = `WAVE ${tdWave} CLEAR!`;
+    tdWaveNoticeTimer = 120;
+}
+
+function drawTDPath() {
+    tdCtx.beginPath();
+    tdCtx.moveTo(tdPath[0].x, tdPath[0].y);
+    for (let i = 1; i < tdPath.length; i++) tdCtx.lineTo(tdPath[i].x, tdPath[i].y);
+    tdCtx.strokeStyle = '#E2E8F0';
+    tdCtx.lineWidth = 32;
+    tdCtx.lineCap = 'round';
+    tdCtx.lineJoin = 'round';
+    tdCtx.stroke();
+}
+
+function triggerTDCompletionModal(finalScore) {
+    let starsEarned = 0;
+    if (tdDifficulty === 'easy') {
+        if (tdIsGameCleared || finalScore >= 500) starsEarned = 1;
+    } else {
+        if (finalScore >= 1000) starsEarned = 3;
+        else if (finalScore >= 800) starsEarned = 2;
+        else if (finalScore >= 500) starsEarned = 1;
+    }
+
+    if (starsEarned > 0) {
+        if (typeof totalStars !== 'undefined') totalStars += starsEarned;
+        if (typeof saveUserStars === 'function') saveUserStars();
+        if (typeof addEXPToUser === 'function') addEXPToUser(starsEarned * 50);
+        if (typeof incrementTodayRounds === 'function') incrementTodayRounds();
+
+        const countEl = document.getElementById("summary-total-count"); if (countEl) countEl.innerText = `${finalScore} คะแนน (Math TD - ${tdDifficulty.toUpperCase()})`;
+        const starsEl = document.getElementById("summary-stars-earned"); if (starsEl) { starsEl.innerText = `⭐ ${starsEarned} ดวง`; starsEl.className = "text-sm text-amber-500 font-bold"; }
+        const expEl = document.getElementById("summary-exp-earned"); if (expEl) expEl.innerText = `+${starsEarned * 50} EXP ✨`;
+        const modal = document.getElementById("completion-modal"); if (modal) modal.classList.remove("hidden");
+    }
+}
+
+function tdGameLoop() {
+    if (!tdCtx) return;
+    tdCtx.clearRect(0, 0, tdCanvas.width, tdCanvas.height);
+
+    if (tdSlowTimer > 0) tdSlowTimer--;
+    if (tdFreezeTimer > 0) tdFreezeTimer--;
+
+    tdCtx.save();
+    if (tdShakeTimer > 0) {
+        const shakeX = (Math.random() - 0.5) * 14;
+        const shakeY = (Math.random() - 0.5) * 14;
+        tdCtx.translate(shakeX, shakeY);
+        tdShakeTimer--;
+    }
+
+    drawTDPath();
+    drawTDHero();
+
+    if (!tdIsGameCleared && tdHp > 0) {
+        const baseInterval = (tdDifficulty === 'easy') ? 220 : 180;
+        const spawnRate = Math.max(baseInterval - (tdWave - 1) * 12, 80);
+        tdSpawnTimer++;
+        if (tdSpawnTimer > spawnRate) {
+            tdEnemies.push(new TDEnemy());
+            tdSpawnTimer = 0;
+        }
+    }
+
+    for (let i = 0; i < tdEnemies.length; i++) {
+        const aheadEnemy = tdEnemies[i - 1] || null;
+        tdEnemies[i].update(aheadEnemy);
+    }
+
+    for (let i = tdEnemies.length - 1; i >= 0; i--) {
+        if (tdEnemies[i].dead) {
+            if (tdCurrentTarget && tdCurrentTarget.id === tdEnemies[i].id) tdCurrentTarget = null;
+            tdEnemies.splice(i, 1);
+        }
+    }
+
+    updateTDTargetAndChoices();
+
+    tdEnemies.forEach(enemy => {
+        const isTarget = tdCurrentTarget && enemy.id === tdCurrentTarget.id;
+        enemy.draw(isTarget);
+    });
+
+    for (let i = tdSlashes.length - 1; i >= 0; i--) {
+        const s = tdSlashes[i];
+        tdCtx.beginPath(); tdCtx.moveTo(s.x1, s.y1); tdCtx.lineTo(s.x2, s.y2);
+        tdCtx.strokeStyle = `rgba(78, 168, 222, ${s.life})`;
+        tdCtx.lineWidth = 8 * s.life;
+        tdCtx.stroke();
+        s.life -= 0.15;
+        if (s.life <= 0) tdSlashes.splice(i, 1);
+    }
+
+    for (let i = tdParticles.length - 1; i >= 0; i--) {
+        const p = tdParticles[i];
+        p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+        tdCtx.fillStyle = p.color;
+        tdCtx.globalAlpha = Math.max(0, p.life);
+        tdCtx.fillRect(p.x, p.y, 5, 5);
+        tdCtx.globalAlpha = 1.0;
+        if (p.life <= 0) tdParticles.splice(i, 1);
+    }
+
+    if (tdWaveNoticeTimer > 0 && !tdIsGameCleared && tdHp > 0) {
+        tdCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        tdCtx.fillRect(0, 150, tdCanvas.width, 80);
+        tdCtx.fillStyle = '#FF70A6';
+        tdCtx.font = 'bold 36px Quicksand, Arial';
+        tdCtx.textAlign = 'center';
+        tdCtx.fillText(tdWaveNoticeText, tdCanvas.width / 2, 202);
+        tdWaveNoticeTimer--;
+    }
+
+    tdCtx.restore();
+
+    if (tdIsGameCleared && tdEnemies.length === 0) {
+        tdCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        tdCtx.fillRect(0, 0, tdCanvas.width, tdCanvas.height);
+        tdCtx.fillStyle = '#FF70A6';
+        tdCtx.font = 'bold 44px Quicksand, Arial';
+        tdCtx.textAlign = 'center';
+        tdCtx.fillText('🏆 VICTORY! 🏆', tdCanvas.width / 2, tdCanvas.height / 2 - 20);
+        tdCtx.fillStyle = '#4A5568';
+        tdCtx.font = '20px Quicksand, Arial';
+        tdCtx.fillText('คุณคือปรมาจารย์คณิตศาสตร์!', tdCanvas.width / 2, tdCanvas.height / 2 + 20);
+        tdCtx.fillText(`Final Score: ${tdScore}`, tdCanvas.width / 2, tdCanvas.height / 2 + 55);
+
+        if (tdAnimationRequestId) cancelAnimationFrame(tdAnimationRequestId);
+        triggerTDCompletionModal(tdScore);
+        return;
+    }
+
+    if (tdHp > 0) {
+        tdAnimationRequestId = requestAnimationFrame(tdGameLoop);
+    } else {
+        tdCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        tdCtx.fillRect(0, 0, tdCanvas.width, tdCanvas.height);
+        tdCtx.fillStyle = '#FF477E';
+        tdCtx.font = 'bold 40px Quicksand, Arial';
+        tdCtx.textAlign = 'center';
+        tdCtx.fillText('GAME OVER', tdCanvas.width / 2, tdCanvas.height / 2 - 20);
+        tdCtx.fillStyle = '#4A5568';
+        tdCtx.font = '20px Quicksand, Arial';
+        tdCtx.fillText(`Wave Reached: ${tdWave}/10`, tdCanvas.width / 2, tdCanvas.height / 2 + 20);
+        tdCtx.fillText(`Final Score: ${tdScore}`, tdCanvas.width / 2, tdCanvas.height / 2 + 50);
+
+        if (tdAnimationRequestId) cancelAnimationFrame(tdAnimationRequestId);
+        triggerTDCompletionModal(tdScore);
+    }
+}
