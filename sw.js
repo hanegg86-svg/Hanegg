@@ -1,9 +1,8 @@
 // Path: ./sw.js
 
-// ปรับเวอร์ชันเป็น v9 เพื่อบังคับเคลียร์แคชและโหลดสคริปต์ game-td.js ใหม่
-const CACHE_NAME = 'kids-vocab-v9';
+// เปลี่ยนเวอร์ชันแคชเป็น v10 เพื่อล้างแคชไฟล์ game-td.js ตัวเก่าทิ้ง
+const CACHE_NAME = 'kids-vocab-v10';
 
-// รายการไฟล์ที่ต้องการให้ Service Worker ทำการแคชไว้ใช้งานออฟไลน์
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -23,17 +22,15 @@ const ASSETS_TO_CACHE = [
   'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js'
 ];
 
-// 1. Install Event: โหลดและบันทึกไฟล์สคริปต์ทั้งหมดลงใน Cache
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching updated app assets v9');
+      console.log('[Service Worker] Caching updated app assets v10');
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );
 });
 
-// 2. Activate Event: เคลียร์ Cache เวอร์ชันเก่าทิ้งทันทีเมื่อมีการอัปเดตระบบ
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -49,7 +46,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// 3. Fetch Event: พยายามดึงข้อมูลจาก Network ก่อน หากไม่มีเน็ตให้ดึงจาก Cache
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 

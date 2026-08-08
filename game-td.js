@@ -1,12 +1,12 @@
 // ==========================================
-// --- MATH HERO TD GAME ENGINE (UPDATED v13 - TURRET 2 SHOTS) ---
+// --- MATH HERO TD GAME ENGINE (FIXED V13) ---
 // ==========================================
 let tdCanvas, tdCtx, tdChoiceBtns, tdQuestionDisplay, tdUltBtn, tdUltCountDisplay;
 let tdHp = 10, tdScore = 0, tdWave = 1, tdTotalKillsInWave = 0, tdUltimateCount = 1, tdIsGameCleared = false;
 let tdCoins = 0, tdSlowTimer = 0, tdFreezeTimer = 0;
 let tdMultiShotUnlocked = false; 
 let tdAutoTurretUnlocked = false; // ป้อมช่วยตี
-let tdTotalAnswersCount = 0;     // [ปรับปรุง] นับจำนวนครั้งการตอบทั้งหมด (ทั้งถูกและผิด)
+let tdTotalAnswersCount = 0;     // นับจำนวนการเลือกตอบทั้งหมด (ทั้งถูกและผิด)
 let tdWrongCount = 0, tdShakeTimer = 0;
 let tdEnemies = [], tdParticles = [], tdSlashes = [], tdSpawnTimer = 0, tdCurrentTarget = null, tdCurrentChoices = [];
 let tdWaveNoticeTimer = 120, tdWaveNoticeText = "WAVE 1", tdAnimationRequestId = null;
@@ -205,30 +205,24 @@ class TDEnemy {
             tdCtx.beginPath(); tdCtx.moveTo(-16, -this.size); tdCtx.lineTo(-26, -this.size - 18); tdCtx.lineTo(-2, -this.size - 2); tdCtx.fill();
             tdCtx.beginPath(); tdCtx.moveTo(16, -this.size); tdCtx.lineTo(26, -this.size - 18); tdCtx.lineTo(2, -this.size - 2); tdCtx.fill();
 
-            // คิ้วเฉียงดุร้าย
             tdCtx.strokeStyle = '#FF0055'; tdCtx.lineWidth = 4;
             tdCtx.beginPath(); tdCtx.moveTo(-18, -16); tdCtx.lineTo(-2, -4); tdCtx.stroke();
             tdCtx.beginPath(); tdCtx.moveTo(18, -16); tdCtx.lineTo(2, -4); tdCtx.stroke();
 
-            // ตาสีแดงส่องสว่าง
             tdCtx.fillStyle = '#FF0000';
             tdCtx.beginPath(); tdCtx.arc(-9, -2, 7, 0, Math.PI * 2); tdCtx.arc(9, -2, 7, 0, Math.PI * 2); tdCtx.fill();
             tdCtx.fillStyle = '#000000';
             tdCtx.beginPath(); tdCtx.arc(-9, -2, 2, 0, Math.PI * 2); tdCtx.arc(9, -2, 2, 0, Math.PI * 2); tdCtx.fill();
 
-            // ปากพร้อมเขี้ยวล่างและบน
             tdCtx.fillStyle = '#000000';
             tdCtx.beginPath(); tdCtx.arc(0, 9, 9, 0, Math.PI); tdCtx.fill();
             tdCtx.fillStyle = '#FFFFFF';
-            // เขี้ยวบน
             tdCtx.beginPath(); tdCtx.moveTo(-6, 9); tdCtx.lineTo(-4, 15); tdCtx.lineTo(-2, 9); tdCtx.fill();
             tdCtx.beginPath(); tdCtx.moveTo(2, 9); tdCtx.lineTo(4, 15); tdCtx.lineTo(6, 9); tdCtx.fill();
-            // เขี้ยวล่าง
             tdCtx.beginPath(); tdCtx.moveTo(-4, 18); tdCtx.lineTo(-2, 13); tdCtx.lineTo(0, 18); tdCtx.fill();
             tdCtx.beginPath(); tdCtx.moveTo(0, 18); tdCtx.lineTo(2, 13); tdCtx.lineTo(4, 18); tdCtx.fill();
 
         } else if (tdWave >= 9) {
-            // LEVEL 9-10: หน้าโหดสุดๆ
             tdCtx.fillStyle = '#1A1A1A';
             tdCtx.beginPath(); tdCtx.moveTo(-14, -this.size); tdCtx.lineTo(-22, -this.size - 14); tdCtx.lineTo(-4, -this.size - 2); tdCtx.fill();
             tdCtx.beginPath(); tdCtx.moveTo(14, -this.size); tdCtx.lineTo(22, -this.size - 14); tdCtx.lineTo(4, -this.size - 2); tdCtx.fill();
@@ -249,7 +243,6 @@ class TDEnemy {
             tdCtx.beginPath(); tdCtx.moveTo(2, 8); tdCtx.lineTo(4, 15); tdCtx.lineTo(6, 8); tdCtx.fill();
 
         } else if (tdWave >= 7) {
-            // LEVEL 7-8: หน้าดุขึ้นอีก
             tdCtx.strokeStyle = '#2D3748'; tdCtx.lineWidth = 3;
             tdCtx.beginPath(); tdCtx.moveTo(-15, -12); tdCtx.lineTo(-3, -5); tdCtx.stroke();
             tdCtx.beginPath(); tdCtx.moveTo(15, -12); tdCtx.lineTo(3, -5); tdCtx.stroke();
@@ -265,7 +258,6 @@ class TDEnemy {
             tdCtx.beginPath(); tdCtx.moveTo(-4, 8); tdCtx.lineTo(-2, 13); tdCtx.lineTo(0, 8); tdCtx.fill();
 
         } else if (tdWave >= 4) {
-            // LEVEL 4-6: หน้าดุขึ้น
             tdCtx.fillStyle = '#FFD166';
             tdCtx.beginPath(); tdCtx.moveTo(-12, -this.size); tdCtx.lineTo(-18, -this.size - 10); tdCtx.lineTo(-6, -this.size - 2); tdCtx.fill();
             tdCtx.beginPath(); tdCtx.moveTo(12, -this.size); tdCtx.lineTo(18, -this.size - 10); tdCtx.lineTo(6, -this.size - 2); tdCtx.fill();
@@ -282,7 +274,6 @@ class TDEnemy {
             tdCtx.beginPath(); tdCtx.arc(0, 7, 5, 1.1 * Math.PI, 1.9 * Math.PI); tdCtx.strokeStyle = '#2D3748'; tdCtx.lineWidth = 2; tdCtx.stroke();
 
         } else {
-            // LEVEL 1-3: หน้าตาน่ารัก
             tdCtx.fillStyle = '#FFD166';
             tdCtx.beginPath(); tdCtx.moveTo(-12, -this.size); tdCtx.lineTo(-18, -this.size - 10); tdCtx.lineTo(-6, -this.size - 2); tdCtx.fill();
             tdCtx.beginPath(); tdCtx.moveTo(12, -this.size); tdCtx.lineTo(18, -this.size - 10); tdCtx.lineTo(6, -this.size - 2); tdCtx.fill();
@@ -328,7 +319,7 @@ function initMathTDGame() {
     tdUltimateCount = 1;
     tdMultiShotUnlocked = false; 
     tdAutoTurretUnlocked = false; 
-    tdTotalAnswersCount = 0; // รีเซ็ตตัวนับ
+    tdTotalAnswersCount = 0;
     tdSlowTimer = 0; tdFreezeTimer = 0;
     tdWrongCount = 0; tdShakeTimer = 0; tdEnemies = []; tdParticles = []; tdSlashes = []; tdSpawnTimer = 0;
     tdCurrentTarget = null; tdWaveNoticeTimer = 120; tdWaveNoticeText = "WAVE 1";
@@ -514,7 +505,7 @@ function useTDUltimate() {
     const targetKills = getTargetKillsForWave(tdWave);
     if (tdTotalKillsInWave >= targetKills) {
         if (tdWave >= 13) {
-            setTimeout(() => { tdIsGameCleared = true; }, 400);
+            setTimeout(() => { tdIsGameCleared = true; }, 100);
         } else {
             nextTDWave();
         }
@@ -562,25 +553,25 @@ function generateTDChoices(correctAnswer) {
     }
 }
 
+// [FIXED CRITICAL BUG]: แก้ไขปัญหาปุ่มกดตัวสุดท้ายไม่ติด ด้วยการล็อกตัวแปร targetEnemy
 function selectTDChoice(index) {
     if (!tdCurrentTarget || tdIsGameCleared || tdHp <= 0) return;
 
     const selectedValue = tdCurrentChoices[index];
+    const targetEnemy = tdCurrentTarget; // ล็อกเป้าหมายไว้ก่อนประมวลผล
 
-    // นับจำนวนครั้งการตอบเพิ่มทุกครั้ง ทั้งถูกและผิด
     tdTotalAnswersCount++;
 
-    if (selectedValue === tdCurrentTarget.answer) {
-        // ==================== กรณีตอบถูก ====================
+    if (selectedValue === targetEnemy.answer) {
         tdHero.slashAnim = Math.PI;
 
-        createTDSlashWave(tdHero.x, tdHero.y, tdCurrentTarget.x, tdCurrentTarget.y);
-        createTDExplosion(tdCurrentTarget.x, tdCurrentTarget.y);
+        createTDSlashWave(tdHero.x, tdHero.y, targetEnemy.x, targetEnemy.y);
+        createTDExplosion(targetEnemy.x, targetEnemy.y);
 
         let killedInThisShot = 1;
-        const mainTargetId = tdCurrentTarget.id;
-        const idx = tdEnemies.findIndex(e => e.id === mainTargetId);
-        if (idx !== -1) tdEnemies.splice(idx, 1);
+        
+        // ลบเฉพาะมอนสเตอร์ที่โดนยิง
+        tdEnemies = tdEnemies.filter(e => e.id !== targetEnemy.id);
 
         if (tdMultiShotUnlocked && tdEnemies.length > 0) {
             const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
@@ -588,8 +579,7 @@ function selectTDChoice(index) {
             createTDSlashWave(tdHero.x, tdHero.y, secondTarget.x, secondTarget.y);
             createTDExplosion(secondTarget.x, secondTarget.y);
             
-            const secondIdx = tdEnemies.findIndex(e => e.id === secondTarget.id);
-            if (secondIdx !== -1) tdEnemies.splice(secondIdx, 1);
+            tdEnemies = tdEnemies.filter(e => e.id !== secondTarget.id);
             killedInThisShot++;
         }
 
@@ -602,17 +592,17 @@ function selectTDChoice(index) {
         const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
         updateTDCoinsUI();
 
-        tdCurrentTarget = null;
+        tdCurrentTarget = null; // ปลดล็อกเป้าหมาย
+
         const targetKills = getTargetKillsForWave(tdWave);
         if (tdTotalKillsInWave >= targetKills) {
             if (tdWave >= 13) {
-                setTimeout(() => { tdIsGameCleared = true; }, 400); // หน่วงเวลาปุ่มให้เอฟเฟกต์เล่นจบสมบูรณ์
+                setTimeout(() => { tdIsGameCleared = true; }, 100);
             } else {
                 nextTDWave();
             }
         }
     } else {
-        // ==================== กรณีตอบผิด ====================
         if (tdCurrentTarget) tdCurrentTarget.penaltyTimer = 35;
         tdShakeTimer = 15;
         tdWrongCount++;
@@ -629,13 +619,10 @@ function selectTDChoice(index) {
         }
     }
 
-    // =========================================================
-    // 🏰 ป้อมช่วยตีทำงานทุกๆ 2 ครั้งการกดเลือกตอบ (ไม่ว่าจะถูกหรือผิด!)
-    // =========================================================
+    // ป้อมช่วยตีทำงานทุกๆ 2 ครั้งการตอบ (ไม่ว่าจะถูกหรือผิด)
     if (tdAutoTurretUnlocked && tdTotalAnswersCount % 2 === 0 && tdEnemies.length > 0) {
         const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
         
-        // ยิงมอนสเตอร์ตัวรอง (ที่ไม่ใช่ตัวหน้าสุด)
         let turretTarget = null;
         if (sortedEnemies.length > 1) {
             turretTarget = sortedEnemies[1]; // ตัวรองหน้าสุด
@@ -647,8 +634,7 @@ function selectTDChoice(index) {
             createTDSlashWave(tdTurretPos.x, tdTurretPos.y, turretTarget.x, turretTarget.y);
             createTDExplosion(turretTarget.x, turretTarget.y, 15, '#38BDF8');
             
-            const turretTargetIdx = tdEnemies.findIndex(e => e.id === turretTarget.id);
-            if (turretTargetIdx !== -1) tdEnemies.splice(turretTargetIdx, 1);
+            tdEnemies = tdEnemies.filter(e => e.id !== turretTarget.id);
             
             const coinReward = getCoinRewardForWave(tdWave);
             tdScore += 10;
@@ -662,7 +648,7 @@ function selectTDChoice(index) {
             const targetKills = getTargetKillsForWave(tdWave);
             if (tdTotalKillsInWave >= targetKills) {
                 if (tdWave >= 13) {
-                    setTimeout(() => { tdIsGameCleared = true; }, 400);
+                    setTimeout(() => { tdIsGameCleared = true; }, 100);
                 } else {
                     nextTDWave();
                 }
@@ -734,7 +720,7 @@ function tdGameLoop() {
 
     drawTDPath();
     drawTDHero();
-    drawTDAutoTurret(); // วาดป้อมช่วยตี
+    drawTDAutoTurret();
 
     if (!tdIsGameCleared && tdHp > 0) {
         const baseInterval = (tdDifficulty === 'easy') ? 220 : 180;
