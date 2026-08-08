@@ -640,9 +640,10 @@
                     <button id="td-diff-hard" onclick="setTDDifficulty('hard')" class="flex-1 py-1 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-200 transition">🔴 Hard (บวกลบคูณหาร)</button>
                 </div>
 
+                <!-- [ข้อ 1] ปรับ Wave สูงสุดใน UI เป็น 13 -->
                 <div id="td-stats" class="w-full flex justify-between items-center px-3 py-1.5 bg-white rounded-xl shadow-2xs text-[11px] font-bold text-slate-700 border border-slate-100">
                     <div>❤️ HP: <span id="td-hp" class="text-rose-500">10</span></div>
-                    <div>🌊 Wave: <span id="td-wave" class="text-indigo-600">1</span>/10</div>
+                    <div>🌊 Wave: <span id="td-wave" class="text-indigo-600">1</span>/13</div>
                     <div>👾 Kills: <span id="td-kills" class="text-emerald-600">0</span>/10</div>
                     <div>🪙 <span id="td-coins" class="text-amber-500 font-extrabold">0</span></div>
                     <div>Score: <span id="td-score" class="text-slate-500 font-kids">0</span></div>
@@ -664,11 +665,12 @@
                     </button>
                 </div>
 
+                <!-- [ข้อ 4] ปรับ Layout ร้านค้าเป็น grid-cols-5 และเพิ่มปุ่มซื้อป้อมช่วยตี -->
                 <div class="w-full bg-amber-50/90 border border-amber-200/80 px-2 py-1.5 rounded-2xl flex flex-col gap-1">
                     <div class="text-[10px] font-extrabold text-amber-900 flex items-center justify-between px-1 font-kids">
                         <span>🛒 ร้านค้าตัวช่วย:</span>
                     </div>
-                    <div class="grid grid-cols-4 gap-1">
+                    <div class="grid grid-cols-5 gap-1">
                         <button onclick="buyTDFreeze()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
                             <span class="text-sm">❄️</span>
                             <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 100</span>
@@ -687,6 +689,12 @@
                         <button id="td-buy-bow-btn" onclick="buyTDUpgradeTower()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
                             <span class="text-sm">🏹x2</span>
                             <span id="td-buy-bow-text" class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 400</span>
+                        </button>
+
+                        <!-- 🏰 ปุ่มซื้อป้อมช่วยตีใหม่ -->
+                        <button id="td-buy-turret-btn" onclick="buyTDAutoTurret()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
+                            <span class="text-sm">🏰ป้อม</span>
+                            <span id="td-buy-turret-text" class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 400</span>
                         </button>
                     </div>
                 </div>

@@ -1,10 +1,12 @@
 // ==========================================
-// --- MATH HERO TD GAME ENGINE (UPDATED) ---
+// --- MATH HERO TD GAME ENGINE (UPDATED v13) ---
 // ==========================================
 let tdCanvas, tdCtx, tdChoiceBtns, tdQuestionDisplay, tdUltBtn, tdUltCountDisplay;
 let tdHp = 10, tdScore = 0, tdWave = 1, tdTotalKillsInWave = 0, tdUltimateCount = 1, tdIsGameCleared = false;
 let tdCoins = 0, tdSlowTimer = 0, tdFreezeTimer = 0;
 let tdMultiShotUnlocked = false; 
+let tdAutoTurretUnlocked = false; // [ข้อ 4] ป้อมช่วยตี
+let tdCorrectAnswersCount = 0;    // นับจำนวนการตอบถูกเพื่อยิงป้อม
 let tdWrongCount = 0, tdShakeTimer = 0;
 let tdEnemies = [], tdParticles = [], tdSlashes = [], tdSpawnTimer = 0, tdCurrentTarget = null, tdCurrentChoices = [];
 let tdWaveNoticeTimer = 120, tdWaveNoticeText = "WAVE 1", tdAnimationRequestId = null;
@@ -17,6 +19,7 @@ const tdPath = [
     {x: 420, y: 80}, {x: 420, y: 230}, {x: 500, y: 230}
 ];
 const tdHero = { x: 535, y: 230, slashAnim: 0 };
+const tdTurretPos = { x: 300, y: 150 }; // ตำแหน่งวางป้อมช่วยตี
 
 function drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.beginPath();
@@ -58,11 +61,12 @@ function getTargetKillsForWave(wave) {
     return 10;                     
 }
 
-// คำนวณเหรียญทองตาม Level / Wave
+// [ข้อ 3] คำนวณเหรียญทองตาม Level / Wave (เพิ่ม 25 เหรียญใน Wave 11-13)
 function getCoinRewardForWave(wave) {
-    if (wave >= 7) return 20; // Level 7+ ได้ 20 เหรียญ
-    if (wave >= 4) return 15; // Level 4-6 ได้ 15 เหรียญ
-    return 10;                // Level 1-3 ได้ 10 เหรียญ
+    if (wave >= 11) return 25; // Wave 11-13 ได้ 25 เหรียญ
+    if (wave >= 7) return 20;  // Wave 7-10 ได้ 20 เหรียญ
+    if (wave >= 4) return 15;  // Wave 4-6 ได้ 15 เหรียญ
+    return 10;                 // Wave 1-3 ได้ 10 เหรียญ
 }
 
 class TDEnemy {
@@ -179,8 +183,10 @@ class TDEnemy {
             tdCtx.shadowColor = '#FF70A6'; tdCtx.shadowBlur = 18;
         }
 
+        // [ข้อ 2] หน้า Monster โหดขึ้นใน Wave 11-13
         let enemyBg = '#FF85A1';
-        if (tdWave >= 9) enemyBg = '#8B0000';      // โหดสุด
+        if (tdWave >= 11) enemyBg = '#2A0845';     // ม่วงอสูรเข้มสุดๆ (Wave 11-13)
+        else if (tdWave >= 9) enemyBg = '#8B0000'; // โหดสุด
         else if (tdWave >= 7) enemyBg = '#C70039'; // ดุขึ้นอีก
         else if (tdWave >= 4) enemyBg = '#FF5733'; // ดุขึ้น
         if (isTarget) enemyBg = '#FFD166';
@@ -193,7 +199,35 @@ class TDEnemy {
         tdCtx.strokeStyle = '#FFFFFF';
         tdCtx.stroke();
 
-        if (tdWave >= 9) {
+        if (tdWave >= 11) {
+            // [ข้อ 2] WAVE 11-13: หน้าบอสโหมดจอมอสูร (Extreme Nightmare)
+            tdCtx.fillStyle = '#10002B';
+            tdCtx.beginPath(); tdCtx.moveTo(-16, -this.size); tdCtx.lineTo(-26, -this.size - 18); tdCtx.lineTo(-2, -this.size - 2); tdCtx.fill();
+            tdCtx.beginPath(); tdCtx.moveTo(16, -this.size); tdCtx.lineTo(26, -this.size - 18); tdCtx.lineTo(2, -this.size - 2); tdCtx.fill();
+
+            // คิ้วเฉียงดุร้าย
+            tdCtx.strokeStyle = '#FF0055'; tdCtx.lineWidth = 4;
+            tdCtx.beginPath(); tdCtx.moveTo(-18, -16); tdCtx.lineTo(-2, -4); tdCtx.stroke();
+            tdCtx.beginPath(); tdCtx.moveTo(18, -16); tdCtx.lineTo(2, -4); tdCtx.stroke();
+
+            // ตาสีแดงส่องสว่าง
+            tdCtx.fillStyle = '#FF0000';
+            tdCtx.beginPath(); tdCtx.arc(-9, -2, 7, 0, Math.PI * 2); tdCtx.arc(9, -2, 7, 0, Math.PI * 2); tdCtx.fill();
+            tdCtx.fillStyle = '#000000';
+            tdCtx.beginPath(); tdCtx.arc(-9, -2, 2, 0, Math.PI * 2); tdCtx.arc(9, -2, 2, 0, Math.PI * 2); tdCtx.fill();
+
+            // ปากพร้อมเขี้ยวล่างและบน
+            tdCtx.fillStyle = '#000000';
+            tdCtx.beginPath(); tdCtx.arc(0, 9, 9, 0, Math.PI); tdCtx.fill();
+            tdCtx.fillStyle = '#FFFFFF';
+            // เขี้ยวบน
+            tdCtx.beginPath(); tdCtx.moveTo(-6, 9); tdCtx.lineTo(-4, 15); tdCtx.lineTo(-2, 9); tdCtx.fill();
+            tdCtx.beginPath(); tdCtx.moveTo(2, 9); tdCtx.lineTo(4, 15); tdCtx.lineTo(6, 9); tdCtx.fill();
+            // เขี้ยวล่าง
+            tdCtx.beginPath(); tdCtx.moveTo(-4, 18); tdCtx.lineTo(-2, 13); tdCtx.lineTo(0, 18); tdCtx.fill();
+            tdCtx.beginPath(); tdCtx.moveTo(0, 18); tdCtx.lineTo(2, 13); tdCtx.lineTo(4, 18); tdCtx.fill();
+
+        } else if (tdWave >= 9) {
             // LEVEL 9-10: หน้าโหดสุดๆ
             tdCtx.fillStyle = '#1A1A1A';
             tdCtx.beginPath(); tdCtx.moveTo(-14, -this.size); tdCtx.lineTo(-22, -this.size - 14); tdCtx.lineTo(-4, -this.size - 2); tdCtx.fill();
@@ -213,10 +247,6 @@ class TDEnemy {
             tdCtx.fillStyle = '#FFFFFF';
             tdCtx.beginPath(); tdCtx.moveTo(-6, 8); tdCtx.lineTo(-4, 15); tdCtx.lineTo(-2, 8); tdCtx.fill();
             tdCtx.beginPath(); tdCtx.moveTo(2, 8); tdCtx.lineTo(4, 15); tdCtx.lineTo(6, 8); tdCtx.fill();
-
-            tdCtx.strokeStyle = '#FFFFFF'; tdCtx.lineWidth = 2;
-            tdCtx.beginPath(); tdCtx.moveTo(-16, 2); tdCtx.lineTo(-10, 8); tdCtx.stroke();
-            tdCtx.beginPath(); tdCtx.moveTo(-10, 2); tdCtx.lineTo(-16, 8); tdCtx.stroke();
 
         } else if (tdWave >= 7) {
             // LEVEL 7-8: หน้าดุขึ้นอีก
@@ -296,7 +326,9 @@ function initMathTDGame() {
     tdHp = 10; tdScore = 0; tdWave = 1; tdTotalKillsInWave = 0; tdIsGameCleared = false;
     tdCoins = 0;
     tdUltimateCount = 1;
-    tdMultiShotUnlocked = false; // รีเซ็ตการอัปเกรดเมื่อเริ่มเกมใหม่
+    tdMultiShotUnlocked = false; 
+    tdAutoTurretUnlocked = false; // [ข้อ 4] รีเซ็ตป้อม
+    tdCorrectAnswersCount = 0;
     tdSlowTimer = 0; tdFreezeTimer = 0;
     tdWrongCount = 0; tdShakeTimer = 0; tdEnemies = []; tdParticles = []; tdSlashes = []; tdSpawnTimer = 0;
     tdCurrentTarget = null; tdWaveNoticeTimer = 120; tdWaveNoticeText = "WAVE 1";
@@ -316,7 +348,6 @@ function updateTDCoinsUI() {
     const coinEl = document.getElementById('td-coins');
     if (coinEl) coinEl.innerText = tdCoins;
 
-    // อัปเดตปุ่มอัปเกรดธนู
     const bowBtn = document.getElementById('td-buy-bow-btn');
     const bowText = document.getElementById('td-buy-bow-text');
     if (bowBtn && bowText) {
@@ -326,6 +357,19 @@ function updateTDCoinsUI() {
         } else {
             bowText.innerText = "🪙 400";
             bowBtn.classList.remove("opacity-50");
+        }
+    }
+
+    // [ข้อ 4] UI อัปเดตปุ่มซื้อป้อมช่วยตี
+    const turretBtn = document.getElementById('td-buy-turret-btn');
+    const turretText = document.getElementById('td-buy-turret-text');
+    if (turretBtn && turretText) {
+        if (tdAutoTurretUnlocked) {
+            turretText.innerText = "MAX";
+            turretBtn.classList.add("opacity-50");
+        } else {
+            turretText.innerText = "🪙 400";
+            turretBtn.classList.remove("opacity-50");
         }
     }
 }
@@ -353,14 +397,23 @@ function buyTDUltimate() {
     updateTDCoinsUI();
 }
 
-// อัปเกรดถาวรประจำรอบ
 function buyTDUpgradeTower() {
     if (tdMultiShotUnlocked) { alert("หนูอัปเกรดธนูยิง 2 ตัวถาวรแล้วครับ!"); return; }
     if (tdCoins < 400) { alert("เหรียญไม่พอครับ! (ต้องใช้ 400 เหรียญ)"); return; }
     tdCoins -= 400;
-    tdMultiShotUnlocked = true; // เปิดใช้งานยิง 2 ตัวถาวร
+    tdMultiShotUnlocked = true;
     updateTDCoinsUI();
     alert("🏹 อัปเกรดตัวเราสำเร็จ! ฮีโร่จะยิงโจมตีทีเดียว 2 ตัวถาวรแล้วครับ!");
+}
+
+// [ข้อ 4] ฟังก์ชันสำหรับซื้อป้อมช่วยตีใหม่ (ราคา 400)
+function buyTDAutoTurret() {
+    if (tdAutoTurretUnlocked) { alert("คุณมีป้อมช่วยตีแล้วครับ!"); return; }
+    if (tdCoins < 400) { alert("เหรียญไม่พอครับ! (ต้องใช้ 400 เหรียญ)"); return; }
+    tdCoins -= 400;
+    tdAutoTurretUnlocked = true;
+    updateTDCoinsUI();
+    alert("🏰 ซื้อป้อมช่วยตีสำเร็จ! ป้อมจะช่วยยิงมอนสเตอร์รอง (ที่ไม่ใช่ตัวหน้าสุด) ทุกๆ การตอบถูก 3 ครั้ง!");
 }
 
 function drawTDHero() {
@@ -404,6 +457,28 @@ function drawTDHero() {
     tdCtx.restore();
 }
 
+// [ข้อ 4] วาดป้อมช่วยตีในแมพ
+function drawTDAutoTurret() {
+    if (!tdAutoTurretUnlocked) return;
+    tdCtx.save();
+    tdCtx.translate(tdTurretPos.x, tdTurretPos.y);
+
+    // ฐานป้อม
+    tdCtx.fillStyle = '#475569';
+    tdCtx.beginPath(); tdCtx.arc(0, 0, 20, 0, Math.PI * 2); tdCtx.fill();
+    tdCtx.strokeStyle = '#94A3B8'; tdCtx.lineWidth = 3; tdCtx.stroke();
+
+    // ตัวป้อม
+    tdCtx.fillStyle = '#38BDF8';
+    tdCtx.beginPath(); tdCtx.arc(0, 0, 12, 0, Math.PI * 2); tdCtx.fill();
+    
+    // ปากกระบอกปืน
+    tdCtx.fillStyle = '#0F172A';
+    tdCtx.fillRect(-4, -18, 8, 10);
+
+    tdCtx.restore();
+}
+
 function createTDExplosion(x, y, count = 15, color = '#FF70A6') {
     for (let i = 0; i < count; i++) {
         tdParticles.push({
@@ -441,7 +516,7 @@ function useTDUltimate() {
 
     const targetKills = getTargetKillsForWave(tdWave);
     if (tdTotalKillsInWave >= targetKills) {
-        if (tdWave >= 10) tdIsGameCleared = true; else nextTDWave();
+        if (tdWave >= 13) tdIsGameCleared = true; else nextTDWave(); // [ข้อ 1] Wave 13
     }
 }
 
@@ -502,7 +577,6 @@ function selectTDChoice(index) {
         const idx = tdEnemies.findIndex(e => e.id === mainTargetId);
         if (idx !== -1) tdEnemies.splice(idx, 1);
 
-        // หากอัปเกรดแล้ว จะยิงมอนสเตอร์ตัวที่สองพร้อมกันทันที
         if (tdMultiShotUnlocked && tdEnemies.length > 0) {
             const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
             const secondTarget = sortedEnemies[0];
@@ -512,6 +586,28 @@ function selectTDChoice(index) {
             const secondIdx = tdEnemies.findIndex(e => e.id === secondTarget.id);
             if (secondIdx !== -1) tdEnemies.splice(secondIdx, 1);
             killedInThisShot++;
+        }
+
+        // [ข้อ 4] ป้อมช่วยตีทำงานทุกๆ 3 การตอบถูก โดยจะไม่ยิงตัวหน้าสุด (ยิงตัวรองลงมา) กันโจทย์เปลี่ยนแล้วผู้เล่นงง
+        tdCorrectAnswersCount++;
+        if (tdAutoTurretUnlocked && tdCorrectAnswersCount % 3 === 0 && tdEnemies.length > 0) {
+            const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
+            
+            let turretTarget = null;
+            if (sortedEnemies.length > 1) {
+                turretTarget = sortedEnemies[1]; // ตัวรองหน้าสุด
+            } else if (!tdCurrentTarget) {
+                turretTarget = sortedEnemies[0];
+            }
+
+            if (turretTarget) {
+                createTDSlashWave(tdTurretPos.x, tdTurretPos.y, turretTarget.x, turretTarget.y);
+                createTDExplosion(turretTarget.x, turretTarget.y, 15, '#38BDF8');
+                
+                const turretTargetIdx = tdEnemies.findIndex(e => e.id === turretTarget.id);
+                if (turretTargetIdx !== -1) tdEnemies.splice(turretTargetIdx, 1);
+                killedInThisShot++;
+            }
         }
 
         const coinReward = getCoinRewardForWave(tdWave);
@@ -526,7 +622,7 @@ function selectTDChoice(index) {
         tdCurrentTarget = null;
         const targetKills = getTargetKillsForWave(tdWave);
         if (tdTotalKillsInWave >= targetKills) {
-            if (tdWave >= 10) tdIsGameCleared = true; else nextTDWave();
+            if (tdWave >= 13) tdIsGameCleared = true; else nextTDWave(); // [ข้อ 1] Wave 13
         }
     } else {
         if (tdCurrentTarget) tdCurrentTarget.penaltyTimer = 35;
@@ -609,6 +705,7 @@ function tdGameLoop() {
 
     drawTDPath();
     drawTDHero();
+    drawTDAutoTurret(); // [ข้อ 4] วาดป้อมช่วยตี
 
     if (!tdIsGameCleared && tdHp > 0) {
         const baseInterval = (tdDifficulty === 'easy') ? 220 : 180;
@@ -699,7 +796,7 @@ function tdGameLoop() {
         tdCtx.fillText('GAME OVER', tdCanvas.width / 2, tdCanvas.height / 2 - 20);
         tdCtx.fillStyle = '#4A5568';
         tdCtx.font = '20px Quicksand, Arial';
-        tdCtx.fillText(`Wave Reached: ${tdWave}/10`, tdCanvas.width / 2, tdCanvas.height / 2 + 20);
+        tdCtx.fillText(`Wave Reached: ${tdWave}/13`, tdCanvas.width / 2, tdCanvas.height / 2 + 20); // [ข้อ 1] แสดงผล /13
         tdCtx.fillText(`Final Score: ${tdScore}`, tdCanvas.width / 2, tdCanvas.height / 2 + 50);
 
         if (tdAnimationRequestId) cancelAnimationFrame(tdAnimationRequestId);

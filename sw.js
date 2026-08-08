@@ -1,7 +1,7 @@
 // Path: ./sw.js
 
-// ปรับเวอร์ชันเป็น v8 เพื่อบังคับเคลียร์แคชและโหลดสคริปต์ game-rpg.js ใหม่
-const CACHE_NAME = 'kids-vocab-v8';
+// ปรับเวอร์ชันเป็น v9 เพื่อบังคับเคลียร์แคชและโหลดสคริปต์ game-td.js ใหม่
+const CACHE_NAME = 'kids-vocab-v9';
 
 // รายการไฟล์ที่ต้องการให้ Service Worker ทำการแคชไว้ใช้งานออฟไลน์
 const ASSETS_TO_CACHE = [
@@ -27,7 +27,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching updated app assets v8');
+      console.log('[Service Worker] Caching updated app assets v9');
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );
