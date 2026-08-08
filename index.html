@@ -594,30 +594,34 @@
                     </button>
                 </div>
 
-                <!-- 🛒 SHOP / ITEM HELPERS (ปุ่มสัญลักษณ์ + เหรียญทอง) -->
+                <!-- 🛒 SHOP / ITEM HELPERS (อัปเดตใหม่ล่าสุด) -->
                 <div class="w-full bg-amber-50/90 border border-amber-200/80 px-2 py-1.5 rounded-2xl flex flex-col gap-1">
                     <div class="text-[10px] font-extrabold text-amber-900 flex items-center justify-between px-1 font-kids">
                         <span>🛒 ร้านค้าตัวช่วย:</span>
                     </div>
                     <div class="grid grid-cols-4 gap-1">
-                        <button onclick="buyTDSlow()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
-                            <span class="text-sm">🐌</span>
+                        <!-- 1. น้ำแข็งหยุด 5 วินาที (100 เหรียญ) -->
+                        <button onclick="buyTDFreeze()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
+                            <span class="text-sm">❄️</span>
                             <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 100</span>
                         </button>
 
-                        <button onclick="buyTDFreeze()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
-                            <span class="text-sm">❄️</span>
-                            <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 150</span>
-                        </button>
-
+                        <!-- 2. หัวใจ +3 ดวง (200 เหรียญ) -->
                         <button onclick="buyTDHeart()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
-                            <span class="text-sm">❤️</span>
+                            <span class="text-sm">❤️+3</span>
                             <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 200</span>
                         </button>
 
+                        <!-- 3. ระเบิดล้างจอ +1 (300 เหรียญ) -->
                         <button onclick="buyTDUltimate()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
                             <span class="text-sm">💣</span>
                             <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 300</span>
+                        </button>
+
+                        <!-- 4. ธนูยิงทีเดียว 2 ตัว ถาวร (400 เหรียญ) -->
+                        <button id="td-buy-bow-btn" onclick="buyTDUpgradeTower()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
+                            <span class="text-sm">🏹x2</span>
+                            <span id="td-buy-bow-text" class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 400</span>
                         </button>
                     </div>
                 </div>

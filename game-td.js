@@ -1,5 +1,5 @@
 // ==========================================
-// --- MATH HERO TD GAME ENGINE (FULL CODE) ---
+// --- MATH HERO TD GAME ENGINE (UPDATED) ---
 // ==========================================
 let tdCanvas, tdCtx, tdChoiceBtns, tdQuestionDisplay, tdUltBtn, tdUltCountDisplay;
 let tdHp = 10, tdScore = 0, tdWave = 1, tdTotalKillsInWave = 0, tdUltimateCount = 1, tdIsGameCleared = false;
@@ -18,7 +18,6 @@ const tdPath = [
 ];
 const tdHero = { x: 535, y: 230, slashAnim: 0 };
 
-// ฟังก์ชันวาดสี่เหลี่ยมขอบมนแบบปลอดภัยสำหรับเบราว์เซอร์มือถือทุกรุ่น
 function drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.beginPath();
     ctx.moveTo(x + radius, y);
@@ -33,7 +32,6 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.closePath();
 }
 
-// ฟังก์ชันสลับระดับความยาก (Easy / Hard)
 function setTDDifficulty(diff) {
     tdDifficulty = diff;
     const easyBtn = document.getElementById("td-diff-easy");
@@ -60,13 +58,19 @@ function getTargetKillsForWave(wave) {
     return 10;                     
 }
 
+// คำนวณเหรียญทองตาม Level / Wave
+function getCoinRewardForWave(wave) {
+    if (wave >= 7) return 20; // Level 7+ ได้ 20 เหรียญ
+    if (wave >= 4) return 15; // Level 4-6 ได้ 15 เหรียญ
+    return 10;                // Level 1-3 ได้ 10 เหรียญ
+}
+
 class TDEnemy {
     constructor() {
         this.x = tdPath[0].x;
         this.y = tdPath[0].y;
         this.pathIndex = 0;
         
-        // Easy: ความเร็ว 0.7 เท่า | Hard: ความเร็วปกติ
         const speedMultiplier = (tdDifficulty === 'easy') ? 0.7 : 1.0;
         this.baseSpeed = (0.6 + (tdWave - 1) * 0.12) * speedMultiplier;
         this.speed = this.baseSpeed;
@@ -84,12 +88,9 @@ class TDEnemy {
 
     generateMathProblem(currentWave) {
         let availableOps = ['+'];
-        
-        // Easy: บวก และ ลบ เท่านั้น
         if (tdDifficulty === 'easy') {
             if (currentWave >= 2) availableOps.push('-');
         } else {
-            // Hard: มีครบ บวก, ลบ, คูณ, หาร
             if (currentWave >= 3) availableOps.push('-');
             if (currentWave >= 6) availableOps.push('×');
             if (currentWave >= 8) availableOps.push('÷');
@@ -146,7 +147,6 @@ class TDEnemy {
             currentSpeed *= 0.5;
         }
 
-        // เมื่อตอบผิด มอนสเตอร์จะพุ่งเร็วขึ้น 2 เท่า
         if (this.penaltyTimer > 0 && tdFreezeTimer <= 0) {
             currentSpeed *= 2.0;
             this.penaltyTimer--;
@@ -179,24 +179,91 @@ class TDEnemy {
             tdCtx.shadowColor = '#FF70A6'; tdCtx.shadowBlur = 18;
         }
 
+        let enemyBg = '#FF85A1';
+        if (tdWave >= 9) enemyBg = '#8B0000';      // โหดสุด
+        else if (tdWave >= 7) enemyBg = '#C70039'; // ดุขึ้นอีก
+        else if (tdWave >= 4) enemyBg = '#FF5733'; // ดุขึ้น
+        if (isTarget) enemyBg = '#FFD166';
+        if (this.penaltyTimer > 0) enemyBg = '#FF477E';
+
         drawRoundedRect(tdCtx, -this.size, -this.size, this.size * 2, this.size * 2, 12);
-        tdCtx.fillStyle = (this.penaltyTimer > 0) ? '#FF477E' : (isTarget ? '#FFD166' : '#FF85A1');
+        tdCtx.fillStyle = enemyBg;
         tdCtx.fill();
         tdCtx.lineWidth = isTarget ? 4 : 2;
         tdCtx.strokeStyle = '#FFFFFF';
         tdCtx.stroke();
 
-        tdCtx.fillStyle = '#FFD166';
-        tdCtx.beginPath();
-        tdCtx.moveTo(-12, -this.size); tdCtx.lineTo(-18, -this.size - 10); tdCtx.lineTo(-6, -this.size - 2); tdCtx.fill();
-        tdCtx.beginPath();
-        tdCtx.moveTo(12, -this.size); tdCtx.lineTo(18, -this.size - 10); tdCtx.lineTo(6, -this.size - 2); tdCtx.fill();
+        if (tdWave >= 9) {
+            // LEVEL 9-10: หน้าโหดสุดๆ
+            tdCtx.fillStyle = '#1A1A1A';
+            tdCtx.beginPath(); tdCtx.moveTo(-14, -this.size); tdCtx.lineTo(-22, -this.size - 14); tdCtx.lineTo(-4, -this.size - 2); tdCtx.fill();
+            tdCtx.beginPath(); tdCtx.moveTo(14, -this.size); tdCtx.lineTo(22, -this.size - 14); tdCtx.lineTo(4, -this.size - 2); tdCtx.fill();
 
-        tdCtx.fillStyle = '#FFFFFF';
-        tdCtx.beginPath(); tdCtx.arc(-8, -4, 6, 0, Math.PI * 2); tdCtx.arc(8, -4, 6, 0, Math.PI * 2); tdCtx.fill();
-        tdCtx.fillStyle = '#2D3748';
-        tdCtx.beginPath(); tdCtx.arc(-8, -4, 3, 0, Math.PI * 2); tdCtx.arc(8, -4, 3, 0, Math.PI * 2); tdCtx.fill();
-        tdCtx.beginPath(); tdCtx.arc(0, 6, 5, 0, Math.PI); tdCtx.strokeStyle = '#2D3748'; tdCtx.lineWidth = 2; tdCtx.stroke();
+            tdCtx.strokeStyle = '#FFFFFF'; tdCtx.lineWidth = 3.5;
+            tdCtx.beginPath(); tdCtx.moveTo(-16, -14); tdCtx.lineTo(-2, -6); tdCtx.stroke();
+            tdCtx.beginPath(); tdCtx.moveTo(16, -14); tdCtx.lineTo(2, -6); tdCtx.stroke();
+
+            tdCtx.fillStyle = '#FF0000';
+            tdCtx.beginPath(); tdCtx.arc(-8, -3, 6, 0, Math.PI * 2); tdCtx.arc(8, -3, 6, 0, Math.PI * 2); tdCtx.fill();
+            tdCtx.fillStyle = '#FFFF00';
+            tdCtx.beginPath(); tdCtx.arc(-8, -3, 2, 0, Math.PI * 2); tdCtx.arc(8, -3, 2, 0, Math.PI * 2); tdCtx.fill();
+
+            tdCtx.fillStyle = '#1A1A1A';
+            tdCtx.beginPath(); tdCtx.arc(0, 8, 8, 0, Math.PI); tdCtx.fill();
+            tdCtx.fillStyle = '#FFFFFF';
+            tdCtx.beginPath(); tdCtx.moveTo(-6, 8); tdCtx.lineTo(-4, 15); tdCtx.lineTo(-2, 8); tdCtx.fill();
+            tdCtx.beginPath(); tdCtx.moveTo(2, 8); tdCtx.lineTo(4, 15); tdCtx.lineTo(6, 8); tdCtx.fill();
+
+            tdCtx.strokeStyle = '#FFFFFF'; tdCtx.lineWidth = 2;
+            tdCtx.beginPath(); tdCtx.moveTo(-16, 2); tdCtx.lineTo(-10, 8); tdCtx.stroke();
+            tdCtx.beginPath(); tdCtx.moveTo(-10, 2); tdCtx.lineTo(-16, 8); tdCtx.stroke();
+
+        } else if (tdWave >= 7) {
+            // LEVEL 7-8: หน้าดุขึ้นอีก
+            tdCtx.strokeStyle = '#2D3748'; tdCtx.lineWidth = 3;
+            tdCtx.beginPath(); tdCtx.moveTo(-15, -12); tdCtx.lineTo(-3, -5); tdCtx.stroke();
+            tdCtx.beginPath(); tdCtx.moveTo(15, -12); tdCtx.lineTo(3, -5); tdCtx.stroke();
+
+            tdCtx.fillStyle = '#FFFFFF';
+            tdCtx.beginPath(); tdCtx.arc(-8, -3, 6, 0, Math.PI * 2); tdCtx.arc(8, -3, 6, 0, Math.PI * 2); tdCtx.fill();
+            tdCtx.fillStyle = '#D32F2F';
+            tdCtx.beginPath(); tdCtx.arc(-8, -3, 3, 0, Math.PI * 2); tdCtx.arc(8, -3, 3, 0, Math.PI * 2); tdCtx.fill();
+
+            tdCtx.strokeStyle = '#2D3748'; tdCtx.lineWidth = 2;
+            tdCtx.beginPath(); tdCtx.arc(0, 6, 6, 0.1 * Math.PI, 0.9 * Math.PI); tdCtx.stroke();
+            tdCtx.fillStyle = '#FFFFFF';
+            tdCtx.beginPath(); tdCtx.moveTo(-4, 8); tdCtx.lineTo(-2, 13); tdCtx.lineTo(0, 8); tdCtx.fill();
+
+        } else if (tdWave >= 4) {
+            // LEVEL 4-6: หน้าดุขึ้น
+            tdCtx.fillStyle = '#FFD166';
+            tdCtx.beginPath(); tdCtx.moveTo(-12, -this.size); tdCtx.lineTo(-18, -this.size - 10); tdCtx.lineTo(-6, -this.size - 2); tdCtx.fill();
+            tdCtx.beginPath(); tdCtx.moveTo(12, -this.size); tdCtx.lineTo(18, -this.size - 10); tdCtx.lineTo(6, -this.size - 2); tdCtx.fill();
+
+            tdCtx.strokeStyle = '#2D3748'; tdCtx.lineWidth = 2.5;
+            tdCtx.beginPath(); tdCtx.moveTo(-14, -11); tdCtx.lineTo(-4, -6); tdCtx.stroke();
+            tdCtx.beginPath(); tdCtx.moveTo(14, -11); tdCtx.lineTo(4, -6); tdCtx.stroke();
+
+            tdCtx.fillStyle = '#FFFFFF';
+            tdCtx.beginPath(); tdCtx.arc(-8, -3, 6, 0, Math.PI * 2); tdCtx.arc(8, -3, 6, 0, Math.PI * 2); tdCtx.fill();
+            tdCtx.fillStyle = '#2D3748';
+            tdCtx.beginPath(); tdCtx.arc(-7, -3, 3, 0, Math.PI * 2); tdCtx.arc(7, -3, 3, 0, Math.PI * 2); tdCtx.fill();
+
+            tdCtx.beginPath(); tdCtx.arc(0, 7, 5, 1.1 * Math.PI, 1.9 * Math.PI); tdCtx.strokeStyle = '#2D3748'; tdCtx.lineWidth = 2; tdCtx.stroke();
+
+        } else {
+            // LEVEL 1-3: หน้าตาน่ารัก
+            tdCtx.fillStyle = '#FFD166';
+            tdCtx.beginPath(); tdCtx.moveTo(-12, -this.size); tdCtx.lineTo(-18, -this.size - 10); tdCtx.lineTo(-6, -this.size - 2); tdCtx.fill();
+            tdCtx.beginPath(); tdCtx.moveTo(12, -this.size); tdCtx.lineTo(18, -this.size - 10); tdCtx.lineTo(6, -this.size - 2); tdCtx.fill();
+
+            tdCtx.fillStyle = '#FFFFFF';
+            tdCtx.beginPath(); tdCtx.arc(-8, -4, 6, 0, Math.PI * 2); tdCtx.arc(8, -4, 6, 0, Math.PI * 2); tdCtx.fill();
+            tdCtx.fillStyle = '#2D3748';
+            tdCtx.beginPath(); tdCtx.arc(-8, -4, 3, 0, Math.PI * 2); tdCtx.arc(8, -4, 3, 0, Math.PI * 2); tdCtx.fill();
+            tdCtx.beginPath(); tdCtx.arc(0, 6, 5, 0, Math.PI); tdCtx.strokeStyle = '#2D3748'; tdCtx.lineWidth = 2; tdCtx.stroke();
+        }
+
         tdCtx.restore();
 
         const textMargin = 10;
@@ -229,7 +296,7 @@ function initMathTDGame() {
     tdHp = 10; tdScore = 0; tdWave = 1; tdTotalKillsInWave = 0; tdIsGameCleared = false;
     tdCoins = 0;
     tdUltimateCount = 1;
-    tdMultiShotUnlocked = false; 
+    tdMultiShotUnlocked = false; // รีเซ็ตการอัปเกรดเมื่อเริ่มเกมใหม่
     tdSlowTimer = 0; tdFreezeTimer = 0;
     tdWrongCount = 0; tdShakeTimer = 0; tdEnemies = []; tdParticles = []; tdSlashes = []; tdSpawnTimer = 0;
     tdCurrentTarget = null; tdWaveNoticeTimer = 120; tdWaveNoticeText = "WAVE 1";
@@ -248,26 +315,32 @@ function initMathTDGame() {
 function updateTDCoinsUI() {
     const coinEl = document.getElementById('td-coins');
     if (coinEl) coinEl.innerText = tdCoins;
-}
 
-function buyTDSlow() {
-    if (tdCoins < 100) { alert("เหรียญไม่พอครับ! (ต้องใช้ 100 เหรียญ)"); return; }
-    tdCoins -= 100;
-    tdSlowTimer = 300;
-    updateTDCoinsUI();
+    // อัปเดตปุ่มอัปเกรดธนู
+    const bowBtn = document.getElementById('td-buy-bow-btn');
+    const bowText = document.getElementById('td-buy-bow-text');
+    if (bowBtn && bowText) {
+        if (tdMultiShotUnlocked) {
+            bowText.innerText = "MAX";
+            bowBtn.classList.add("opacity-50");
+        } else {
+            bowText.innerText = "🪙 400";
+            bowBtn.classList.remove("opacity-50");
+        }
+    }
 }
 
 function buyTDFreeze() {
-    if (tdCoins < 150) { alert("เหรียญไม่พอครับ! (ต้องใช้ 150 เหรียญ)"); return; }
-    tdCoins -= 150;
-    tdFreezeTimer = 210;
+    if (tdCoins < 100) { alert("เหรียญไม่พอครับ! (ต้องใช้ 100 เหรียญ)"); return; }
+    tdCoins -= 100;
+    tdFreezeTimer = 300; // 5 วินาที
     updateTDCoinsUI();
 }
 
 function buyTDHeart() {
     if (tdCoins < 200) { alert("เหรียญไม่พอครับ! (ต้องใช้ 200 เหรียญ)"); return; }
     tdCoins -= 200;
-    tdHp += 1;
+    tdHp += 3;
     const hpEl = document.getElementById('td-hp'); if (hpEl) hpEl.innerText = tdHp;
     updateTDCoinsUI();
 }
@@ -280,11 +353,14 @@ function buyTDUltimate() {
     updateTDCoinsUI();
 }
 
+// อัปเกรดถาวรประจำรอบ
 function buyTDUpgradeTower() {
-    if (tdCoins < 400) { alert("เหรียญไม่พอครับ!"); return; }
+    if (tdMultiShotUnlocked) { alert("หนูอัปเกรดธนูยิง 2 ตัวถาวรแล้วครับ!"); return; }
+    if (tdCoins < 400) { alert("เหรียญไม่พอครับ! (ต้องใช้ 400 เหรียญ)"); return; }
     tdCoins -= 400;
-    tdMultiShotUnlocked = true;
+    tdMultiShotUnlocked = true; // เปิดใช้งานยิง 2 ตัวถาวร
     updateTDCoinsUI();
+    alert("🏹 อัปเกรดตัวเราสำเร็จ! ฮีโร่จะยิงโจมตีทีเดียว 2 ตัวถาวรแล้วครับ!");
 }
 
 function drawTDHero() {
@@ -353,9 +429,10 @@ function useTDUltimate() {
     const killedCount = tdEnemies.length;
     tdEnemies.forEach(e => createTDExplosion(e.x, e.y, 20, '#FF70A6'));
 
+    const coinReward = getCoinRewardForWave(tdWave);
     tdEnemies = []; tdCurrentTarget = null;
     tdScore += killedCount * 10;
-    tdCoins += killedCount * 10;
+    tdCoins += killedCount * coinReward;
     tdTotalKillsInWave += killedCount;
 
     const scoreEl = document.getElementById('td-score'); if (scoreEl) scoreEl.innerText = tdScore;
@@ -425,6 +502,7 @@ function selectTDChoice(index) {
         const idx = tdEnemies.findIndex(e => e.id === mainTargetId);
         if (idx !== -1) tdEnemies.splice(idx, 1);
 
+        // หากอัปเกรดแล้ว จะยิงมอนสเตอร์ตัวที่สองพร้อมกันทันที
         if (tdMultiShotUnlocked && tdEnemies.length > 0) {
             const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
             const secondTarget = sortedEnemies[0];
@@ -436,8 +514,9 @@ function selectTDChoice(index) {
             killedInThisShot++;
         }
 
+        const coinReward = getCoinRewardForWave(tdWave);
         tdScore += killedInThisShot * 10;
-        tdCoins += killedInThisShot * 10;
+        tdCoins += killedInThisShot * coinReward;
         tdTotalKillsInWave += killedInThisShot;
         
         const scoreEl = document.getElementById('td-score'); if (scoreEl) scoreEl.innerText = tdScore;
