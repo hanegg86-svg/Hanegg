@@ -1,6 +1,45 @@
 // ==========================================
-// --- VOCAB & SPELLING GAME ---
+// --- VOCAB & SPELLING & MATCHING GAME ---
 // ==========================================
+
+let vocabSubMode = 'cards'; // 'cards' | 'spell' | 'match'
+let matchCardsList = [];
+let selectedMatchCards = [];
+let matchedPairsCount = 0;
+
+function switchVocabPlayMode(mode) {
+    vocabSubMode = mode;
+    const cardsBtn = document.getElementById("vocab-mode-cards");
+    const spellBtn = document.getElementById("vocab-mode-spell");
+    const matchBtn = document.getElementById("vocab-mode-match");
+
+    const flashcardSec = document.getElementById("flashcard-section");
+    const spellingSec = document.getElementById("spelling-section");
+    const matchingSec = document.getElementById("matching-section");
+
+    [cardsBtn, spellBtn, matchBtn].forEach(btn => {
+        if (btn) btn.className = "flex-1 py-1 rounded-xl text-xs font-bold text-indigo-700 hover:bg-white/50 transition";
+    });
+
+    if (mode === 'cards') {
+        if (cardsBtn) cardsBtn.className = "flex-1 py-1 rounded-xl text-xs font-bold bg-white text-indigo-900 shadow-2xs transition";
+        if (flashcardSec) flashcardSec.classList.remove("hidden");
+        if (spellingSec) spellingSec.classList.add("hidden");
+        if (matchingSec) matchingSec.classList.add("hidden");
+    } else if (mode === 'spell') {
+        if (spellBtn) spellBtn.className = "flex-1 py-1 rounded-xl text-xs font-bold bg-white text-indigo-900 shadow-2xs transition";
+        if (flashcardSec) flashcardSec.classList.add("hidden");
+        if (spellingSec) spellingSec.classList.remove("hidden");
+        if (matchingSec) matchingSec.classList.add("hidden");
+    } else if (mode === 'match') {
+        if (matchBtn) matchBtn.className = "flex-1 py-1 rounded-xl text-xs font-bold bg-white text-indigo-900 shadow-2xs transition";
+        if (flashcardSec) flashcardSec.classList.add("hidden");
+        if (spellingSec) spellingSec.classList.add("hidden");
+        if (matchingSec) matchingSec.classList.remove("hidden");
+        startMatchingGame();
+    }
+}
+
 function switchSubjectMode(mode) {
     subjectMode = mode;
     const enBtn = document.getElementById("mode-en-btn");
@@ -19,7 +58,9 @@ function switchSubjectMode(mode) {
     else {
         const localData = localStorage.getItem(`kids_vocab_${subjectMode.toLowerCase()}_data`);
         rawVocabList = localData ? JSON.parse(localData) : (mode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH]);
-        filterVocabForUser(); updateCard();
+        filterVocabForUser(); 
+        updateCard();
+        if (vocabSubMode === 'match') startMatchingGame();
     }
 }
 
@@ -146,6 +187,154 @@ function checkSpellingAnswer() {
     } else { alert(`❌ ยังไม่ถูกต้อง ลองใหม่อีกครั้งนะครับ!`); }
 }
 
+// ------------------------------------------
+// --- MATCHING GAME LOGIC ---
+// ------------------------------------------
+function startMatchingGame() {
+    if (!filteredVocabList || filteredVocabList.length < 2) {
+        const container = document.getElementById("match-cards-container");
+        if (container) container.innerHTML = `<div class="col-span-2 text-center text-slate-400 py-10 font-bold">ต้องมีคำศัพท์อย่างน้อย 2 คำเพื่อเล่นเกมจับคู่ครับ</div>`;
+        return;
+    }
+
+    selectedMatchCards = [];
+    matchedPairsCount = 0;
+
+    // เลือกสุ่มคำศัพท์ 4 คำ (หรือเท่าที่มีถ้าไม่ถึง 4)
+    const shuffledList = [...filteredVocabList];
+    shuffleArray(shuffledList);
+    const selectedVocab = shuffledList.slice(0, 4);
+
+    matchCardsList = [];
+    selectedVocab.forEach((item, idx) => {
+        // เพิ่มการ์ดภาษาอังกฤษ
+        matchCardsList.push({
+            id: `en-${idx}`,
+            pairId: idx,
+            type: 'EN',
+            text: item.en,
+            emoji: item.emoji,
+            image: item.image,
+            spokenText: item.en,
+            lang: 'en-US'
+        });
+        // เพิ่มการ์ดภาษาไทย
+        matchCardsList.push({
+            id: `th-${idx}`,
+            pairId: idx,
+            type: 'TH',
+            text: item.th,
+            emoji: item.emoji,
+            image: item.image,
+            spokenText: item.th,
+            lang: 'th-TH'
+        });
+    });
+
+    shuffleArray(matchCardsList);
+    renderMatchingCards();
+    updateMatchProgress();
+}
+
+function renderMatchingCards() {
+    const container = document.getElementById("match-cards-container");
+    if (!container) return;
+
+    container.innerHTML = matchCardsList.map(card => {
+        let contentHtml = '';
+        if (card.type === 'EN') {
+            if (card.image) {
+                contentHtml = `<img src="${card.image}" class="w-10 h-10 object-cover rounded-xl mb-1 pointer-events-none"><span class="font-extrabold text-indigo-900 text-sm font-kids pointer-events-none">${card.text}</span>`;
+            } else {
+                contentHtml = `<span class="text-2xl mb-0.5 pointer-events-none">${card.emoji || '💡'}</span><span class="font-extrabold text-indigo-900 text-sm font-kids pointer-events-none">${card.text}</span>`;
+            }
+        } else {
+            contentHtml = `<span class="font-extrabold text-purple-900 text-base font-kids pointer-events-none">${card.text}</span>`;
+        }
+
+        return `
+            <button id="match-btn-${card.id}" onclick="handleMatchCardClick('${card.id}')" class="match-card bg-white border-2 border-slate-200 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[85px] shadow-2xs hover:border-indigo-300 active:scale-95 transition text-center">
+                ${contentHtml}
+            </button>
+        `;
+    }).join('');
+}
+
+function handleMatchCardClick(cardId) {
+    if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
+        alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
+        return;
+    }
+
+    const card = matchCardsList.find(c => c.id === cardId);
+    if (!card) return;
+
+    // อ่านเสียงคำที่แตะ
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(card.spokenText);
+        utterance.lang = card.lang;
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // ถ้ากดการ์ดเดิมซ้ำ ให้ยกเลิกการเลือก
+    if (selectedMatchCards.length === 1 && selectedMatchCards[0].id === cardId) {
+        selectedMatchCards = [];
+        const btn = document.getElementById(`match-btn-${cardId}`);
+        if (btn) btn.classList.remove("selected");
+        return;
+    }
+
+    selectedMatchCards.push(card);
+    const btn = document.getElementById(`match-btn-${cardId}`);
+    if (btn) btn.classList.add("selected");
+
+    if (selectedMatchCards.length === 2) {
+        const [card1, card2] = selectedMatchCards;
+
+        if (card1.pairId === card2.pairId && card1.type !== card2.type) {
+            // จับคู่ถูก!
+            matchedPairsCount++;
+            updateMatchProgress();
+
+            setTimeout(() => {
+                const btn1 = document.getElementById(`match-btn-${card1.id}`);
+                const btn2 = document.getElementById(`match-btn-${card2.id}`);
+                if (btn1) btn1.classList.add("matched");
+                if (btn2) btn2.classList.add("matched");
+                selectedMatchCards = [];
+
+                // เช็คว่าชนะทั้งหมดแล้วหรือยัง
+                if (matchedPairsCount >= Math.min(4, Math.floor(matchCardsList.length / 2))) {
+                    setTimeout(() => {
+                        triggerCompletionModal();
+                    }, 500);
+                }
+            }, 300);
+
+        } else {
+            // จับคู่ผิด
+            setTimeout(() => {
+                const btn1 = document.getElementById(`match-btn-${card1.id}`);
+                const btn2 = document.getElementById(`match-btn-${card2.id}`);
+                if (btn1) btn1.classList.remove("selected");
+                if (btn2) btn2.classList.remove("selected");
+                selectedMatchCards = [];
+            }, 600);
+        }
+    }
+}
+
+function updateMatchProgress() {
+    const totalPairs = Math.min(4, Math.floor(matchCardsList.length / 2));
+    const remaining = totalPairs - matchedPairsCount;
+    const progressText = document.getElementById("match-progress-text");
+    if (progressText) {
+        progressText.innerText = `จับคู่คำศัพท์ (เหลือ ${remaining} คู่)`;
+    }
+}
+
 function flipCard() { if (filteredVocabList.length === 0) return; isFlipped = !isFlipped; document.getElementById("card-inner").classList.toggle("card-flipped", isFlipped); }
 function nextCard() { if (filteredVocabList.length === 0) return; currentIndex = (currentIndex + 1) % filteredVocabList.length; updateCard(); }
 function prevCard() { if (filteredVocabList.length === 0) return; currentIndex = (currentIndex - 1 + filteredVocabList.length) % filteredVocabList.length; updateCard(); }
@@ -182,18 +371,18 @@ function triggerCompletionModal() {
     saveUserStars();
     addEXPToUser(100);
     incrementTodayRounds();
-    document.getElementById("summary-total-count").innerText = "5 / 5 คำ";
+    document.getElementById("summary-total-count").innerText = "สำเร็จแล้ว!";
     document.getElementById("summary-stars-earned").innerText = "⭐ 1 ดวง";
     document.getElementById("summary-stars-earned").className = "text-sm text-amber-500 font-bold";
     document.getElementById("summary-exp-earned").innerText = "+100 EXP ✨";
     document.getElementById("summary-saved-badge").innerText = "✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
     document.getElementById("summary-saved-badge").className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-2.5 rounded-xl border border-emerald-200";
-    document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} ท่องถูกครบชุด 5 คำแล้ว!`;
+    document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} เก่งมาก เล่นสำเร็จแล้ว!`;
     document.getElementById("completion-modal").classList.remove("hidden");
 
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(`เก่งมากเลยครับ ${currentUser || ''} ตอบถูกครบ 5 คำ รับไปเลย 1 ดาว และ 100 EXP`);
+        const utterance = new SpeechSynthesisUtterance(`เก่งมากเลยครับ ${currentUser || ''} รับไปเลย 1 ดาว และ 100 EXP`);
         utterance.lang = 'th-TH'; window.speechSynthesis.speak(utterance);
     }
     sendInAppNotification('COMPLETED_SET', { setNum: Math.floor(currentIndex / 5) + 1 });
@@ -250,6 +439,7 @@ function deleteCurrentCard() {
         saveToStorage(); filterVocabForUser();
         if (currentIndex >= filteredVocabList.length) currentIndex = Math.max(0, filteredVocabList.length - 1);
         updateCard();
+        if (vocabSubMode === 'match') startMatchingGame();
     }
 }
 
@@ -284,6 +474,7 @@ function handleFormSubmit(e) {
     currentIndex = filteredVocabList.findIndex(x => x.en === en && x.th === th);
     if (currentIndex === -1) currentIndex = 0;
     updateCard();
+    if (vocabSubMode === 'match') startMatchingGame();
 }
 
 async function askGeminiAI() {

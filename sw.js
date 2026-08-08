@@ -1,7 +1,7 @@
 // Path: ./sw.js
 
-// ปรับเวอร์ชันเป็น v5 เพื่อบังคับให้ Service Worker เคลียร์แคชเก่าและโหลด UI/เกมใหม่ทันที
-const CACHE_NAME = 'kids-vocab-v5';
+// ปรับเวอร์ชันเป็น v6 เพื่อบังคับให้ Service Worker เคลียร์แคชเก่าและโหลดโหมดจับคู่คำศัพท์ใหม่ทันที
+const CACHE_NAME = 'kids-vocab-v6';
 
 // รายการไฟล์ที่ต้องการให้ Service Worker ทำการแคชไว้ใช้งานออฟไลน์
 const ASSETS_TO_CACHE = [
@@ -26,7 +26,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching updated app assets v5');
+      console.log('[Service Worker] Caching updated app assets v6');
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );
