@@ -1,9 +1,9 @@
 // Path: ./sw.js
 
-// เปลี่ยนเวอร์ชันเพื่อให้เบราว์เซอร์เคลียร์แคชอันเก่าทิ้ง
-const CACHE_NAME = 'kids-vocab-v3';
+// เปลี่ยนเวอร์ชันของ CACHE_NAME เพื่อให้เบราว์เซอร์ล้างแคชเก่าแล้วโหลดไฟล์โครงสร้างใหม่
+const CACHE_NAME = 'kids-vocab-v4';
 
-// อัปเดตรายการไฟล์ให้ตรงกับที่เราเพิ่งแยกไฟล์กันใหม่
+// รายการไฟล์ที่ต้องการให้ Service Worker ทำการแคชไว้ใช้งานออฟไลน์
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -11,14 +11,18 @@ const ASSETS_TO_CACHE = [
   './Icon.png',
   './core.js',
   './quest-shop.js',
-  './minigames.js',
+  './minigames-main.js',
+  './game-vocab.js',
+  './game-math.js',
+  './game-story.js',
+  './game-td.js',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/lucide@latest',
   'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js',
   'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js'
 ];
 
-// 1. Install Event: โหลดและแคชไฟล์ใหม่ทั้งหมด
+// 1. Install Event: โหลดและบันทึกไฟล์สคริปต์ทั้งหมดลงใน Cache
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -28,7 +32,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// 2. Activate Event: เคลียร์ Cache เวอร์ชันเก่าออกอัตโนมัติ
+// 2. Activate Event: เคลียร์ Cache เวอร์ชันเก่าทิ้งเมื่อมีการอัปเดตระบบ
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -44,7 +48,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// 3. Fetch Event: Network First falling back to Cache
+// 3. Fetch Event: พยายามดึงข้อมูลจาก Network ก่อน หากไม่มีเน็ตให้ดึงจาก Cache (Network First falling back to Cache)
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 

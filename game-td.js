@@ -561,6 +561,12 @@
             <!-- SUB-GAME 4: MATH HERO TD MINIGAME (COMPACT RESPONSIVE LAYOUT) -->
             <div id="game-td-container" class="w-full max-w-sm hidden flex-col items-center gap-1.5">
                 
+                <!-- ปุ่มเลือกความยาก Math TD (Easy / Hard) -->
+                <div class="w-full flex bg-slate-100 p-1 rounded-2xl border border-slate-200 gap-1 mb-0.5">
+                    <button id="td-diff-easy" onclick="setTDDifficulty('easy')" class="flex-1 py-1 rounded-xl text-[11px] font-black bg-emerald-500 text-white shadow-xs transition">🟢 Easy (บวกลบ)</button>
+                    <button id="td-diff-hard" onclick="setTDDifficulty('hard')" class="flex-1 py-1 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-200 transition">🔴 Hard (บวกลบคูณหาร)</button>
+                </div>
+
                 <!-- Status Bar (HP, Wave, Kills, Coins, Score) -->
                 <div id="td-stats" class="w-full flex justify-between items-center px-3 py-1.5 bg-white rounded-xl shadow-2xs text-[11px] font-bold text-slate-700 border border-slate-100">
                     <div>❤️ HP: <span id="td-hp" class="text-rose-500">10</span></div>
