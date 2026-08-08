@@ -440,7 +440,7 @@
                         </div>
                     </div>
 
-                                <div class="w-full flex gap-2">
+                    <div class="w-full flex gap-2">
                         <button onclick="resetCurrentMathQuestion()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-2xl text-xs bubble-btn">
                             ล้างใหม่ 🔄
                         </button>
@@ -452,11 +452,10 @@
                         </button>
                     </div>
 
-
                 </div>
             </div>
 
-            <!-- SUB-GAME 3: AI STORYTELLER -->
+            <!-- SUB-GAME 3: AI STORYTELLER WITH RPG SYSTEM -->
             <div id="game-story-container" class="w-full max-w-sm hidden flex-col items-center">
                 
                 <div id="story-creator-box" class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs w-full">
@@ -532,6 +531,27 @@
                 </div>
 
                 <div id="story-reader-box" class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs w-full hidden flex-col items-center">
+                    
+                    <!-- 🛡️ RPG Status Header -->
+                    <div class="w-full flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-purple-50 p-2.5 rounded-2xl shadow-2xs border border-indigo-100 mb-3">
+                        <div class="bg-indigo-600 text-white font-extrabold px-2.5 py-1 rounded-xl text-xs flex items-center gap-1">
+                            <span>Lv.</span><span id="rpg-level-display">1</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between text-[10px] font-bold mb-0.5">
+                                <span class="text-indigo-900 font-kids">ค่าประสบการณ์</span>
+                                <span id="rpg-exp-text" class="text-indigo-600 font-kids">0 / 200 EXP</span>
+                            </div>
+                            <div class="w-full bg-white h-2 rounded-full overflow-hidden border border-indigo-100">
+                                <div id="rpg-exp-bar" class="bg-gradient-to-r from-sky-400 to-indigo-600 h-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <button onclick="openSkillTreeModal()" class="relative bg-amber-400 hover:bg-amber-500 active:scale-95 text-amber-950 px-2.5 py-1 rounded-xl font-bold text-xs shadow-2xs transition flex items-center gap-1 font-kids">
+                            <span>🛡️ ทักษะ</span>
+                            <span id="rpg-sp-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center animate-ping">1</span>
+                        </button>
+                    </div>
+
                     <div class="w-full flex justify-between items-center mb-3 bg-indigo-50/60 px-3 py-1.5 rounded-full border border-indigo-100">
                         <span id="story-title-display" class="text-xs font-bold text-indigo-950 truncate max-w-[200px] font-kids">ชื่อเรื่องนิทาน</span>
                         <span id="story-page-indicator" class="text-[10px] font-bold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded-full font-kids">หน้า 1 / 10</span>
@@ -550,9 +570,15 @@
                     <div id="story-item-mission-box" class="w-full bg-indigo-50 border border-indigo-200 p-3 rounded-2xl mb-3 flex flex-col items-center text-center hidden">
                         <span class="text-xs font-bold text-indigo-950 mb-1">🔍 ภารกิจถ่ายรูปตามหาไอเทมจริง!</span>
                         <p id="story-item-target-text" class="text-sm font-extrabold text-emerald-600 mb-2 font-kids">ต้องถ่ายรูป: ส้ม หรือ ผลไม้สีส้ม</p>
-                        <button onclick="startCameraForStory()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 active:scale-95 text-white font-bold py-2.5 rounded-xl shadow-xs flex items-center justify-center gap-2 text-xs transition">
-                            📷 เปิดกล้องส่องถ่ายรูปไอเทมนี้เลย!
-                        </button>
+                        
+                        <div class="w-full flex gap-2">
+                            <button onclick="startCameraForStory()" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 active:scale-95 text-white font-bold py-2.5 rounded-xl shadow-xs flex items-center justify-center gap-2 text-xs transition">
+                                📷 เปิดกล้องส่องถ่ายรูปไอเทมนี้เลย!
+                            </button>
+                            <button id="btn-skill-skip-mission" onclick="useSkipMissionSkill()" class="hidden bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-bold px-3 py-2.5 rounded-xl shadow-xs text-xs transition whitespace-nowrap">
+                                🪄 ข้ามภารกิจ
+                            </button>
+                        </div>
                     </div>
 
                     <div class="w-full flex gap-2 mb-3">
@@ -606,16 +632,14 @@
 
             </div>
 
-            <!-- SUB-GAME 4: MATH HERO TD MINIGAME (COMPACT RESPONSIVE LAYOUT) -->
+            <!-- SUB-GAME 4: MATH HERO TD MINIGAME -->
             <div id="game-td-container" class="w-full max-w-sm hidden flex-col items-center gap-1.5">
                 
-                <!-- 🟢🔴 ปุ่มเลือกความยาก Math TD (Easy / Hard) -->
                 <div class="w-full flex bg-slate-100 p-1 rounded-2xl border border-slate-200 gap-1 mb-0.5">
                     <button id="td-diff-easy" onclick="setTDDifficulty('easy')" class="flex-1 py-1 rounded-xl text-[11px] font-black bg-emerald-500 text-white shadow-xs transition">🟢 Easy (บวกลบ)</button>
                     <button id="td-diff-hard" onclick="setTDDifficulty('hard')" class="flex-1 py-1 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-200 transition">🔴 Hard (บวกลบคูณหาร)</button>
                 </div>
 
-                <!-- Status Bar (HP, Wave, Kills, Coins, Score) -->
                 <div id="td-stats" class="w-full flex justify-between items-center px-3 py-1.5 bg-white rounded-xl shadow-2xs text-[11px] font-bold text-slate-700 border border-slate-100">
                     <div>❤️ HP: <span id="td-hp" class="text-rose-500">10</span></div>
                     <div>🌊 Wave: <span id="td-wave" class="text-indigo-600">1</span>/10</div>
@@ -624,12 +648,10 @@
                     <div>Score: <span id="td-score" class="text-slate-500 font-kids">0</span></div>
                 </div>
 
-                <!-- Canvas Game Display -->
                 <div class="w-full relative">
                     <canvas id="tdCanvas" width="600" height="320" class="w-full h-auto bg-slate-100 rounded-2xl border border-slate-200 shadow-inner block"></canvas>
                 </div>
 
-                <!-- Question & Choice Area -->
                 <div id="td-ui-layer" class="w-full bg-white px-3 py-2 rounded-2xl border border-slate-100 shadow-2xs flex flex-col items-center gap-1.5">
                     <div id="td-target-question" class="text-xs font-bold text-indigo-600 font-kids">เป้าหมาย: -</div>
                     <div class="choice-container flex gap-1.5 w-full">
@@ -642,31 +664,26 @@
                     </button>
                 </div>
 
-                <!-- 🛒 SHOP / ITEM HELPERS -->
                 <div class="w-full bg-amber-50/90 border border-amber-200/80 px-2 py-1.5 rounded-2xl flex flex-col gap-1">
                     <div class="text-[10px] font-extrabold text-amber-900 flex items-center justify-between px-1 font-kids">
                         <span>🛒 ร้านค้าตัวช่วย:</span>
                     </div>
                     <div class="grid grid-cols-4 gap-1">
-                        <!-- 1. น้ำแข็งหยุด 5 วินาที (100 เหรียญ) -->
                         <button onclick="buyTDFreeze()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
                             <span class="text-sm">❄️</span>
                             <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 100</span>
                         </button>
 
-                        <!-- 2. หัวใจ +3 ดวง (200 เหรียญ) -->
                         <button onclick="buyTDHeart()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
                             <span class="text-sm">❤️+3</span>
                             <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 200</span>
                         </button>
 
-                        <!-- 3. ระเบิดล้างจอ +1 (300 เหรียญ) -->
                         <button onclick="buyTDUltimate()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
                             <span class="text-sm">💣</span>
                             <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 300</span>
                         </button>
 
-                        <!-- 4. ธนูยิงทีเดียว 2 ตัว ถาวร (400 เหรียญ) -->
                         <button id="td-buy-bow-btn" onclick="buyTDUpgradeTower()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
                             <span class="text-sm">🏹x2</span>
                             <span id="td-buy-bow-text" class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 400</span>
@@ -743,6 +760,83 @@
             <span class="text-xl">🎁</span><span>ร้านค้า</span>
         </button>
     </nav>
+
+    <!-- 🔮 RPG SKILL TREE MODAL -->
+    <div id="rpg-skill-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl relative border border-slate-100 max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-bold font-kids text-indigo-950 flex items-center gap-1.5">
+                    🛡️ ต้นไม้ทักษะเวทมนตร์ (Skill Tree)
+                </h3>
+                <button onclick="closeSkillTreeModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 mb-3 flex justify-between items-center">
+                <span class="text-xs font-bold text-amber-900 font-kids">พอยต์สกิลคงเหลือ (SP):</span>
+                <span id="rpg-modal-sp-count" class="text-lg font-extrabold text-amber-600 font-kids">0</span>
+            </div>
+
+            <div class="space-y-2.5 overflow-y-auto flex-1 pr-1">
+                <!-- Skill 1 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center shadow-2xs">
+                    <div>
+                        <div class="font-bold text-xs text-slate-800 font-kids flex items-center gap-1">
+                            <span>👁️ ดวงตานักสำรวจ</span>
+                            <span id="skill-lvl-hintVision" class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md">Lv. 0 / 3</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-0.5">AI ช่วยใบ้ตำแหน่งไอเทมในบ้าน เมื่อส่องหาไม่เจอ</p>
+                    </div>
+                    <button id="btn-upgrade-hintVision" onclick="learnSkill('hintVision')" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-2xs active:scale-95 transition whitespace-nowrap">
+                        อัปเกรด
+                    </button>
+                </div>
+
+                <!-- Skill 2 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center shadow-2xs">
+                    <div>
+                        <div class="font-bold text-xs text-slate-800 font-kids flex items-center gap-1">
+                            <span>🪄 คาถาข้ามเวลา</span>
+                            <span id="skill-lvl-timeWarp" class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md">Lv. 0 / 3</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-0.5">กดใช้เวทมนตร์ข้ามภารกิจถ่ายรูปที่หาของไม่เจอได้</p>
+                    </div>
+                    <button id="btn-upgrade-timeWarp" onclick="learnSkill('timeWarp')" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-2xs active:scale-95 transition whitespace-nowrap">
+                        อัปเกรด
+                    </button>
+                </div>
+
+                <!-- Skill 3 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center shadow-2xs">
+                    <div>
+                        <div class="font-bold text-xs text-slate-800 font-kids flex items-center gap-1">
+                            <span>✨ พรของอัศวิน</span>
+                            <span id="skill-lvl-expBoost" class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md">Lv. 0 / 3</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-0.5">รับโบนัสค่า EXP พิเศษ +15% ทุกๆ ระดับสกิล</p>
+                    </div>
+                    <button id="btn-upgrade-expBoost" onclick="learnSkill('expBoost')" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-2xs active:scale-95 transition whitespace-nowrap">
+                        อัปเกรด
+                    </button>
+                </div>
+
+                <!-- Skill 4 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center shadow-2xs">
+                    <div>
+                        <div class="font-bold text-xs text-slate-800 font-kids flex items-center gap-1">
+                            <span>🌟 นักล่าดาว</span>
+                            <span id="skill-lvl-doubleStar" class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md">Lv. 0 / 3</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-0.5">มีโอกาส 25% ต่อระดับ สุ่มรับดาว ⭐ x2 ตอนอ่านจบ</p>
+                    </div>
+                    <button id="btn-upgrade-doubleStar" onclick="learnSkill('doubleStar')" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-2xs active:scale-95 transition whitespace-nowrap">
+                        อัปเกรด
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Assign Quest -->
     <div id="assign-quest-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
@@ -1026,10 +1120,11 @@
     <script src="./core.js"></script>
     <script src="./quest-shop.js"></script>
     
-    <!-- สคริปต์มินิเกมระดับเดียวกับไฟล์อื่น -->
+    <!-- สคริปต์มินิเกมและระบบ RPG -->
     <script src="./minigames-main.js"></script>
     <script src="./game-vocab.js"></script>
     <script src="./game-math.js"></script>
+    <script src="./game-rpg.js"></script>
     <script src="./game-story.js"></script>
     <script src="./game-td.js"></script>
 

@@ -78,11 +78,25 @@ function renderStoryPage() {
     document.getElementById("story-text-display").innerText = pageData.text;
     document.getElementById("story-image-emoji").innerText = pageData.emoji || "📖";
 
+    // อัปเดต RPG Header UI ทุกครั้งที่เปลี่ยนหน้า
+    if (typeof updateRPGUI === 'function') updateRPGUI();
+
     const btnPrev = document.getElementById("btn-prev-story"), btnNext = document.getElementById("btn-next-story"), missionBox = document.getElementById("story-item-mission-box");
     btnPrev.disabled = currentStoryPage === 0; btnPrev.style.opacity = currentStoryPage === 0 ? "0.5" : "1";
 
     if (pageData.isItemHunt && !pageData.isPassed) {
         document.getElementById("story-item-target-text").innerText = selectedStoryLang === 'EN' ? `Mission Target: ${pageData.targetItemEN}` : `ต้องถ่ายรูป: ${pageData.targetItemTH}`;
+        
+        // เช็กแสดงปุ่มใช้สกิล Skip ถ่ายรูป
+        const btnSkipSkill = document.getElementById("btn-skill-skip-mission");
+        if (btnSkipSkill) {
+            if (typeof getSkillLevel === 'function' && getSkillLevel('timeWarp') > 0) {
+                btnSkipSkill.classList.remove("hidden");
+            } else {
+                btnSkipSkill.classList.add("hidden");
+            }
+        }
+
         missionBox.classList.remove("hidden"); btnNext.classList.add("hidden"); 
     } else {
         missionBox.classList.add("hidden"); btnNext.classList.remove("hidden");
@@ -129,7 +143,13 @@ async function captureAndAnalyzeStoryImage() {
     const base64Data = canvas.toDataURL("image/jpeg", 0.75).split(",")[1];
     const targetItemName = generatedStoryData.pages[currentStoryPage].targetItemTH;
 
-    const prompt = `วิเคราะห์รูปภาพนี้อย่างละเอียดและตรงไปตรงมา: ในรูปภาพนี้มีสิ่งของหรือวัตถุที่ตรงกับ หรือใกล้เคียงกับคำว่า "${targetItemName}" หรือไม่? ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น: {"found": true/false, "detected_object": "ระบุสิ่งที่เห็นในภาพเป็นภาษาไทย", "comment": "คำชมเชยสั้นๆ เหมาะสำหรับเด็ก"}`;
+    // เช็กระดับสกิล Hint Vision เพื่อสั่งให้ AI ให้คำใบ้เสริม
+    const hintSkillLevel = (typeof getSkillLevel === 'function') ? getSkillLevel('hintVision') : 0;
+    let hintInstruction = hintSkillLevel > 0 
+        ? `หากหาไม่เจอ ให้เขียนช่อง "hint" ใบ้จุดที่มักจะพบของสิ่งนี้ในบ้านสำหรับเด็กสั้นๆ` 
+        : ``;
+
+    const prompt = `วิเคราะห์รูปภาพนี้อย่างละเอียดและตรงไปตรงมา: ในรูปภาพนี้มีสิ่งของหรือวัตถุที่ตรงกับ หรือใกล้เคียงกับคำว่า "${targetItemName}" หรือไม่? ${hintInstruction} ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น: {"found": true/false, "detected_object": "ระบุสิ่งที่เห็นในภาพเป็นภาษาไทย", "comment": "คำชมเชยสั้นๆ เหมาะสำหรับเด็ก", "hint": "คำใบ้สั้นๆ (ถ้าหาไม่เจอ)"}`;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
 
     try {
@@ -142,7 +162,11 @@ async function captureAndAnalyzeStoryImage() {
             alert(`🎉 ถูกต้องแล้วครับเก่งมากๆ! AI ตรวจเจอ ${result.detected_object} แล้ว!\n\n💬 ${result.comment}`);
             generatedStoryData.pages[currentStoryPage].isPassed = true;
             closeCameraForStory(); currentStoryPage++; renderStoryPage();
-        } else { alert(`❌ AI เห็นเป็น "${result.detected_object || 'ยังไม่ชัดเจน'}" ยังไม่ตรงกับ ${targetItemName} ครับ ลองขยับส่องให้ชัดเจนแล้วถ่ายใหม่อีกครั้งนะ!`); }
+        } else { 
+            let alertMsg = `❌ AI เห็นเป็น "${result.detected_object || 'ยังไม่ชัดเจน'}" ยังไม่ตรงกับ ${targetItemName} ครับ ลองขยับส่องให้ชัดเจนแล้วถ่ายใหม่อีกครั้งนะ!`;
+            if (result.hint) alertMsg += `\n\n💡 คำใบ้จากดวงตานักสำรวจ: ${result.hint}`;
+            alert(alertMsg); 
+        }
     } catch (err) { alert("เกิดข้อผิดพลาดในการวิเคราะห์รูปภาพ: " + (err.message || "กรุณาตรวจสอบการเชื่อมต่อ")); } 
     finally { btnPhoto.disabled = false; btnPhoto.classList.remove("opacity-50"); loadingBox.classList.add("hidden"); }
 }
@@ -166,17 +190,37 @@ function speakStoryPageText() {
 }
 
 function triggerStoryCompletionModal() {
-    incrementTodayRounds(); totalStars += 1; saveUserStars(); addEXPToUser(150);
-    document.getElementById("summary-stars-earned").innerText = "⭐ 1 ดวง";
+    incrementTodayRounds(); 
+
+    // --- คำนวณ RPG Bonus (EXP / Stars) ---
+    const expBoostLevel = (typeof getSkillLevel === 'function') ? getSkillLevel('expBoost') : 0;
+    const doubleStarLevel = (typeof getSkillLevel === 'function') ? getSkillLevel('doubleStar') : 0;
+
+    let baseEXP = 150;
+    let bonusEXP = Math.round(baseEXP * (expBoostLevel * 0.15)); // เพิ่ม 15% ต่อระดับสกิล
+    let totalEarnedEXP = baseEXP + bonusEXP;
+
+    let earnedStars = 1;
+    let doubleStarTriggered = false;
+    if (doubleStarLevel > 0 && Math.random() < (doubleStarLevel * 0.25)) { // โอกาส 25% ต่อระดับสกิล
+        earnedStars = 2;
+        doubleStarTriggered = true;
+    }
+
+    totalStars += earnedStars; 
+    saveUserStars(); 
+    addEXPToUser(totalEarnedEXP);
+
+    document.getElementById("summary-stars-earned").innerText = `⭐ ${earnedStars} ดวง ${doubleStarTriggered ? '(🌟 โบนัสดาว x2!)' : ''}`;
     document.getElementById("summary-stars-earned").className = "text-sm text-amber-500 font-bold";
-    document.getElementById("summary-exp-earned").innerText = `+150 EXP ✨ (พิชิตภารกิจส่องถ่ายรูปสำเร็จครบหมด)`;
+    document.getElementById("summary-exp-earned").innerText = `+${totalEarnedEXP} EXP ✨ ${bonusEXP > 0 ? `(โบนัส +${bonusEXP})` : ''}`;
     document.getElementById("summary-saved-badge").innerText = "✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
     document.getElementById("summary-saved-badge").className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-2.5 rounded-xl border border-emerald-200";
 
     sendInAppNotification('COMPLETED_STORY', { title: generatedStoryData.title, lang: selectedStoryLang });
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        const msg = selectedStoryLang === 'EN' ? `Awesome job ${currentUser || ''}! You found all items and completed the adventure story!` : `เก่งมากเลยครับ ${currentUser || ''} ถ่ายรูปส่องตามหาไอเทมครบทุกภารกิจ พิชิตเกมนิทานจบ 10 หน้า รับไปเลย 1 ดาว`;
+        const msg = selectedStoryLang === 'EN' ? `Awesome job ${currentUser || ''}! You found all items and completed the adventure story!` : `เก่งมากเลยครับ ${currentUser || ''} ถ่ายรูปส่องตามหาไอเทมครบทุกภารกิจ พิชิตเกมนิทานจบ 10 หน้า รับไปเลย ${earnedStars} ดาว`;
         const utterance = new SpeechSynthesisUtterance(msg); utterance.lang = selectedStoryLang === 'EN' ? 'en-US' : 'th-TH';
         window.speechSynthesis.speak(utterance);
     }

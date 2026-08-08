@@ -1,7 +1,7 @@
 // Path: ./sw.js
 
-// ปรับเวอร์ชันเป็น v7 เพื่อบังคับให้ Service Worker เคลียร์แคชเก่าและโหลดระบบ Bomb Bubble ใหม่
-const CACHE_NAME = 'kids-vocab-v7';
+// ปรับเวอร์ชันเป็น v8 เพื่อบังคับเคลียร์แคชและโหลดสคริปต์ game-rpg.js ใหม่
+const CACHE_NAME = 'kids-vocab-v8';
 
 // รายการไฟล์ที่ต้องการให้ Service Worker ทำการแคชไว้ใช้งานออฟไลน์
 const ASSETS_TO_CACHE = [
@@ -14,6 +14,7 @@ const ASSETS_TO_CACHE = [
   './minigames-main.js',
   './game-vocab.js',
   './game-math.js',
+  './game-rpg.js',
   './game-story.js',
   './game-td.js',
   'https://cdn.tailwindcss.com',
@@ -26,7 +27,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching updated app assets v7');
+      console.log('[Service Worker] Caching updated app assets v8');
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );
