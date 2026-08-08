@@ -70,7 +70,7 @@ let isDailyLimitEnabled = true;
 let dailyLimitRounds = 3;
 let todayPlayedRounds = 0;
 
-let maxLevel = 10;
+let maxLevel = 20;
 let currentChildEXP = 0;
 let currentChildLevel = 1;
 let levelAvatarsConfig = { 'พูน': {}, 'เพลิน': {} };
@@ -108,7 +108,7 @@ function initData() {
 
     isDailyLimitEnabled = localStorage.getItem("enable_daily_limit") !== "false";
     dailyLimitRounds = parseInt(localStorage.getItem("daily_limit_rounds") || "3", 10);
-    maxLevel = parseInt(localStorage.getItem("max_level") || "10", 10);
+    maxLevel = parseInt(localStorage.getItem("max_level") || "20", 10);
     document.getElementById("input-max-level").value = maxLevel;
 
     const savedAvatars = localStorage.getItem("level_avatars_config");
@@ -220,7 +220,7 @@ function initFirebase() {
         onValue(dbRefLevelConfig, (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                maxLevel = data.maxLevel || 10;
+                maxLevel = data.maxLevel || 20;
                 levelAvatarsConfig = data.levelAvatars || { 'พูน': {}, 'เพลิน': {} };
                 document.getElementById("input-max-level").value = maxLevel;
                 updateUserLevelAndAvatarDisplay();
