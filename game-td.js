@@ -27,7 +27,7 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.lineTo(x + width - radius, y);
     ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
     ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.quadraticCurveTo(x + width, y, x + width - radius, y + height);
     ctx.lineTo(x + radius, y + height);
     ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
     ctx.lineTo(x, y + radius);
@@ -331,6 +331,12 @@ function initMathTDGame() {
 
     updateTDCoinsUI();
     updateTDUltUI();
+
+    // เช็กสถานะโควต้าเล่นประจำวัน
+    if (typeof checkDailyLimitStatus === 'function') {
+        checkDailyLimitStatus();
+    }
+
     if (tdAnimationRequestId) cancelAnimationFrame(tdAnimationRequestId);
     tdGameLoop();
 }
@@ -482,6 +488,14 @@ function createTDSlashWave(startX, startY, targetX, targetY) {
 }
 
 function useTDUltimate() {
+    // บล็อกหากเกินโควต้า Daily Limit
+    if (typeof isParentUser !== 'undefined' && typeof isDailyLimitEnabled !== 'undefined' && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined') {
+        if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
+            alert("หนูเล่นครบโควต้ารวมวันนี้แล้วครับ! พรุ่งนี้ค่อยมาเล่นใหม่นะ 🎈");
+            return;
+        }
+    }
+
     if (tdUltimateCount <= 0 || tdEnemies.length === 0 || tdIsGameCleared || tdHp <= 0) return;
 
     tdUltimateCount--;
@@ -518,7 +532,10 @@ function useTDUltimate() {
 
 function updateTDUltUI() {
     if (tdUltCountDisplay) tdUltCountDisplay.innerText = tdUltimateCount;
-    if (tdUltBtn) tdUltBtn.disabled = (tdUltimateCount <= 0);
+    if (tdUltBtn) {
+        const isQuotaExceeded = (typeof isParentUser !== 'undefined' && !isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds);
+        tdUltBtn.disabled = (tdUltimateCount <= 0 || isQuotaExceeded);
+    }
 }
 
 function updateTDTargetAndChoices() {
@@ -557,12 +574,19 @@ function generateTDChoices(correctAnswer) {
     }
 }
 
-// [FIXED CRITICAL BUG]: แก้ไขปัญหาปุ่มกดตัวสุดท้ายไม่ติด ด้วยการล็อกตัวแปร targetEnemy
 function selectTDChoice(index) {
+    // บล็อกการตอบหากเล่นครบโควต้าแล้ว
+    if (typeof isParentUser !== 'undefined' && typeof isDailyLimitEnabled !== 'undefined' && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined') {
+        if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
+            alert("หนูเล่นครบโควต้ารวมวันนี้แล้วครับ! พรุ่งนี้ค่อยมาเล่นใหม่นะ 🎈");
+            return;
+        }
+    }
+
     if (!tdCurrentTarget || tdIsGameCleared || tdHp <= 0) return;
 
     const selectedValue = tdCurrentChoices[index];
-    const targetEnemy = tdCurrentTarget; // ล็อกเป้าหมายไว้ก่อนประมวลผล
+    const targetEnemy = tdCurrentTarget;
 
     tdTotalAnswersCount++;
 
@@ -574,7 +598,6 @@ function selectTDChoice(index) {
 
         let killedInThisShot = 1;
         
-        // ลบเฉพาะมอนสเตอร์ที่โดนยิง
         tdEnemies = tdEnemies.filter(e => e.id !== targetEnemy.id);
 
         if (tdMultiShotUnlocked && tdEnemies.length > 0) {
@@ -596,7 +619,7 @@ function selectTDChoice(index) {
         const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
         updateTDCoinsUI();
 
-        tdCurrentTarget = null; // ปลดล็อกเป้าหมาย
+        tdCurrentTarget = null;
 
         const targetKills = getTargetKillsForWave(tdWave);
         if (tdTotalKillsInWave >= targetKills) {
@@ -627,13 +650,12 @@ function selectTDChoice(index) {
         }
     }
 
-    // ป้อมช่วยตีทำงานทุกๆ 2 ครั้งการตอบ (ไม่ว่าจะถูกหรือผิด)
     if (tdAutoTurretUnlocked && tdTotalAnswersCount % 2 === 0 && tdEnemies.length > 0) {
         const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
         
         let turretTarget = null;
         if (sortedEnemies.length > 1) {
-            turretTarget = sortedEnemies[1]; // ตัวรองหน้าสุด
+            turretTarget = sortedEnemies[1];
         } else if (!tdCurrentTarget) {
             turretTarget = sortedEnemies[0];
         }
