@@ -38,7 +38,7 @@ function selectStoryPet(pet) {
 }
 
 async function generateAIStory() {
-    if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) { alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วครับ! พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ 🎈`); return; }
+    if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) { alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วครับ! พักสายตาก่อนแล้วมาเล่นใหม่พรนี้นะครับ 🎈`); return; }
     const apiKey = localStorage.getItem("gemini_api_key");
     if (!apiKey) { alert("กรุณาให้คุณพ่อคุณแม่ช่วยตั้งค่า Gemini API Key ให้ก่อนสร้างนิทานครับ!"); return; }
 
@@ -46,8 +46,19 @@ async function generateAIStory() {
     btnGen.disabled = true; btnGen.innerHTML = `<span class="spinner"></span> Gemini AI กำลังแต่งเกมนิทาน...`;
 
     let langInstruction = selectedStoryLang === 'EN' ? "Write the story in SIMPLE EASY ENGLISH for kids." : "แต่งนิทานเป็นภาษาไทยที่อ่านง่าย สนุกสนานสำหรับเด็ก";
+
+    // สุ่มแกนเรื่องหลัก (Plot Variations) เพื่อลดความซ้ำซ้อนของนิทานในแต่ละ Category
+    const plotVariations = [
+        "ภารกิจกอบกู้สมบัติลับที่หายไปตามตำนานโบราณ",
+        "การหลบหนีจากการไล่ล่าของสิ่งมีชีวิตจอมซนที่ชอบขโมยของ",
+        "การแข่งขันกับเวลาเพื่อช่วยเหลือเพื่อนใหม่ที่กำลังหลงทาง",
+        "การไขปริศนาจากแผนที่ลึกลับที่บังเอิญค้นพบ",
+        "การรวบรวมชิ้นส่วนพลังงานวิเศษเพื่อซ่อมแซมยานพาหนะและหาทางกลับบ้าน"
+    ];
+    const randomPlot = plotVariations[Math.floor(Math.random() * plotVariations.length)];
+
     const prompt = `แต่งนิทานสนุกๆ สไตล์ Scavenger Hunt ตามล่าหาไอเทมจริงรอบบ้าน ความยาว 10 หน้า พอดีสำหรับเด็ก:
-ตัวละครหลัก: ${selectedStoryHero} | สถานที่ผจญภัย: ${selectedStoryTheme} | เพื่อนร่วมทาง: ${selectedStoryPet} | ภาษา: ${langInstruction}
+ตัวละครหลัก: ${selectedStoryHero} | สถานที่ผจญภัย: ${selectedStoryTheme} | เพื่อนร่วมทาง: ${selectedStoryPet} | พล็อตเรื่องหลัก: ${randomPlot} | ภาษา: ${langInstruction}
 กฎสำคัญสำหรับระบบถ่ายรูปหาของ (Item Hunt):
 - ในหน้า 2, 4, 6, 8 จะต้องเป็นหน้าที่มี "ภารกิจถ่ายรูปหาไอเทมจริงรอบบ้าน"
 - ให้สุ่มสิ่งของในบ้านที่มีความหลากหลาย จากคลังตัวอย่างต่อไปนี้: [แก้วน้ำ, ช้อน, หมอน, ผ้าเช็ดหน้า, ร่ม, หูฟัง, นาฬิกา, ขวดน้ำ, หวี, ส้ม, กล้วย, แอปเปิ้ล, ขนม, กล่องนม, ดินสอ, ยางลบ, ไม้บรรทัด, สีไม้, สมุด, กรรไกรป้าน, รองเท้า, ถุงเท้า, หมวก, แว่นตา, ตุ๊กตา, รถของเล่น, บล็อกตัวต่อ, ลูกบอล]
