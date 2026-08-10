@@ -188,7 +188,7 @@ function checkSpellingAnswer() {
 }
 
 // ------------------------------------------
-// --- MATCHING GAME LOGIC ---
+// --- MATCHING GAME LOGIC (ปรับเป็น 8 คู่) ---
 // ------------------------------------------
 function startMatchingGame() {
     if (!filteredVocabList || filteredVocabList.length < 2) {
@@ -200,10 +200,11 @@ function startMatchingGame() {
     selectedMatchCards = [];
     matchedPairsCount = 0;
 
-    // เลือกสุ่มคำศัพท์ 4 คำ (หรือเท่าที่มีถ้าไม่ถึง 4)
+    // สุ่มคำศัพท์ 8 คำ (หรือเท่าที่มีถ้าไม่ถึง 8 คำ)
+    const targetPairsCount = Math.min(8, filteredVocabList.length);
     const shuffledList = [...filteredVocabList];
     shuffleArray(shuffledList);
-    const selectedVocab = shuffledList.slice(0, 4);
+    const selectedVocab = shuffledList.slice(0, targetPairsCount);
 
     matchCardsList = [];
     selectedVocab.forEach((item, idx) => {
@@ -305,8 +306,9 @@ function handleMatchCardClick(cardId) {
                 if (btn2) btn2.classList.add("matched");
                 selectedMatchCards = [];
 
-                // เช็คว่าชนะทั้งหมดแล้วหรือยัง
-                if (matchedPairsCount >= Math.min(4, Math.floor(matchCardsList.length / 2))) {
+                // เช็คว่าจับคู่ครบตามเป้าหมาย (สูงสุด 8 คู่) แล้วหรือยัง
+                const totalPairs = Math.min(8, Math.floor(matchCardsList.length / 2));
+                if (matchedPairsCount >= totalPairs) {
                     setTimeout(() => {
                         triggerCompletionModal();
                     }, 500);
@@ -327,11 +329,11 @@ function handleMatchCardClick(cardId) {
 }
 
 function updateMatchProgress() {
-    const totalPairs = Math.min(4, Math.floor(matchCardsList.length / 2));
+    const totalPairs = Math.min(8, Math.floor(matchCardsList.length / 2));
     const remaining = totalPairs - matchedPairsCount;
     const progressText = document.getElementById("match-progress-text");
     if (progressText) {
-        progressText.innerText = `จับคู่คำศัพท์ (เหลือ ${remaining} คู่)`;
+        progressText.innerText = `จับคู่คำศัพท์ (เหลือ ${remaining} คู่ จากทั้งหมด ${totalPairs} คู่)`;
     }
 }
 
