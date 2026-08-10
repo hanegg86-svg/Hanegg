@@ -1,7 +1,7 @@
 // Path: ./sw.js
 
-// เปลี่ยนเวอร์ชันแคชเป็น v10 เพื่อล้างแคชไฟล์ game-td.js ตัวเก่าทิ้ง
-const CACHE_NAME = 'kids-vocab-v10';
+// เปลี่ยนเวอร์ชันแคชเป็น v11 เพื่อบังคับให้แอปโหลด game-vocab.js ตัวใหม่
+const CACHE_NAME = 'kids-vocab-v11';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -25,7 +25,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching updated app assets v10');
+      console.log('[Service Worker] Caching updated app assets v11');
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );
