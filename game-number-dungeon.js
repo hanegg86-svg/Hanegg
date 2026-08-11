@@ -2,7 +2,7 @@
 // --- NUMBER DUNGEON MINIGAME SYSTEM (5x5 GRID) ---
 // ==========================================
 
-let dungeonGridSize = 5; // กระดานขนาด 5x5 (25 ช่อง)
+let dungeonGridSize = 5; // ขยายกระดานเป็น 5x5 (25 ช่อง)
 let dungeonPlayerX = 0;
 let dungeonPlayerY = 0;
 let dungeonScore = 10;
@@ -19,13 +19,16 @@ function startDungeonGame(diff) {
     dungeonHP = 1;
     dungeonPlayerX = 0;
     dungeonPlayerY = 0;
+    dungeonGridSize = 5;
     
     if (diff === 'hard') {
         dungeonTargetScore = 300;
-        document.getElementById('nd-diff-tag').innerText = "ระดับยากพิเศษ 🔥";
+        const tag = document.getElementById('nd-diff-tag');
+        if (tag) tag.innerText = "ระดับยากพิเศษ 🔥";
     } else {
         dungeonTargetScore = 150;
-        document.getElementById('nd-diff-tag').innerText = "ระดับท้าทาย ⚡";
+        const tag = document.getElementById('nd-diff-tag');
+        if (tag) tag.innerText = "ระดับท้าทาย ⚡";
     }
 
     // สร้างแผนที่ตาราง 5x5
@@ -35,12 +38,11 @@ function startDungeonGame(diff) {
         for (let c = 0; c < dungeonGridSize; c++) {
             if (r === 0 && c === 0) {
                 row.push({ type: 'start', val: 0, text: '🧙‍♂️' });
-            } else if (r === 4 && c === 4) {
+            } else if (r === 4 && c === 4) { // ทางออกประตูอยู่ที่มุมขวาล่าง (4,4)
                 row.push({ type: 'exit', val: 0, text: '🚪' });
             } else {
                 let rand = Math.random();
                 if (diff === 'hard') {
-                    // โหมดยาก: มอนสเตอร์หักคะแนนเยอะ สุ่มคูณและบวกลบเลขสูงขึ้น
                     if (rand < 0.35) {
                         let num = Math.floor(Math.random() * 15) + 5;
                         row.push({ type: 'add', val: num, text: `+${num}` });
@@ -52,7 +54,6 @@ function startDungeonGame(diff) {
                         row.push({ type: 'monster', val: num, text: `👾 -${num}` });
                     }
                 } else {
-                    // โหมดทั่วไป
                     if (rand < 0.45) {
                         let num = Math.floor(Math.random() * 12) + 3;
                         row.push({ type: 'add', val: num, text: `+${num}` });
@@ -73,14 +74,18 @@ function startDungeonGame(diff) {
 }
 
 function renderDungeonUI() {
-    document.getElementById('nd-hp-text').innerText = dungeonHP;
-    document.getElementById('nd-score-text').innerText = dungeonScore;
-    document.getElementById('nd-target-text').innerText = dungeonTargetScore;
+    const hpText = document.getElementById('nd-hp-text');
+    const scoreText = document.getElementById('nd-score-text');
+    const targetText = document.getElementById('nd-target-text');
 
-    const board = document.getElementById('nd-grid-board');
+    if (hpText) hpText.innerText = dungeonHP;
+    if (scoreText) scoreText.innerText = dungeonScore;
+    if (targetText) targetText.innerText = dungeonTargetScore;
+
+    const board = document.getElementById('nd-grid-board') || document.getElementById('dungeon-grid-board');
     if (!board) return;
     
-    // ตั้งค่า CSS Grid เป็น 5 คอลัมน์
+    // กำหนดการแสดงผล CSS Grid เป็น 5 คอลัมน์
     board.className = "grid grid-cols-5 gap-1.5 w-full max-w-[340px] mx-auto py-2";
     board.innerHTML = '';
 
@@ -89,7 +94,7 @@ function renderDungeonUI() {
             const cell = dungeonMap[r][c];
             const isPlayerHere = (r === dungeonPlayerX && c === dungeonPlayerY);
             
-            // กฎการเดิน: เดินได้เฉพาะ ขวา (c + 1) หรือ ลง (r + 1) เท่านั้น เพื่อบีบเส้นทางให้วางแผนล่วงหน้า
+            // กฎบีบเส้นทางเดิน: เดินได้เฉพาะ ขวา (c + 1) หรือ ลง (r + 1)
             const canMoveRight = (r === dungeonPlayerX && c === dungeonPlayerY + 1);
             const canMoveDown = (r === dungeonPlayerX + 1 && c === dungeonPlayerY);
             const isSelectablePath = canMoveRight || canMoveDown;
@@ -105,10 +110,10 @@ function renderDungeonUI() {
                 bgClass = "bg-slate-950/60 border-slate-900 text-slate-600 cursor-not-allowed opacity-60";
             }
 
-            btn.className = `h-14 rounded-xl border flex flex-col items-center justify-center font-bold text-[11px] transition duration-150 ${bgClass}`;
+            btn.className = `h-12 rounded-xl border flex flex-col items-center justify-center font-bold text-[10px] transition duration-150 ${bgClass}`;
             
             if (isPlayerHere) {
-                btn.innerHTML = `<span class="text-base">🧙‍♂️</span><span class="text-[9px] font-extrabold">${dungeonScore}</span>`;
+                btn.innerHTML = `<span class="text-sm">🧙‍♂️</span><span class="text-[8px] font-extrabold">${dungeonScore}</span>`;
             } else {
                 btn.innerHTML = `<span class="font-kids">${cell.text}</span>`;
             }
@@ -127,7 +132,6 @@ function moveDungeonPlayer(r, c) {
     dungeonPlayerY = c;
     const cell = dungeonMap[r][c];
 
-    // คำนวณผลลัพธ์คะแนน
     if (cell.type === 'add') {
         dungeonScore += cell.val;
     } else if (cell.type === 'mul') {
@@ -136,20 +140,18 @@ function moveDungeonPlayer(r, c) {
         dungeonScore -= cell.val;
     }
 
-    // เคลียร์ช่องที่เดินผ่านแล้ว
     cell.type = 'empty';
     cell.text = '✨';
     cell.val = 0;
 
     renderDungeonUI();
 
-    // ตรวจสอบเงื่อนไขแพ้-ชนะ
     if (dungeonScore <= 0) {
         setTimeout(() => {
             alert("💥 คะแนนลดจนหมด! พ่ายแพ้ในดันเจี้ยน");
             startDungeonGame('easy');
         }, 100);
-    } else if (r === 4 && c === 4) {
+    } else if (r === 4 && c === 4) { // ตรวจสอบการเข้าประตูทางออกที่ช่อง (4,4)
         if (dungeonScore >= dungeonTargetScore) {
             setTimeout(() => {
                 showCompletionModalDungeon();
@@ -164,7 +166,7 @@ function moveDungeonPlayer(r, c) {
 
 function showCompletionModalDungeon() {
     if (typeof addStar === "function") {
-        addStar(); // เรียกเปิด Modal มอบดาวสะสม
+        addStar();
     } else {
         alert("🎉 พิชิต Number Dungeon 5x5 สำเร็จแล้ว!");
     }
