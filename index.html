@@ -269,24 +269,26 @@
         <!-- TAB 2: MINI GAMES HUB TAB -->
         <div id="main-game-tab" class="w-full hidden flex-col items-center space-y-3">
             
-            <div class="w-full bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs flex gap-1">
-                <button id="game-subtab-vocab" onclick="switchMiniGame('vocab')" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition">🎴 คำศัพท์</button>
-                <button id="game-subtab-math" onclick="switchMiniGame('math')" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">🔢 คิดเลข</button>
-                <button id="game-subtab-story" onclick="switchMiniGame('story')" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">📖 นิทาน AI</button>
-                <button id="game-subtab-td" onclick="switchMiniGame('td')" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">⚔️ Math TD</button>
+            <div class="w-full bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs flex gap-1 overflow-x-auto">
+                <button id="game-subtab-vocab" onclick="switchMiniGame('vocab')" class="flex-1 py-1.5 px-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition whitespace-nowrap">🎴 คำศัพท์</button>
+                <button id="game-subtab-math" onclick="switchMiniGame('math')" class="flex-1 py-1.5 px-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">🔢 คิดเลข</button>
+                <button id="game-subtab-story" onclick="switchMiniGame('story')" class="flex-1 py-1.5 px-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">📖 นิทาน AI</button>
+                <button id="game-subtab-td" onclick="switchMiniGame('td')" class="flex-1 py-1.5 px-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">⚔️ Math TD</button>
+                <!-- เพิ่มปุ่ม Number Dungeon -->
+                <button id="game-subtab-dungeon" onclick="switchMiniGame('dungeon')" class="flex-1 py-1.5 px-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition whitespace-nowrap">🏰 Number Dungeon</button>
             </div>
 
             <!-- SUB-GAME 1: VOCABULARY GAME -->
             <div id="game-vocab-container" class="w-full flex flex-col items-center">
                 
-                <!-- Vocab Sub-mode selector (Cards / Spelling / Match) -->
+                <!-- Vocab Sub-mode selector -->
                 <div class="w-full bg-indigo-50/80 p-1 rounded-2xl border border-indigo-100 flex gap-1 mb-3">
                     <button id="vocab-mode-cards" onclick="switchVocabPlayMode('cards')" class="flex-1 py-1 rounded-xl text-xs font-bold bg-white text-indigo-900 shadow-2xs transition">🎴 ท่องศัพท์</button>
                     <button id="vocab-mode-spell" onclick="switchVocabPlayMode('spell')" class="flex-1 py-1 rounded-xl text-xs font-bold text-indigo-700 hover:bg-white/50 transition">✏️ สะกดคำ</button>
                     <button id="vocab-mode-match" onclick="switchVocabPlayMode('match')" class="flex-1 py-1 rounded-xl text-xs font-bold text-indigo-700 hover:bg-white/50 transition">🧩 จับคู่</button>
                 </div>
 
-                <!-- 1.1 FLASHCARD MODE -->
+                <!-- FLASHCARD MODE -->
                 <div id="flashcard-section" class="w-full flex flex-col items-center">
                     <div id="parent-controls" class="w-full max-w-sm flex justify-between items-center mb-2 px-1 hidden">
                         <span id="target-assigned-badge" class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full font-bold border border-indigo-100">🎯 เรียนได้ทุกคน</span>
@@ -331,7 +333,7 @@
                     </div>
                 </div>
 
-                <!-- 1.2 SPELLING MODE -->
+                <!-- SPELLING MODE -->
                 <div id="spelling-section" class="w-full max-w-sm hidden flex-col items-center">
                     <div id="daily-limit-banner" class="w-full bg-rose-50 border border-rose-200 rounded-2xl p-4 text-center mb-4 hidden shadow-xs">
                         <div class="text-3xl mb-1">🛑</div>
@@ -373,7 +375,7 @@
                     </div>
                 </div>
 
-                <!-- 1.3 MATCHING GAME MODE -->
+                <!-- MATCHING GAME MODE -->
                 <div id="matching-section" class="w-full max-w-sm hidden flex-col items-center">
                     <div class="bg-white border border-slate-100 rounded-3xl p-4 shadow-xs w-full">
                         <div class="flex justify-between items-center mb-3 bg-indigo-50/60 px-3 py-1.5 rounded-full border border-indigo-100">
@@ -384,7 +386,6 @@
                         </div>
 
                         <div id="match-cards-container" class="grid grid-cols-2 gap-2.5 min-h-[280px]">
-                            <!-- การ์ดจับคู่จะถูกสร้างด้วย JS ที่นี่ -->
                         </div>
                     </div>
                 </div>
@@ -532,7 +533,7 @@
 
                 <div id="story-reader-box" class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs w-full hidden flex-col items-center">
                     
-                    <!-- 🛡️ RPG Status Header -->
+                    <!-- RPG Status Header -->
                     <div class="w-full flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-purple-50 p-2.5 rounded-2xl shadow-2xs border border-indigo-100 mb-3">
                         <div class="bg-indigo-600 text-white font-extrabold px-2.5 py-1 rounded-xl text-xs flex items-center gap-1">
                             <span>Lv.</span><span id="rpg-level-display">1</span>
@@ -640,7 +641,6 @@
                     <button id="td-diff-hard" onclick="setTDDifficulty('hard')" class="flex-1 py-1 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-200 transition">🔴 Hard (บวกลบคูณหาร)</button>
                 </div>
 
-                <!-- [ข้อ 1] ปรับ Wave สูงสุดใน UI เป็น 13 -->
                 <div id="td-stats" class="w-full flex justify-between items-center px-3 py-1.5 bg-white rounded-xl shadow-2xs text-[11px] font-bold text-slate-700 border border-slate-100">
                     <div>❤️ HP: <span id="td-hp" class="text-rose-500">10</span></div>
                     <div>🌊 Wave: <span id="td-wave" class="text-indigo-600">1</span>/13</div>
@@ -665,7 +665,6 @@
                     </button>
                 </div>
 
-                <!-- [ข้อ 4] ปรับ Layout ร้านค้าเป็น grid-cols-5 และเพิ่มปุ่มซื้อป้อมช่วยตี -->
                 <div class="w-full bg-amber-50/90 border border-amber-200/80 px-2 py-1.5 rounded-2xl flex flex-col gap-1">
                     <div class="text-[10px] font-extrabold text-amber-900 flex items-center justify-between px-1 font-kids">
                         <span>🛒 ร้านค้าตัวช่วย:</span>
@@ -691,7 +690,6 @@
                             <span id="td-buy-bow-text" class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 400</span>
                         </button>
 
-                        <!-- 🏰 ปุ่มซื้อป้อมช่วยตีใหม่ -->
                         <button id="td-buy-turret-btn" onclick="buyTDAutoTurret()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
                             <span class="text-sm">🏰ป้อม</span>
                             <span id="td-buy-turret-text" class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 400</span>
@@ -699,6 +697,37 @@
                     </div>
                 </div>
 
+            </div>
+
+            <!-- SUB-GAME 5: NUMBER DUNGEON MINIGAME (ส่วนเพิ่มใหม่) -->
+            <div id="game-dungeon-container" class="w-full max-w-sm hidden flex-col items-center space-y-3">
+                <div class="bg-slate-900 border-4 border-purple-500 p-4 rounded-3xl text-white w-full space-y-3 shadow-lg">
+                    
+                    <div class="flex justify-between items-center border-b border-purple-800 pb-2">
+                        <h3 class="font-kids text-sm font-bold text-purple-300 flex items-center gap-1">
+                            🏰 Number Dungeon
+                        </h3>
+                        <span id="nd-diff-tag" class="text-[10px] bg-purple-900 text-purple-200 px-2 py-0.5 rounded-full font-bold">ระดับง่าย</span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 text-center text-xs font-bold bg-slate-950/80 p-2 rounded-2xl border border-purple-900/50">
+                        <div>❤️ HP: <span id="nd-hp-text" class="text-rose-400 font-extrabold">1</span></div>
+                        <div>⭐ คะแนน: <span id="nd-score-text" class="text-amber-400 font-extrabold">10</span></div>
+                        <div>🎯 เป้าหมาย: <span id="nd-target-text" class="text-cyan-400 font-extrabold">50</span></div>
+                    </div>
+
+                    <div id="nd-grid-board" class="grid grid-cols-3 gap-2 w-full max-w-[260px] mx-auto py-2">
+                    </div>
+
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="initNumberDungeon()" class="flex-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-bold py-2 rounded-xl border border-slate-700 text-slate-300 transition">
+                            🔄 รีเซ็ตกระดาน
+                        </button>
+                        <button onclick="startDungeonGame('easy')" class="flex-1 bg-purple-600 hover:bg-purple-500 active:scale-95 text-xs font-bold py-2 rounded-xl text-white shadow-xs transition">
+                            ▶️ เริ่มดันเจี้ยนใหม่
+                        </button>
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -769,7 +798,7 @@
         </button>
     </nav>
 
-    <!-- 🔮 RPG SKILL TREE MODAL -->
+    <!-- RPG SKILL TREE MODAL -->
     <div id="rpg-skill-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl relative border border-slate-100 max-h-[85vh] flex flex-col">
             <div class="flex justify-between items-center mb-3">
@@ -787,7 +816,6 @@
             </div>
 
             <div class="space-y-2.5 overflow-y-auto flex-1 pr-1">
-                <!-- Skill 1 -->
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center shadow-2xs">
                     <div>
                         <div class="font-bold text-xs text-slate-800 font-kids flex items-center gap-1">
@@ -801,7 +829,6 @@
                     </button>
                 </div>
 
-                <!-- Skill 2 -->
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center shadow-2xs">
                     <div>
                         <div class="font-bold text-xs text-slate-800 font-kids flex items-center gap-1">
@@ -815,7 +842,6 @@
                     </button>
                 </div>
 
-                <!-- Skill 3 -->
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center shadow-2xs">
                     <div>
                         <div class="font-bold text-xs text-slate-800 font-kids flex items-center gap-1">
@@ -829,7 +855,6 @@
                     </button>
                 </div>
 
-                <!-- Skill 4 -->
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center shadow-2xs">
                     <div>
                         <div class="font-bold text-xs text-slate-800 font-kids flex items-center gap-1">
@@ -1135,6 +1160,8 @@
     <script src="./game-rpg.js"></script>
     <script src="./game-story.js"></script>
     <script src="./game-td.js"></script>
+    <!-- ไฟล์ระบบ Number Dungeon ใหม่ -->
+    <script src="./game-number-dungeon.js"></script>
 
     <script>
         lucide.createIcons();
