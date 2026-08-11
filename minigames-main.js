@@ -8,13 +8,13 @@ function switchMiniGame(subGame) {
     const btnMath = document.getElementById("game-subtab-math");
     const btnStory = document.getElementById("game-subtab-story");
     const btnTd = document.getElementById("game-subtab-td");
-    const btnDungeon = document.getElementById("game-subtab-dungeon"); // [เพิ่มปุ่มใหม่]
+    const btnDungeon = document.getElementById("game-subtab-dungeon"); // [ปุ่ม Number Dungeon]
 
     const vocabContainer = document.getElementById("game-vocab-container");
     const mathContainer = document.getElementById("game-math-container");
     const storyContainer = document.getElementById("game-story-container");
     const tdContainer = document.getElementById("game-td-container");
-    const dungeonContainer = document.getElementById("game-dungeon-container"); // [เพิ่ม Container ใหม่]
+    const dungeonContainer = document.getElementById("game-dungeon-container"); // [Container Number Dungeon]
 
     const langSwitchBox = document.getElementById("lang-switch-box");
 
@@ -44,7 +44,7 @@ function switchMiniGame(subGame) {
         if (btnTd) btnTd.className = activeClass;
         tdContainer.classList.remove("hidden"); tdContainer.classList.add("flex");
         initMathTDGame();
-    } else if (subGame === 'dungeon') { // [เงื่อนไขสลับสวิตช์เกมใหม่]
+    } else if (subGame === 'dungeon') { // [สลับโหมดเปิด Number Dungeon]
         if (btnDungeon) btnDungeon.className = activeClass;
         dungeonContainer.classList.remove("hidden"); dungeonContainer.classList.add("flex");
         initNumberDungeon();
@@ -57,6 +57,6 @@ function restartSession() {
     if (currentMiniGame === 'math') { mathQuestionIndex = 1; generateMathPuzzle(); } 
     else if (currentMiniGame === 'story') { openStoryCreator(); } 
     else if (currentMiniGame === 'td') { initMathTDGame(); } 
-    else if (currentMiniGame === 'dungeon') { initNumberDungeon(); } // [เพิ่มการ Restart ของเกมดันเจี้ยน]
+    else if (currentMiniGame === 'dungeon') { initNumberDungeon(); } // [รีสตาร์ต Number Dungeon]
     else { setCorrectAnswers = 0; shuffleArray(filteredVocabList); currentIndex = 0; updateCard(); }
 }
