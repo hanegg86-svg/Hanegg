@@ -1,5 +1,5 @@
 // ==========================================
-// --- MATH HERO TD GAME ENGINE (FIXED V14 - BOSS HP SYSTEM FIXED) ---
+// --- MATH HERO TD GAME ENGINE (FIXED V16 - EXPONENT PROBLEM ADDED) ---
 // ==========================================
 let tdCanvas, tdCtx, tdChoiceBtns, tdQuestionDisplay, tdUltBtn, tdUltCountDisplay;
 let tdHp = 10, tdScore = 0, tdWave = 1, tdTotalKillsInWave = 0, tdUltimateCount = 1, tdIsGameCleared = false;
@@ -34,6 +34,8 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.quadraticCurveTo(x + width, y, x + width, y + height);
     ctx.lineTo(x + radius, y + height);
     ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
     ctx.lineTo(x, y + radius);
     ctx.quadraticCurveTo(x, y, x + radius, y);
     ctx.closePath();
@@ -63,7 +65,7 @@ function getTargetKillsForWave(wave) {
     if (wave <= 2) return 7;      
     if (wave <= 4) return 8;      
     if (wave <= 13) return 10;
-    return 6; // Wave 14 (Boss Wave): ลูกน้อง 5 ตัว + บอสใหญ่ 1 ตัว[span_1](start_span)[span_1](end_span)
+    return 6; // Wave 14 (Boss Wave): ลูกน้อง 5 ตัว + บอสใหญ่ 1 ตัว[span_4](start_span)[span_4](end_span)
 }
 
 // คำนวณเหรียญทองตาม Level / Wave
@@ -81,16 +83,16 @@ class TDEnemy {
         this.pathIndex = 0;
         
         this.isBoss = isBoss;
-        this.maxHp = isBoss ? 20 : 1; // บอสใหญ่มีพลังชีวิต 20[span_2](start_span)[span_2](end_span)
+        this.maxHp = isBoss ? 20 : 1; // บอสใหญ่มีพลังชีวิต 20[span_5](start_span)[span_5](end_span)
         this.hp = this.maxHp;
 
         const speedMultiplier = (tdDifficulty === 'easy') ? 0.7 : 1.0;
         let speedBase = ((0.6 + (tdWave - 1) * 0.12) * speedMultiplier) * 1.265;
-        if (this.isBoss) speedBase *= 0.45; // บอสเดินช้าลงอย่างเห็นได้ชัด[span_3](start_span)[span_3](end_span)
+        if (this.isBoss) speedBase *= 0.225; // บอสเดินช้าลง[span_6](start_span)[span_6](end_span)
 
         this.baseSpeed = speedBase;
         this.speed = this.baseSpeed;
-        this.size = isBoss ? 50 : 22; // บอสตัวใหญ่มาก[span_4](start_span)[span_4](end_span)
+        this.size = isBoss ? 50 : 22; // บอสตัวใหญ่มาก[span_7](start_span)[span_7](end_span)
         this.id = Math.random();
         
         const qData = this.generateMathProblem(tdWave);
@@ -102,7 +104,7 @@ class TDEnemy {
         this.penaltyTimer = 0;
     }
 
-    // ฟังก์ชันเปลี่ยนโจทย์ใหม่เมื่อโดนยิง[span_5](start_span)[span_5](end_span)
+    // ฟังก์ชันเปลี่ยนโจทย์ใหม่เมื่อโดนยิง[span_8](start_span)[span_8](end_span)
     resetQuestion() {
         const qData = this.generateMathProblem(tdWave);
         this.question = qData.question;
@@ -117,6 +119,8 @@ class TDEnemy {
             if (currentWave >= 3) availableOps.push('-');
             if (currentWave >= 6) availableOps.push('×');
             if (currentWave >= 8) availableOps.push('÷');
+            // เพิ่มโจทย์เลขยกกำลังเฉพาะโหมดยากใน Wave 13 และ 14
+            if (currentWave >= 13) availableOps.push('^');
         }
 
         const op = availableOps[Math.floor(Math.random() * availableOps.length)];
@@ -141,6 +145,14 @@ class TDEnemy {
             answer = Math.floor(Math.random() * 10) + 2;
             num1 = num2 * answer;
             question = `${num1} ÷ ${num2}`;
+        } else if (op === '^') {
+            // เลขยกกำลัง: ฐาน 1-5, ตัวยกกำลัง 2-3
+            num1 = Math.floor(Math.random() * 5) + 1;
+            num2 = Math.floor(Math.random() * 2) + 2;
+            answer = Math.pow(num1, num2);
+            
+            const superscriptMap = { '2': '²', '3': '³' };
+            question = `${num1}${superscriptMap[num2] || '^' + num2}`;
         }
         return { question, answer };
     }
@@ -203,7 +215,6 @@ class TDEnemy {
             tdCtx.shadowColor = '#FF70A6'; tdCtx.shadowBlur = 18;
         }
 
-        // สีของมอนสเตอร์และบอสใหญ่
         let enemyBg = this.isBoss ? '#4A00E0' : '#FF85A1';
         if (tdWave >= 11 && !this.isBoss) enemyBg = '#2A0845';
         else if (tdWave >= 9 && !this.isBoss) enemyBg = '#8B0000';
@@ -219,7 +230,6 @@ class TDEnemy {
         tdCtx.strokeStyle = this.isBoss ? '#FFD166' : '#FFFFFF';
         tdCtx.stroke();
 
-        // หลอดพลังชีวิต (HP Bar) ของบอส
         if (this.isBoss) {
             const barWidth = 90;
             const barHeight = 10;
@@ -232,7 +242,6 @@ class TDEnemy {
             tdCtx.strokeRect(-barWidth / 2, -this.size - 28, barWidth, barHeight);
         }
 
-        // หน้าตาของบอสและมอนสเตอร์
         if (this.isBoss) {
             tdCtx.fillStyle = '#10002B';
             tdCtx.beginPath(); tdCtx.moveTo(-25, -this.size); tdCtx.lineTo(-40, -this.size - 25); tdCtx.lineTo(-5, -this.size - 5); tdCtx.fill();
@@ -489,14 +498,34 @@ function useTDUltimate() {
     tdShakeTimer = 20;
 
     createTDExplosion(tdHero.x, tdHero.y, 40, '#FFD166');
-    const killedCount = tdEnemies.length;
-    tdEnemies.forEach(e => createTDExplosion(e.x, e.y, 20, '#FF70A6'));
-
     const coinReward = getCoinRewardForWave(tdWave);
-    tdEnemies = []; tdCurrentTarget = null;
-    tdScore += killedCount * 10;
-    tdCoins += killedCount * coinReward;
-    tdTotalKillsInWave += killedCount;
+
+    for (let i = tdEnemies.length - 1; i >= 0; i--) {
+        const enemy = tdEnemies[i];
+        createTDExplosion(enemy.x, enemy.y, 25, '#FF70A6');
+
+        if (enemy.isBoss) {
+            // ระเบิดลด HP บอสใหญ่ 3 หัวใจ[span_9](start_span)[span_9](end_span)
+            enemy.hp -= 3;
+            if (enemy.hp <= 0) {
+                enemy.dead = true;
+                tdEnemies.splice(i, 1);
+                tdScore += 200;
+                tdCoins += 100;
+                tdTotalKillsInWave += 1;
+            } else {
+                enemy.resetQuestion(); // สุ่มเปลี่ยนโจทย์ใหม่[span_10](start_span)[span_10](end_span)
+            }
+        } else {
+            enemy.dead = true;
+            tdEnemies.splice(i, 1);
+            tdScore += 10;
+            tdCoins += coinReward;
+            tdTotalKillsInWave += 1;
+        }
+    }
+
+    tdCurrentTarget = null;
 
     const scoreEl = document.getElementById('td-score'); if (scoreEl) scoreEl.innerText = tdScore;
     const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
@@ -581,11 +610,9 @@ function selectTDChoice(index) {
         createTDSlashWave(tdHero.x, tdHero.y, targetEnemy.x, targetEnemy.y);
         createTDExplosion(targetEnemy.x, targetEnemy.y);
 
-        // 1. ธนูอัปเกรดจะหัก 2 HP (กระสุนยิงทีละ 2 หัวใจ) / ปกติหัก 1 HP[span_6](start_span)[span_6](end_span)
         let damage = tdMultiShotUnlocked ? 2 : 1; 
         targetEnemy.hp -= damage;
 
-        // 2. เช็กว่า HP หมดหรือไม่[span_7](start_span)[span_7](end_span)
         if (targetEnemy.hp <= 0) {
             targetEnemy.dead = true;
             tdEnemies = tdEnemies.filter(e => e.id !== targetEnemy.id);
@@ -593,11 +620,9 @@ function selectTDChoice(index) {
             tdScore += targetEnemy.isBoss ? 200 : 10;
             tdCoins += targetEnemy.isBoss ? 100 : getCoinRewardForWave(tdWave);
         } else {
-            // บอสโดนยิงแล้ว HP ยังไม่หมด -> สุ่มเปลี่ยนโจทย์ใหม่ทันที[span_8](start_span)[span_8](end_span)!
-            targetEnemy.resetQuestion();
+            targetEnemy.resetQuestion();[span_11](start_span)[span_11](end_span)
         }
 
-        // 3. หากมีอัปเกรดธนูยิง 2 ตัว และยิงมอนสเตอร์ปกติ จะช่วยยิงตัวถัดไปด้วย[span_9](start_span)[span_9](end_span)
         if (tdMultiShotUnlocked && tdEnemies.length > 0 && !targetEnemy.isBoss) {
             const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
             const secondTarget = sortedEnemies.find(e => e.id !== targetEnemy.id);
@@ -653,7 +678,6 @@ function selectTDChoice(index) {
         }
     }
 
-    // ป้อมช่วยยิงบอสและศัตรู (ลด 1 HP)[span_10](start_span)[span_10](end_span)
     if (tdAutoTurretUnlocked && tdTotalAnswersCount % 2 === 0 && tdEnemies.length > 0) {
         const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
         
@@ -767,7 +791,6 @@ function tdGameLoop() {
     drawTDHero();
     drawTDAutoTurret();
 
-    // สปอว์นลูกน้อง 5 ตัวก่อน แล้วบอสใหญ่ถึงจะออกมาตาม[span_11](start_span)[span_11](end_span)
     if (!tdIsGameCleared && tdHp > 0) {
         if (tdWave >= 14) {
             tdSpawnTimer++;
@@ -777,7 +800,7 @@ function tdGameLoop() {
                     tdMinionsSpawnedCount++;
                     tdSpawnTimer = 0;
                 } else if (!tdBossSpawned) {
-                    tdEnemies.push(new TDEnemy(true));
+                    tdEnemies.push(new TDEnemy(true));[span_12](start_span)[span_12](end_span)
                     tdBossSpawned = true;
                     tdSpawnTimer = 0;
                 }
