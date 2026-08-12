@@ -2,7 +2,7 @@
 // --- NUMBER DUNGEON MINIGAME SYSTEM (5x5 GRID) ---
 // ==========================================
 
-let dungeonGridSize = 5; // ขยายกระดานเป็น 5x5 (25 ช่อง)
+let dungeonGridSize = 5; // ขยายกระดานเป็น 5x5 (25 ช่อง)[span_2](start_span)[span_2](end_span)
 let dungeonPlayerX = 0;
 let dungeonPlayerY = 0;
 let dungeonScore = 10;
@@ -15,7 +15,7 @@ function initNumberDungeon() {
 }
 
 function startDungeonGame(diff) {
-    // เช็กโควต้ารอบเล่นประจำวันก่อนเริ่มเกม
+    // เช็กโควต้ารอบเล่นประจำวันก่อนเริ่มเกม[span_3](start_span)[span_3](end_span)
     if (typeof isParentUser !== 'undefined' && typeof isDailyLimitEnabled !== 'undefined' && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined') {
         if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
             alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
@@ -30,35 +30,39 @@ function startDungeonGame(diff) {
     dungeonGridSize = 5;
     
     if (diff === 'hard') {
-        dungeonTargetScore = 300;
+        // ====================================================
+        // โหมดยาก: สุ่มตั้งเป้าหมายคะแนนปลายทางให้อยู่ระหว่าง 300 - 400
+        // ====================================================
+        dungeonTargetScore = Math.floor(Math.random() * 101) + 300; 
         const tag = document.getElementById('nd-diff-tag');
-        if (tag) tag.innerText = "ระดับยากพิเศษ 🔥";
+        if (tag) tag.innerText = `ระดับยากพิเศษ 🔥 (เป้าหมาย: ${dungeonTargetScore})`;
     } else {
         dungeonTargetScore = 150;
         const tag = document.getElementById('nd-diff-tag');
         if (tag) tag.innerText = "ระดับท้าทาย ⚡";
     }
 
-    // สร้างแผนที่ตาราง 5x5
+    // สร้างแผนที่ตาราง 5x5[span_4](start_span)[span_4](end_span)
     dungeonMap = [];
     for (let r = 0; r < dungeonGridSize; r++) {
         let row = [];
         for (let c = 0; c < dungeonGridSize; c++) {
             if (r === 0 && c === 0) {
                 row.push({ type: 'start', val: 0, text: '🧙‍♂️' });
-            } else if (r === 4 && c === 4) { // ทางออกประตูอยู่ที่มุมขวาล่าง (4,4)
+            } else if (r === 4 && c === 4) { // ทางออกประตูอยู่ที่มุมขวาล่าง (4,4)[span_5](start_span)[span_5](end_span)
                 row.push({ type: 'exit', val: 0, text: '🚪' });
             } else {
                 let rand = Math.random();
                 if (diff === 'hard') {
+                    // ปรับสเกลตัวเลขในกระดานโหมดยากเพื่อให้เอื้อต่อการทำคะแนน 300-400
                     if (rand < 0.35) {
-                        let num = Math.floor(Math.random() * 15) + 5;
+                        let num = Math.floor(Math.random() * 25) + 10; // +10 ถึง +34
                         row.push({ type: 'add', val: num, text: `+${num}` });
-                    } else if (rand < 0.6) {
-                        let num = Math.floor(Math.random() * 2) + 2;
+                    } else if (rand < 0.65) {
+                        let num = Math.floor(Math.random() * 2) + 2; // ×2 ถึง ×3
                         row.push({ type: 'mul', val: num, text: `×${num}` });
                     } else {
-                        let num = Math.floor(Math.random() * 40) + 15;
+                        let num = Math.floor(Math.random() * 50) + 20; // 👾 -20 ถึง -69
                         row.push({ type: 'monster', val: num, text: `👾 -${num}` });
                     }
                 } else {
@@ -93,10 +97,10 @@ function renderDungeonUI() {
     const board = document.getElementById('nd-grid-board') || document.getElementById('dungeon-grid-board');
     if (!board) return;
     
-    // ตรวจสอบสถานะ Daily Limit
+    // ตรวจสอบสถานะ Daily Limit[span_6](start_span)[span_6](end_span)
     const isQuotaExceeded = (typeof isParentUser !== 'undefined' && !isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds);
 
-    // กำหนดการแสดงผล CSS Grid เป็น 5 คอลัมน์
+    // กำหนดการแสดงผล CSS Grid เป็น 5 คอลัมน์[span_7](start_span)[span_7](end_span)
     board.className = "grid grid-cols-5 gap-1.5 w-full max-w-[340px] mx-auto py-2";
     board.innerHTML = '';
 
@@ -105,7 +109,7 @@ function renderDungeonUI() {
             const cell = dungeonMap[r][c];
             const isPlayerHere = (r === dungeonPlayerX && c === dungeonPlayerY);
             
-            // กฎบีบเส้นทางเดิน: เดินได้เฉพาะ ขวา (c + 1) หรือ ลง (r + 1)
+            // กฎบีบเส้นทางเดิน: เดินได้เฉพาะ ขวา (c + 1) หรือ ลง (r + 1)[span_8](start_span)[span_8](end_span)
             const canMoveRight = (r === dungeonPlayerX && c === dungeonPlayerY + 1);
             const canMoveDown = (r === dungeonPlayerX + 1 && c === dungeonPlayerY);
             const isSelectablePath = (canMoveRight || canMoveDown) && !isQuotaExceeded;
@@ -140,7 +144,7 @@ function renderDungeonUI() {
 }
 
 function moveDungeonPlayer(r, c) {
-    // บล็อกการเคลื่อนที่หากเล่นเล่นเกินโควต้า
+    // บล็อกการเคลื่อนที่หากเล่นเล่นเกินโควต้า[span_9](start_span)[span_9](end_span)
     if (typeof isParentUser !== 'undefined' && typeof isDailyLimitEnabled !== 'undefined' && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined') {
         if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
             alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
@@ -171,7 +175,7 @@ function moveDungeonPlayer(r, c) {
             alert("💥 คะแนนลดจนหมด! พ่ายแพ้ในดันเจี้ยน");
             startDungeonGame('easy');
         }, 100);
-    } else if (r === 4 && c === 4) { // ตรวจสอบการเข้าประตูทางออกที่ช่อง (4,4)
+    } else if (r === 4 && c === 4) { // ตรวจสอบการเข้าประตูทางออกที่ช่อง (4,4)[span_10](start_span)[span_10](end_span)
         if (dungeonScore >= dungeonTargetScore) {
             setTimeout(() => {
                 showCompletionModalDungeon();
@@ -188,7 +192,7 @@ function showCompletionModalDungeon() {
     totalStars += 1;
     saveUserStars();
     addEXPToUser(100);
-    incrementTodayRounds(); // บันทึกเพิ่มจำนวนรอบที่เล่นประจำวัน
+    incrementTodayRounds(); // บันทึกเพิ่มจำนวนรอบที่เล่นประจำวัน[span_11](start_span)[span_11](end_span)
 
     document.getElementById("summary-total-count").innerText = "พิชิต Number Dungeon 5x5!";
     document.getElementById("summary-stars-earned").innerText = "⭐ 1 ดวง";
