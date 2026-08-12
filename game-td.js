@@ -76,8 +76,8 @@ class TDEnemy {
         this.pathIndex = 0;
         
         const speedMultiplier = (tdDifficulty === 'easy') ? 0.7 : 1.0;
-        // ปรับเพิ่มความเร็วขึ้น 10%
-        this.baseSpeed = ((0.6 + (tdWave - 1) * 0.12) * speedMultiplier) * 1.10;
+        // เพิ่มความเร็วขึ้นอีก 15% จากเดิม (1.10 * 1.15 = 1.265)
+        this.baseSpeed = ((0.6 + (tdWave - 1) * 0.12) * speedMultiplier) * 1.265;
         this.speed = this.baseSpeed;
         this.size = 22;
         this.id = Math.random();
