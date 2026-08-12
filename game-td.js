@@ -1,5 +1,5 @@
 // ==========================================
-// --- MATH HERO TD GAME ENGINE (FIXED V16 - EXPONENT PROBLEM ADDED) ---
+// --- MATH HERO TD GAME ENGINE (FIXED V16 - BOSS UPDATED) ---
 // ==========================================
 let tdCanvas, tdCtx, tdChoiceBtns, tdQuestionDisplay, tdUltBtn, tdUltCountDisplay;
 let tdHp = 10, tdScore = 0, tdWave = 1, tdTotalKillsInWave = 0, tdUltimateCount = 1, tdIsGameCleared = false;
@@ -65,7 +65,7 @@ function getTargetKillsForWave(wave) {
     if (wave <= 2) return 7;      
     if (wave <= 4) return 8;      
     if (wave <= 13) return 10;
-    return 6; // Wave 14 (Boss Wave): ลูกน้อง 5 ตัว + บอสใหญ่ 1 ตัว[span_4](start_span)[span_4](end_span)
+    return 6; // Wave 14 (Boss Wave): ลูกน้อง 5 ตัว + บอสใหญ่ 1 ตัว[span_1](start_span)[span_1](end_span)
 }
 
 // คำนวณเหรียญทองตาม Level / Wave
@@ -83,16 +83,16 @@ class TDEnemy {
         this.pathIndex = 0;
         
         this.isBoss = isBoss;
-        this.maxHp = isBoss ? 20 : 1; // บอสใหญ่มีพลังชีวิต 20[span_5](start_span)[span_5](end_span)
+        this.maxHp = isBoss ? 20 : 1; // บอสใหญ่มีพลังชีวิต 20[span_2](start_span)[span_2](end_span)
         this.hp = this.maxHp;
 
         const speedMultiplier = (tdDifficulty === 'easy') ? 0.7 : 1.0;
         let speedBase = ((0.6 + (tdWave - 1) * 0.12) * speedMultiplier) * 1.265;
-        if (this.isBoss) speedBase *= 0.225; // บอสเดินช้าลง[span_6](start_span)[span_6](end_span)
+        if (this.isBoss) speedBase *= 0.225; // บอสเดินช้าลง[span_3](start_span)[span_3](end_span)
 
         this.baseSpeed = speedBase;
         this.speed = this.baseSpeed;
-        this.size = isBoss ? 50 : 22; // บอสตัวใหญ่มาก[span_7](start_span)[span_7](end_span)
+        this.size = isBoss ? 50 : 22; // บอสตัวใหญ่มาก[span_4](start_span)[span_4](end_span)
         this.id = Math.random();
         
         const qData = this.generateMathProblem(tdWave);
@@ -104,7 +104,7 @@ class TDEnemy {
         this.penaltyTimer = 0;
     }
 
-    // ฟังก์ชันเปลี่ยนโจทย์ใหม่เมื่อโดนยิง[span_8](start_span)[span_8](end_span)
+    // ฟังก์ชันเปลี่ยนโจทย์ใหม่เมื่อโดนยิง[span_5](start_span)[span_5](end_span)
     resetQuestion() {
         const qData = this.generateMathProblem(tdWave);
         this.question = qData.question;
@@ -223,6 +223,7 @@ class TDEnemy {
         if (isTarget) enemyBg = '#FFD166';
         if (this.penaltyTimer > 0) enemyBg = '#FF477E';
 
+        // วาดตัวศัตรู/บอส (ทรงเหลี่ยมมุมโค้ง)
         drawRoundedRect(tdCtx, -this.size, -this.size, this.size * 2, this.size * 2, this.isBoss ? 20 : 12);
         tdCtx.fillStyle = enemyBg;
         tdCtx.fill();
@@ -243,14 +244,58 @@ class TDEnemy {
         }
 
         if (this.isBoss) {
-            tdCtx.fillStyle = '#10002B';
-            tdCtx.beginPath(); tdCtx.moveTo(-25, -this.size); tdCtx.lineTo(-40, -this.size - 25); tdCtx.lineTo(-5, -this.size - 5); tdCtx.fill();
-            tdCtx.beginPath(); tdCtx.moveTo(25, -this.size); tdCtx.lineTo(40, -this.size - 25); tdCtx.lineTo(5, -this.size - 5); tdCtx.fill();
+            // --- ปรับปรุง Boss Wave 14: ปีศาจถือดาบกับโล่ ---
 
+            // หัวบอส (สีดำอมม่วง)
+            tdCtx.fillStyle = '#10002B';
+            tdCtx.beginPath(); tdCtx.arc(0, -this.size * 0.4, 25, 0, Math.PI * 2); tdCtx.fill();
+
+            // เขา (Horn)
+            tdCtx.fillStyle = '#C70039';
+            tdCtx.beginPath(); tdCtx.moveTo(-18, -this.size * 0.7); tdCtx.lineTo(-35, -this.size * 1.1); tdCtx.lineTo(-8, -this.size * 0.8); tdCtx.fill();
+            tdCtx.beginPath(); tdCtx.moveTo(18, -this.size * 0.7); tdCtx.lineTo(35, -this.size * 1.1); tdCtx.lineTo(8, -this.size * 0.8); tdCtx.fill();
+
+            // ดวงตา (Eyes)
             tdCtx.fillStyle = '#FF0000';
-            tdCtx.beginPath(); tdCtx.arc(-14, -5, 10, 0, Math.PI * 2); tdCtx.arc(14, -5, 10, 0, Math.PI * 2); tdCtx.fill();
-            tdCtx.fillStyle = '#FFFF00';
-            tdCtx.beginPath(); tdCtx.arc(-14, -5, 4, 0, Math.PI * 2); tdCtx.arc(14, -5, 4, 0, Math.PI * 2); tdCtx.fill();
+            tdCtx.beginPath(); tdCtx.arc(-10, -this.size * 0.4, 8, 0, Math.PI * 2); tdCtx.arc(10, -this.size * 0.4, 8, 0, Math.PI * 2); tdCtx.fill();
+            tdCtx.fillStyle = '#FFFF00'; // ลูกตาใน (Puppils)
+            tdCtx.beginPath(); tdCtx.arc(-10, -this.size * 0.4, 3, 0, Math.PI * 2); tdCtx.arc(10, -this.size * 0.4, 3, 0, Math.PI * 2); tdCtx.fill();
+
+            // แขนขวา (Hand Right) - ถือดาบ (Sword)
+            tdCtx.fillStyle = enemyBg; // สีเดียวกับตัวบอส
+            tdCtx.fillRect(-this.size - 15, -15, 15, 30); // ต้นแขน
+            
+            // ดาบ (Sword)
+            tdCtx.save();
+            tdCtx.translate(-this.size - 20, 0);
+            tdCtx.rotate(-Math.PI / 4); // เอียงดาบ
+
+            // ใบดาบ (Blade)
+            tdCtx.fillStyle = '#E2E8F0';
+            tdCtx.beginPath(); tdCtx.moveTo(0, -5); tdCtx.lineTo(60, -5); tdCtx.lineTo(70, 0); tdCtx.lineTo(60, 5); tdCtx.lineTo(0, 5); tdCtx.closePath(); tdCtx.fill();
+            tdCtx.strokeStyle = '#FFFFFF'; tdCtx.lineWidth = 1; tdCtx.stroke();
+            // ด้ามดาบ (Guard)
+            tdCtx.fillStyle = '#FFD166'; tdCtx.fillRect(-5, -10, 8, 20);
+            // ด้ามจับ (Hilt)
+            tdCtx.fillStyle = '#708090'; tdCtx.fillRect(-15, -3, 10, 6);
+            tdCtx.restore();
+
+            // แขนซ้าย (Hand Left) - ถือโล่ (Shield)
+            tdCtx.fillStyle = enemyBg; // สีเดียวกับตัวบอส
+            tdCtx.fillRect(this.size, -15, 15, 30); // ต้นแขน
+
+            // โล่ (Shield)
+            tdCtx.fillStyle = '#94A3B8'; // สีเทาเหล็ก
+            drawRoundedRect(tdCtx, this.size + 10, -25, 40, 50, 8); // รูปทรงโล่
+            tdCtx.fill();
+            tdCtx.strokeStyle = '#FFFFFF'; tdCtx.lineWidth = 3; tdCtx.stroke();
+            // สัญลักษณ์บนโล่ (Shield Emblem - ตราหัวกะโหลกยิ้มง่ายๆ)
+            tdCtx.fillStyle = '#FFFFFF';
+            tdCtx.beginPath(); tdCtx.arc(this.size + 30, -5, 8, 0, Math.PI * 2); tdCtx.fill(); // หัว
+            tdCtx.fillRect(this.size + 26, 3, 8, 5); // ฟัน
+            tdCtx.fillStyle = '#000000'; // ตา
+            tdCtx.beginPath(); tdCtx.arc(this.size + 27, -5, 2, 0, Math.PI * 2); tdCtx.arc(this.size + 33, -5, 2, 0, Math.PI * 2); tdCtx.fill();
+
         } else if (tdWave >= 11) {
             tdCtx.fillStyle = '#10002B';
             tdCtx.beginPath(); tdCtx.moveTo(-16, -this.size); tdCtx.lineTo(-26, -this.size - 18); tdCtx.lineTo(-2, -this.size - 2); tdCtx.fill();
@@ -505,7 +550,7 @@ function useTDUltimate() {
         createTDExplosion(enemy.x, enemy.y, 25, '#FF70A6');
 
         if (enemy.isBoss) {
-            // ระเบิดลด HP บอสใหญ่ 3 หัวใจ[span_9](start_span)[span_9](end_span)
+            // ระเบิดลด HP บอสใหญ่ 3 หัวใจ
             enemy.hp -= 3;
             if (enemy.hp <= 0) {
                 enemy.dead = true;
@@ -514,7 +559,7 @@ function useTDUltimate() {
                 tdCoins += 100;
                 tdTotalKillsInWave += 1;
             } else {
-                enemy.resetQuestion(); // สุ่มเปลี่ยนโจทย์ใหม่[span_10](start_span)[span_10](end_span)
+                enemy.resetQuestion(); // สุ่มเปลี่ยนโจทย์ใหม่
             }
         } else {
             enemy.dead = true;
@@ -620,7 +665,7 @@ function selectTDChoice(index) {
             tdScore += targetEnemy.isBoss ? 200 : 10;
             tdCoins += targetEnemy.isBoss ? 100 : getCoinRewardForWave(tdWave);
         } else {
-            targetEnemy.resetQuestion();[span_11](start_span)[span_11](end_span)
+            targetEnemy.resetQuestion();
         }
 
         if (tdMultiShotUnlocked && tdEnemies.length > 0 && !targetEnemy.isBoss) {
@@ -800,7 +845,7 @@ function tdGameLoop() {
                     tdMinionsSpawnedCount++;
                     tdSpawnTimer = 0;
                 } else if (!tdBossSpawned) {
-                    tdEnemies.push(new TDEnemy(true));[span_12](start_span)[span_12](end_span)
+                    tdEnemies.push(new TDEnemy(true));
                     tdBossSpawned = true;
                     tdSpawnTimer = 0;
                 }
