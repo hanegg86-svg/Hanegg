@@ -15,6 +15,14 @@ function initNumberDungeon() {
 }
 
 function startDungeonGame(diff) {
+    // เช็กโควต้ารอบเล่นประจำวันก่อนเริ่มเกม
+    if (typeof isParentUser !== 'undefined' && typeof isDailyLimitEnabled !== 'undefined' && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined') {
+        if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
+            alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
+            return;
+        }
+    }
+
     dungeonScore = 10;
     dungeonHP = 1;
     dungeonPlayerX = 0;
@@ -85,6 +93,9 @@ function renderDungeonUI() {
     const board = document.getElementById('nd-grid-board') || document.getElementById('dungeon-grid-board');
     if (!board) return;
     
+    // ตรวจสอบสถานะ Daily Limit
+    const isQuotaExceeded = (typeof isParentUser !== 'undefined' && !isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds);
+
     // กำหนดการแสดงผล CSS Grid เป็น 5 คอลัมน์
     board.className = "grid grid-cols-5 gap-1.5 w-full max-w-[340px] mx-auto py-2";
     board.innerHTML = '';
@@ -97,7 +108,7 @@ function renderDungeonUI() {
             // กฎบีบเส้นทางเดิน: เดินได้เฉพาะ ขวา (c + 1) หรือ ลง (r + 1)
             const canMoveRight = (r === dungeonPlayerX && c === dungeonPlayerY + 1);
             const canMoveDown = (r === dungeonPlayerX + 1 && c === dungeonPlayerY);
-            const isSelectablePath = canMoveRight || canMoveDown;
+            const isSelectablePath = (canMoveRight || canMoveDown) && !isQuotaExceeded;
 
             const btn = document.createElement('button');
             let bgClass = "bg-slate-800 border-slate-700 text-slate-300";
@@ -111,7 +122,8 @@ function renderDungeonUI() {
             }
 
             btn.className = `h-12 rounded-xl border flex flex-col items-center justify-center font-bold text-[10px] transition duration-150 ${bgClass}`;
-            
+            if (isQuotaExceeded) btn.disabled = true;
+
             if (isPlayerHere) {
                 btn.innerHTML = `<span class="text-sm">🧙‍♂️</span><span class="text-[8px] font-extrabold">${dungeonScore}</span>`;
             } else {
@@ -128,6 +140,14 @@ function renderDungeonUI() {
 }
 
 function moveDungeonPlayer(r, c) {
+    // บล็อกการเคลื่อนที่หากเล่นเล่นเกินโควต้า
+    if (typeof isParentUser !== 'undefined' && typeof isDailyLimitEnabled !== 'undefined' && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined') {
+        if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
+            alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
+            return;
+        }
+    }
+
     dungeonPlayerX = r;
     dungeonPlayerY = c;
     const cell = dungeonMap[r][c];
@@ -168,7 +188,7 @@ function showCompletionModalDungeon() {
     totalStars += 1;
     saveUserStars();
     addEXPToUser(100);
-    incrementTodayRounds();
+    incrementTodayRounds(); // บันทึกเพิ่มจำนวนรอบที่เล่นประจำวัน
 
     document.getElementById("summary-total-count").innerText = "พิชิต Number Dungeon 5x5!";
     document.getElementById("summary-stars-earned").innerText = "⭐ 1 ดวง";
