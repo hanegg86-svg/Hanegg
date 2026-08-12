@@ -1,21 +1,19 @@
 // ==========================================
-// --- MATH HERO TD GAME ENGINE (FIXED BASE-ATTACK & GAME OVER BUG) ---
+// --- MATH HERO TD GAME ENGINE (FIXED UI OFFSET & BOSS HP 10) ---
 // ==========================================
 let tdCanvas, tdCtx, tdChoiceBtns, tdQuestionDisplay, tdUltBtn, tdUltCountDisplay;
 let tdHp = 10, tdScore = 0, tdWave = 1, tdTotalKillsInWave = 0, tdUltimateCount = 1, tdIsGameCleared = false;
 let tdCoins = 0, tdSlowTimer = 0, tdFreezeTimer = 0;
 let tdMultiShotUnlocked = false; 
-let tdAutoTurretUnlocked = false; // ป้อมช่วยตี
-let tdTotalAnswersCount = 0;     // นับจำนวนการเลือกตอบทั้งหมด (ทั้งถูกและผิด)
+let tdAutoTurretUnlocked = false; 
+let tdTotalAnswersCount = 0;     
 let tdWrongCount = 0, tdShakeTimer = 0;
 let tdEnemies = [], tdParticles = [], tdSlashes = [], tdSpawnTimer = 0, tdCurrentTarget = null, tdCurrentChoices = [];
 let tdWaveNoticeTimer = 120, tdWaveNoticeText = "WAVE 1", tdAnimationRequestId = null;
 
-// ตัวแปรสำหรับ Boss Wave
-let tdBossSpawned = false;
-let tdBossKilled = false;
+// ตัวแปรควบคุมสปอว์นใน Boss Wave 14 (0=Minions, 1=Boss, 2=AfterBoss, 3=FinishedSpawn)
+let tdBossWaveStage = 0; 
 let tdMinionsSpawnedCount = 0;
-let tdAfterBossSpawned = false;
 
 // ตัวแปรระดับความยาก ('easy' หรือ 'hard')
 let tdDifficulty = 'easy';
@@ -25,7 +23,7 @@ const tdPath = [
     {x: 420, y: 80}, {x: 420, y: 230}, {x: 500, y: 230}
 ];
 const tdHero = { x: 535, y: 230, slashAnim: 0 };
-const tdTurretPos = { x: 300, y: 150 }; // ตำแหน่งวางป้อมช่วยตี
+const tdTurretPos = { x: 300, y: 150 };
 
 function drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.beginPath();
@@ -67,10 +65,9 @@ function getTargetKillsForWave(wave) {
     if (wave <= 2) return 7;      
     if (wave <= 4) return 8;      
     if (wave <= 13) return 10;
-    return 7; // Wave 14: ลูกน้อง 5 ตัว + บอสใหญ่ 1 ตัว + ตัวปิดท้ายหลังบอส 1 ตัว[span_0](start_span)[span_0](end_span)
+    return 7; // Wave 14: ลูกน้อง 5 ตัว + บอสใหญ่ 1 ตัว + ตัวปิดท้าย 1 ตัว
 }
 
-// คำนวณเหรียญทองตาม Level / Wave
 function getCoinRewardForWave(wave) {
     if (wave >= 11) return 25; 
     if (wave >= 7) return 20;  
@@ -85,7 +82,7 @@ class TDEnemy {
         this.pathIndex = 0;
         
         this.isBoss = isBoss;
-        this.maxHp = isBoss ? 20 : 1; 
+        this.maxHp = isBoss ? 10 : 1; // ปรับลดเลือดบอสเหลือ 10
         this.hp = this.maxHp;
 
         const speedMultiplier = (tdDifficulty === 'easy') ? 0.7 : 1.0;
@@ -166,7 +163,6 @@ class TDEnemy {
                     const hpEl = document.getElementById('td-hp');
                     if (hpEl) hpEl.innerText = tdHp;
                 }
-                // เช็กจบเกมหากเข้าฐานแล้วเลือดหมด หรือเป็นตัวสุดท้ายใน Wave 14
                 checkGameEndState();
             }
             return;
@@ -235,16 +231,16 @@ class TDEnemy {
             const barWidth = 90;
             const barHeight = 10;
             tdCtx.fillStyle = '#000000';
-            tdCtx.fillRect(-barWidth / 2, -this.size - 28, barWidth, barHeight);
+            tdCtx.fillRect(-barWidth / 2, -this.size - 20, barWidth, barHeight);
             tdCtx.fillStyle = '#FF0055';
-            tdCtx.fillRect(-barWidth / 2, -this.size - 28, (barWidth * (this.hp / this.maxHp)), barHeight);
+            tdCtx.fillRect(-barWidth / 2, -this.size - 20, (barWidth * (this.hp / this.maxHp)), barHeight);
             tdCtx.strokeStyle = '#FFFFFF';
             tdCtx.lineWidth = 1.5;
-            tdCtx.strokeRect(-barWidth / 2, -this.size - 28, barWidth, barHeight);
+            tdCtx.strokeRect(-barWidth / 2, -this.size - 20, barWidth, barHeight);
         }
 
         if (this.isBoss) {
-            // Boss Wave 14: ปีศาจถือดาบกับโล่[span_1](start_span)[span_1](end_span)
+            // Boss Wave 14: ปีศาจถือดาบกับโล่
             tdCtx.fillStyle = '#10002B';
             tdCtx.beginPath(); tdCtx.arc(0, -this.size * 0.4, 25, 0, Math.PI * 2); tdCtx.fill();
 
@@ -322,12 +318,16 @@ class TDEnemy {
         tdCtx.restore();
 
         const textMargin = 10;
-        tdCtx.font = 'bold 20px Quicksand, Arial';
-        const displayQuestion = (this.penaltyTimer > 0) ? "!! SPEED 2x !!" : (this.isBoss ? `[HP: ${this.hp}/20] ${this.question}` : this.question);
+        tdCtx.font = 'bold 18px Quicksand, Arial';
+        const displayQuestion = (this.penaltyTimer > 0) ? "!! SPEED 2x !!" : (this.isBoss ? `[HP:${this.hp}/10] ${this.question}` : this.question);
         const textWidth = tdCtx.measureText(displayQuestion).width;
 
+        // คำนวณตำแหน่ง Y ให้กล่องโจทย์ไม่ตกขอบบนเมื่อศัตรูเดินขึ้นด้านบน
+        let boxY = this.y - (this.isBoss ? 78 : 55);
+        if (boxY - 30 < 5) boxY = 5 + 30; // ล็อคไม่ให้ตกขอบจออย่างน้อย 5px
+
         tdCtx.fillStyle = (this.penaltyTimer > 0) ? '#FF477E' : (isTarget ? 'rgba(255, 209, 102, 0.95)' : 'rgba(255, 255, 255, 0.9)');
-        drawRoundedRect(tdCtx, this.x - (textWidth / 2) - textMargin, this.y - (this.isBoss ? 98 : 60), textWidth + (textMargin * 2), 30, 8);
+        drawRoundedRect(tdCtx, this.x - (textWidth / 2) - textMargin, boxY - 26, textWidth + (textMargin * 2), 28, 8);
         tdCtx.fill();
         if (isTarget || this.penaltyTimer > 0) {
             tdCtx.strokeStyle = '#FFFFFF'; tdCtx.lineWidth = 2; tdCtx.stroke();
@@ -335,7 +335,7 @@ class TDEnemy {
 
         tdCtx.fillStyle = (isTarget && this.penaltyTimer <= 0) ? '#2D3748' : (this.penaltyTimer > 0 ? '#FFFFFF' : '#4A5568');
         tdCtx.textAlign = 'center';
-        tdCtx.fillText(displayQuestion, this.x, this.y - (this.isBoss ? 76 : 38));
+        tdCtx.fillText(displayQuestion, this.x, boxY - 6);
     }
 }
 
@@ -358,13 +358,11 @@ function initMathTDGame() {
     tdWrongCount = 0; tdShakeTimer = 0; tdEnemies = []; tdParticles = []; tdSlashes = []; tdSpawnTimer = 0;
     tdCurrentTarget = null; tdWaveNoticeTimer = 120; tdWaveNoticeText = "WAVE 1";
 
-    tdBossSpawned = false;
-    tdBossKilled = false;
+    tdBossWaveStage = 0;
     tdMinionsSpawnedCount = 0;
-    tdAfterBossSpawned = false;
 
     const hpEl = document.getElementById('td-hp'); if (hpEl) hpEl.innerText = tdHp;
-    const waveEl = document.getElementById('td-wave'); if (waveEl) waveEl.innerText = tdWave;
+    const waveEl = document.getElementById('td-wave'); if (waveEl) waveEl.innerText = `${tdWave}/14`;
     const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
     const scoreEl = document.getElementById('td-score'); if (scoreEl) scoreEl.innerText = tdScore;
 
@@ -525,8 +523,7 @@ function createTDSlashWave(startX, startY, targetX, targetY) {
 function checkGameEndState() {
     const targetKills = getTargetKillsForWave(tdWave);
     if (tdWave >= 14) {
-        // หากบอสหรือศัตรูถูกปล่อยออกมาครบแล้ว และไม่มีศัตรูบนจอ
-        if (tdAfterBossSpawned && tdEnemies.length === 0) {
+        if (tdBossWaveStage === 3 && tdEnemies.length === 0) {
             if (tdHp > 0) {
                 setTimeout(() => { 
                     tdIsGameCleared = true; 
@@ -565,7 +562,6 @@ function useTDUltimate() {
             enemy.hp -= 3;
             if (enemy.hp <= 0) {
                 enemy.dead = true;
-                tdBossKilled = true;
                 tdEnemies.splice(i, 1);
                 tdScore += 200;
                 tdCoins += 100;
@@ -661,7 +657,6 @@ function selectTDChoice(index) {
 
         if (targetEnemy.hp <= 0) {
             targetEnemy.dead = true;
-            if (targetEnemy.isBoss) tdBossKilled = true;
             tdEnemies = tdEnemies.filter(e => e.id !== targetEnemy.id);
             tdTotalKillsInWave += 1;
             tdScore += targetEnemy.isBoss ? 200 : 10;
@@ -680,7 +675,6 @@ function selectTDChoice(index) {
                 secondTarget.hp -= 1;
                 if (secondTarget.hp <= 0) {
                     secondTarget.dead = true;
-                    if (secondTarget.isBoss) tdBossKilled = true;
                     tdEnemies = tdEnemies.filter(e => e.id !== secondTarget.id);
                     tdTotalKillsInWave += 1;
                     tdScore += 10;
@@ -728,7 +722,6 @@ function selectTDChoice(index) {
             
             if (turretTarget.hp <= 0) {
                 turretTarget.dead = true;
-                if (turretTarget.isBoss) tdBossKilled = true;
                 tdEnemies = tdEnemies.filter(e => e.id !== turretTarget.id);
                 tdTotalKillsInWave += 1;
                 tdScore += turretTarget.isBoss ? 200 : 10;
@@ -751,16 +744,14 @@ function nextTDWave() {
     tdTotalKillsInWave = 0; 
 
     if (tdWave === 14) {
-        tdBossSpawned = false;
-        tdBossKilled = false;
+        tdBossWaveStage = 0;
         tdMinionsSpawnedCount = 0;
-        tdAfterBossSpawned = false;
         tdWaveNoticeText = "🔥 FINAL BOSS WAVE! 🔥";
     } else {
         tdWaveNoticeText = `WAVE ${tdWave} CLEAR!`;
     }
 
-    const waveEl = document.getElementById('td-wave'); if (waveEl) waveEl.innerText = tdWave;
+    const waveEl = document.getElementById('td-wave'); if (waveEl) waveEl.innerText = `${tdWave}/14`;
     const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
     const hpEl = document.getElementById('td-hp'); if (hpEl) hpEl.innerText = tdHp;
 
@@ -824,27 +815,26 @@ function tdGameLoop() {
         if (tdWave >= 14) { 
             tdSpawnTimer++;
             if (tdSpawnTimer > 90) {
-                // 1. ปล่อยลูกน้องก่อน 5 ตัว
-                if (tdMinionsSpawnedCount < 5) {
+                if (tdBossWaveStage === 0) {
                     tdEnemies.push(new TDEnemy(false));
                     tdMinionsSpawnedCount++;
+                    if (tdMinionsSpawnedCount >= 5) {
+                        tdBossWaveStage = 1;
+                    }
                     tdSpawnTimer = 0;
                 } 
-                // 2. ปล่อยบอสใหญ่เป็นตัวที่ 6
-                else if (!tdBossSpawned) {
+                else if (tdBossWaveStage === 1) {
                     tdEnemies.push(new TDEnemy(true)); 
-                    tdBossSpawned = true;
+                    tdBossWaveStage = 2;
                     tdSpawnTimer = 0;
                 } 
-                // 3. ปล่อยตัวปิดท้าย 1 ตัวหลังจากบอสออกมาแล้ว
-                else if (tdBossSpawned && !tdAfterBossSpawned) {
+                else if (tdBossWaveStage === 2) {
                     tdEnemies.push(new TDEnemy(false));
-                    tdAfterBossSpawned = true;
+                    tdBossWaveStage = 3;
                     tdSpawnTimer = 0;
                 }
             }
         } else {
-            // Wave 1 - 13
             const baseInterval = (tdDifficulty === 'easy') ? 220 : 180;
             const spawnRate = Math.max(baseInterval - (tdWave - 1) * 12, 80);
             tdSpawnTimer++;
@@ -886,7 +876,7 @@ function tdGameLoop() {
 
     for (let i = tdParticles.length - 1; i >= 0; i--) {
         const p = tdParticles[i];
-        p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+        p.x += p.vx; p.vy += p.vy; p.life -= 0.05;
         tdCtx.fillStyle = p.color;
         tdCtx.globalAlpha = Math.max(0, p.life);
         tdCtx.fillRect(p.x, p.y, 5, 5);
