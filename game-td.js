@@ -1,5 +1,5 @@
 // ==========================================
-// --- MATH HERO TD GAME ENGINE (FIXED AFTER-BOSS MINION) ---
+// --- MATH HERO TD GAME ENGINE (FIXED BASE-ATTACK & GAME OVER BUG) ---
 // ==========================================
 let tdCanvas, tdCtx, tdChoiceBtns, tdQuestionDisplay, tdUltBtn, tdUltCountDisplay;
 let tdHp = 10, tdScore = 0, tdWave = 1, tdTotalKillsInWave = 0, tdUltimateCount = 1, tdIsGameCleared = false;
@@ -67,7 +67,7 @@ function getTargetKillsForWave(wave) {
     if (wave <= 2) return 7;      
     if (wave <= 4) return 8;      
     if (wave <= 13) return 10;
-    return 7; // Wave 14: ลูกน้อง 5 ตัว + บอสใหญ่ 1 ตัว + ตัวปิดท้ายหลังบอส 1 ตัว
+    return 7; // Wave 14: ลูกน้อง 5 ตัว + บอสใหญ่ 1 ตัว + ตัวปิดท้ายหลังบอส 1 ตัว[span_0](start_span)[span_0](end_span)
 }
 
 // คำนวณเหรียญทองตาม Level / Wave
@@ -166,6 +166,8 @@ class TDEnemy {
                     const hpEl = document.getElementById('td-hp');
                     if (hpEl) hpEl.innerText = tdHp;
                 }
+                // เช็กจบเกมหากเข้าฐานแล้วเลือดหมด หรือเป็นตัวสุดท้ายใน Wave 14
+                checkGameEndState();
             }
             return;
         }
@@ -242,7 +244,7 @@ class TDEnemy {
         }
 
         if (this.isBoss) {
-            // Boss Wave 14: ปีศาจถือดาบกับโล่
+            // Boss Wave 14: ปีศาจถือดาบกับโล่[span_1](start_span)[span_1](end_span)
             tdCtx.fillStyle = '#10002B';
             tdCtx.beginPath(); tdCtx.arc(0, -this.size * 0.4, 25, 0, Math.PI * 2); tdCtx.fill();
 
@@ -362,7 +364,7 @@ function initMathTDGame() {
     tdAfterBossSpawned = false;
 
     const hpEl = document.getElementById('td-hp'); if (hpEl) hpEl.innerText = tdHp;
-    const waveEl = document.getElementById('td-wave'); if (waveEl) waveEl.innerText = `${tdWave}/14`;
+    const waveEl = document.getElementById('td-wave'); if (waveEl) waveEl.innerText = tdWave;
     const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
     const scoreEl = document.getElementById('td-score'); if (scoreEl) scoreEl.innerText = tdScore;
 
@@ -520,16 +522,16 @@ function createTDSlashWave(startX, startY, targetX, targetY) {
     tdSlashes.push({ x1: startX, y1: startY, x2: targetX, y2: targetY, life: 1.0 });
 }
 
-function checkWaveProgress() {
+function checkGameEndState() {
     const targetKills = getTargetKillsForWave(tdWave);
     if (tdWave >= 14) {
-        // ต้องให้บอสตายแล้ว (tdBossKilled = true) และเก็บ Kills ครบ 7 ตัว (ลูกน้อง 5 + บอส 1 + หลังบอส 1) ถึงจะจบเกม
-        if (tdBossKilled && tdAfterBossSpawned && tdTotalKillsInWave >= targetKills) {
-            setTimeout(() => { 
-                tdIsGameCleared = true; 
-                tdEnemies.forEach(e => createTDExplosion(e.x, e.y, 20, '#FFD166'));
-                tdEnemies = []; 
-            }, 100);
+        // หากบอสหรือศัตรูถูกปล่อยออกมาครบแล้ว และไม่มีศัตรูบนจอ
+        if (tdAfterBossSpawned && tdEnemies.length === 0) {
+            if (tdHp > 0) {
+                setTimeout(() => { 
+                    tdIsGameCleared = true; 
+                }, 100);
+            }
         }
     } else {
         if (tdTotalKillsInWave >= targetKills) {
@@ -586,7 +588,7 @@ function useTDUltimate() {
     const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
     updateTDCoinsUI();
 
-    checkWaveProgress();
+    checkGameEndState();
 }
 
 function updateTDUltUI() {
@@ -694,7 +696,7 @@ function selectTDChoice(index) {
         updateTDCoinsUI();
 
         tdCurrentTarget = null;
-        checkWaveProgress();
+        checkGameEndState();
 
     } else {
         if (tdCurrentTarget) tdCurrentTarget.penaltyTimer = 35;
@@ -739,7 +741,7 @@ function selectTDChoice(index) {
             const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
             updateTDCoinsUI();
 
-            checkWaveProgress();
+            checkGameEndState();
         }
     }
 }
@@ -758,7 +760,7 @@ function nextTDWave() {
         tdWaveNoticeText = `WAVE ${tdWave} CLEAR!`;
     }
 
-    const waveEl = document.getElementById('td-wave'); if (waveEl) waveEl.innerText = `${tdWave}/14`;
+    const waveEl = document.getElementById('td-wave'); if (waveEl) waveEl.innerText = tdWave;
     const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
     const hpEl = document.getElementById('td-hp'); if (hpEl) hpEl.innerText = tdHp;
 
