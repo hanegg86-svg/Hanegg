@@ -1,5 +1,5 @@
 // ==========================================
-// --- MATH HERO TD GAME ENGINE (FIXED V14 - BOSS WAVE ADDED) ---
+// --- MATH HERO TD GAME ENGINE (FIXED V14 - BOSS HP SYSTEM FIXED) ---
 // ==========================================
 let tdCanvas, tdCtx, tdChoiceBtns, tdQuestionDisplay, tdUltBtn, tdUltCountDisplay;
 let tdHp = 10, tdScore = 0, tdWave = 1, tdTotalKillsInWave = 0, tdUltimateCount = 1, tdIsGameCleared = false;
@@ -31,7 +31,7 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.lineTo(x + width - radius, y);
     ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
     ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y, x + width - radius, y + height);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + height);
     ctx.lineTo(x + radius, y + height);
     ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
     ctx.lineTo(x, y + radius);
@@ -66,12 +66,12 @@ function getTargetKillsForWave(wave) {
     return 6; // Wave 14 (Boss Wave): ลูกน้อง 5 ตัว + บอสใหญ่ 1 ตัว[span_1](start_span)[span_1](end_span)
 }
 
-// คำนวณเหรียญทองตาม Level / Wave (เพิ่ม 25 เหรียญใน Wave 11-13)
+// คำนวณเหรียญทองตาม Level / Wave
 function getCoinRewardForWave(wave) {
-    if (wave >= 11) return 25; // Wave 11-13 ได้ 25 เหรียญ
-    if (wave >= 7) return 20;  // Wave 7-10 ได้ 20 เหรียญ
-    if (wave >= 4) return 15;  // Wave 4-6 ได้ 15 เหรียญ
-    return 10;                 // Wave 1-3 ได้ 10 เหรียญ
+    if (wave >= 11) return 25; 
+    if (wave >= 7) return 20;  
+    if (wave >= 4) return 15;  
+    return 10;                 
 }
 
 class TDEnemy {
@@ -86,11 +86,11 @@ class TDEnemy {
 
         const speedMultiplier = (tdDifficulty === 'easy') ? 0.7 : 1.0;
         let speedBase = ((0.6 + (tdWave - 1) * 0.12) * speedMultiplier) * 1.265;
-        if (this.isBoss) speedBase *= 0.45; // เดินช้าลงอย่างเห็นได้ชัด[span_3](start_span)[span_3](end_span)
+        if (this.isBoss) speedBase *= 0.45; // บอสเดินช้าลงอย่างเห็นได้ชัด[span_3](start_span)[span_3](end_span)
 
         this.baseSpeed = speedBase;
         this.speed = this.baseSpeed;
-        this.size = isBoss ? 50 : 22; // รูปลักษณ์ตัวใหญ่มาก[span_4](start_span)[span_4](end_span)
+        this.size = isBoss ? 50 : 22; // บอสตัวใหญ่มาก[span_4](start_span)[span_4](end_span)
         this.id = Math.random();
         
         const qData = this.generateMathProblem(tdWave);
@@ -102,7 +102,7 @@ class TDEnemy {
         this.penaltyTimer = 0;
     }
 
-    // ฟังก์ชันเปลี่ยนโจทย์ใหม่ทันที[span_5](start_span)[span_5](end_span)
+    // ฟังก์ชันเปลี่ยนโจทย์ใหม่เมื่อโดนยิง[span_5](start_span)[span_5](end_span)
     resetQuestion() {
         const qData = this.generateMathProblem(tdWave);
         this.question = qData.question;
@@ -150,7 +150,7 @@ class TDEnemy {
             if (!this.dead) {
                 this.dead = true;
                 if (!tdIsGameCleared && tdHp > 0) {
-                    tdHp -= this.isBoss ? 5 : 1; // บอสเข้าบ้านจะหัก HP เยอะขึ้น
+                    tdHp -= this.isBoss ? 5 : 1; 
                     if (tdHp < 0) tdHp = 0;
                     const hpEl = document.getElementById('td-hp');
                     if (hpEl) hpEl.innerText = tdHp;
@@ -203,7 +203,7 @@ class TDEnemy {
             tdCtx.shadowColor = '#FF70A6'; tdCtx.shadowBlur = 18;
         }
 
-        // หน้า Monster และบอสใหญ่[span_6](start_span)[span_6](end_span)
+        // สีของมอนสเตอร์และบอสใหญ่
         let enemyBg = this.isBoss ? '#4A00E0' : '#FF85A1';
         if (tdWave >= 11 && !this.isBoss) enemyBg = '#2A0845';
         else if (tdWave >= 9 && !this.isBoss) enemyBg = '#8B0000';
@@ -232,7 +232,7 @@ class TDEnemy {
             tdCtx.strokeRect(-barWidth / 2, -this.size - 28, barWidth, barHeight);
         }
 
-        // วาดหน้าตารูปลักษณ์อสูร/บอสใหญ่
+        // หน้าตาของบอสและมอนสเตอร์
         if (this.isBoss) {
             tdCtx.fillStyle = '#10002B';
             tdCtx.beginPath(); tdCtx.moveTo(-25, -this.size); tdCtx.lineTo(-40, -this.size - 25); tdCtx.lineTo(-5, -this.size - 5); tdCtx.fill();
@@ -389,7 +389,7 @@ function buyTDUpgradeTower() {
     tdCoins -= 400;
     tdMultiShotUnlocked = true;
     updateTDCoinsUI();
-    alert("🏹 อัปเกรดตัวเราสำเร็จ! ฮีโร่จะยิงโจมตีทีเดียว 2 ตัวถาวรแล้วครับ!");
+    alert("🏹 อัปเกรดตัวเราสำเร็จ! ฮีโร่จะยิงโจมตีทีเดียว 2 หัวใจถาวรแล้วครับ!");
 }
 
 function buyTDAutoTurret() {
@@ -581,22 +581,23 @@ function selectTDChoice(index) {
         createTDSlashWave(tdHero.x, tdHero.y, targetEnemy.x, targetEnemy.y);
         createTDExplosion(targetEnemy.x, targetEnemy.y);
 
-        // ธนูอัปเกรดจะลด 2 HP (ยิงทีละ 2 หัวใจ)[span_7](start_span)[span_7](end_span)
+        // 1. ธนูอัปเกรดจะหัก 2 HP (กระสุนยิงทีละ 2 หัวใจ) / ปกติหัก 1 HP[span_6](start_span)[span_6](end_span)
         let damage = tdMultiShotUnlocked ? 2 : 1; 
         targetEnemy.hp -= damage;
 
+        // 2. เช็กว่า HP หมดหรือไม่[span_7](start_span)[span_7](end_span)
         if (targetEnemy.hp <= 0) {
             targetEnemy.dead = true;
             tdEnemies = tdEnemies.filter(e => e.id !== targetEnemy.id);
             tdTotalKillsInWave += 1;
-            tdScore += targetEnemy.isBoss ? 150 : 10;
+            tdScore += targetEnemy.isBoss ? 200 : 10;
             tdCoins += targetEnemy.isBoss ? 100 : getCoinRewardForWave(tdWave);
         } else {
-            // บอสโดนยิงโจทย์จะเปลี่ยนเรื่อยๆ[span_8](start_span)[span_8](end_span)
+            // บอสโดนยิงแล้ว HP ยังไม่หมด -> สุ่มเปลี่ยนโจทย์ใหม่ทันที[span_8](start_span)[span_8](end_span)!
             targetEnemy.resetQuestion();
         }
 
-        // หากธนูอัปเกรด ยิงศัตรูอีกตัวด้วยหากไม่ได้ยิงบอส[span_9](start_span)[span_9](end_span)
+        // 3. หากมีอัปเกรดธนูยิง 2 ตัว และยิงมอนสเตอร์ปกติ จะช่วยยิงตัวถัดไปด้วย[span_9](start_span)[span_9](end_span)
         if (tdMultiShotUnlocked && tdEnemies.length > 0 && !targetEnemy.isBoss) {
             const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
             const secondTarget = sortedEnemies.find(e => e.id !== targetEnemy.id);
@@ -652,7 +653,7 @@ function selectTDChoice(index) {
         }
     }
 
-    // ป้อมช่วยยิงบอสได้[span_10](start_span)[span_10](end_span)
+    // ป้อมช่วยยิงบอสและศัตรู (ลด 1 HP)[span_10](start_span)[span_10](end_span)
     if (tdAutoTurretUnlocked && tdTotalAnswersCount % 2 === 0 && tdEnemies.length > 0) {
         const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
         
@@ -668,7 +669,7 @@ function selectTDChoice(index) {
                 turretTarget.dead = true;
                 tdEnemies = tdEnemies.filter(e => e.id !== turretTarget.id);
                 tdTotalKillsInWave += 1;
-                tdScore += turretTarget.isBoss ? 150 : 10;
+                tdScore += turretTarget.isBoss ? 200 : 10;
                 tdCoins += turretTarget.isBoss ? 100 : getCoinRewardForWave(tdWave);
             } else {
                 turretTarget.resetQuestion();
@@ -766,25 +767,23 @@ function tdGameLoop() {
     drawTDHero();
     drawTDAutoTurret();
 
-    // ระบบสปอว์นบอสใหญ่หลัง Wave 13 (Wave 14)[span_11](start_span)[span_11](end_span)
+    // สปอว์นลูกน้อง 5 ตัวก่อน แล้วบอสใหญ่ถึงจะออกมาตาม[span_11](start_span)[span_11](end_span)
     if (!tdIsGameCleared && tdHp > 0) {
         if (tdWave >= 14) {
             tdSpawnTimer++;
             if (tdSpawnTimer > 120) {
                 if (tdMinionsSpawnedCount < 5) {
-                    // ปล่อยลูกน้องวิ่งนำหน้า 5 ตัว[span_12](start_span)[span_12](end_span)
                     tdEnemies.push(new TDEnemy(false));
                     tdMinionsSpawnedCount++;
                     tdSpawnTimer = 0;
                 } else if (!tdBossSpawned) {
-                    // ปล่อยบอสใหญ่ตามออกมา[span_13](start_span)[span_13](end_span)
                     tdEnemies.push(new TDEnemy(true));
                     tdBossSpawned = true;
                     tdSpawnTimer = 0;
                 }
             }
         } else {
-            // Wave ปกติ 1 - 13
+            // Wave 1 - 13
             const baseInterval = (tdDifficulty === 'easy') ? 220 : 180;
             const spawnRate = Math.max(baseInterval - (tdWave - 1) * 12, 80);
             tdSpawnTimer++;
