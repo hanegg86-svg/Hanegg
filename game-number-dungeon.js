@@ -205,12 +205,8 @@ function moveDungeonPlayer(r, c) {
 
     renderDungeonUI();
 
-    if (dungeonScore <= 0) {
-        setTimeout(() => {
-            alert("💥 คะแนนลดจนหมด! พ่ายแพ้ในดันเจี้ยน");
-            startDungeonGame('easy');
-        }, 100);
-    } else if (r === 4 && c === 4) { // ตรวจสอบเมื่อถึงทางออกที่ช่อง (4,4)
+    // 💡 ยกเลิกเงื่อนไข Game Over เมื่อคะแนนติดลบ เพื่อให้เดินเล่นต่อได้ตลอด
+    if (r === 4 && c === 4) { // ตรวจสอบเมื่อถึงทางออกที่ช่อง (4,4)
         const currentDiffRange = (dungeonTargetScore >= 300) ? 50 : 75;
         const minTarget = dungeonTargetScore - currentDiffRange;
         const maxTarget = dungeonTargetScore + currentDiffRange;
@@ -223,9 +219,9 @@ function moveDungeonPlayer(r, c) {
         } else {
             setTimeout(() => {
                 if (dungeonScore < minTarget) {
-                    alert(`🚪 ถึงทางออกแล้ว แต่คะแนนน้อยเกินไป! (ต้องได้ช่วง ${minTarget} - ${maxTarget} คะแนน)`);
+                    alert(`🚪 ถึงทางออกแล้ว แต่คะแนนน้อยเกินไป! (${dungeonScore} คะแนน / ต้องได้ช่วง ${minTarget} - ${maxTarget})`);
                 } else {
-                    alert(`🚪 ถึงทางออกแล้ว แต่คะแนนเกินเป้าหมาย! (ต้องได้ช่วง ${minTarget} - ${maxTarget} คะแนน)`);
+                    alert(`🚪 ถึงทางออกแล้ว แต่คะแนนเกินเป้าหมาย! (${dungeonScore} คะแนน / ต้องได้ช่วง ${minTarget} - ${maxTarget})`);
                 }
             }, 100);
         }
