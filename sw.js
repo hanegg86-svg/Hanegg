@@ -1,7 +1,7 @@
 // Path: ./sw.js
 
-// เปลี่ยนเวอร์ชันแคชเป็น v11 เพื่อบังคับให้แอปโหลด game-vocab.js ตัวใหม่
-const CACHE_NAME = 'kids-vocab-v11';
+// เปลี่ยนเวอร์ชันแคชเป็น v12 เพื่อบังคับล้างแคชเก่าทิ้งแล้วดึงไฟล์ใหม่ทันที
+const CACHE_NAME = 'kids-vocab-v12';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -16,6 +16,7 @@ const ASSETS_TO_CACHE = [
   './game-rpg.js',
   './game-story.js',
   './game-td.js',
+  './game-number-dungeon.js',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/lucide@latest',
   'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js',
@@ -25,7 +26,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching updated app assets v11');
+      console.log('[Service Worker] Caching updated app assets v12');
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );
