@@ -1,3 +1,4 @@
+// Path: ./game-td.js
 // ==========================================
 // --- MATH HERO TD GAME ENGINE (FIXED UI OFFSET & BOSS HP 10) ---
 // ==========================================
@@ -82,7 +83,7 @@ class TDEnemy {
         this.pathIndex = 0;
         
         this.isBoss = isBoss;
-        this.maxHp = isBoss ? 10 : 1; // ปรับลดเลือดบอสเหลือ 10
+        this.maxHp = isBoss ? 10 : 1; // เลือดบอส 10 HP
         this.hp = this.maxHp;
 
         const speedMultiplier = (tdDifficulty === 'easy') ? 0.7 : 1.0;
@@ -322,9 +323,8 @@ class TDEnemy {
         const displayQuestion = (this.penaltyTimer > 0) ? "!! SPEED 2x !!" : (this.isBoss ? `[HP:${this.hp}/10] ${this.question}` : this.question);
         const textWidth = tdCtx.measureText(displayQuestion).width;
 
-        // คำนวณตำแหน่ง Y ให้กล่องโจทย์ไม่ตกขอบบนเมื่อศัตรูเดินขึ้นด้านบน
         let boxY = this.y - (this.isBoss ? 78 : 55);
-        if (boxY - 30 < 5) boxY = 5 + 30; // ล็อคไม่ให้ตกขอบจออย่างน้อย 5px
+        if (boxY - 30 < 5) boxY = 5 + 30;
 
         tdCtx.fillStyle = (this.penaltyTimer > 0) ? '#FF477E' : (isTarget ? 'rgba(255, 209, 102, 0.95)' : 'rgba(255, 255, 255, 0.9)');
         drawRoundedRect(tdCtx, this.x - (textWidth / 2) - textMargin, boxY - 26, textWidth + (textMargin * 2), 28, 8);
@@ -537,54 +537,57 @@ function checkGameEndState() {
     }
 }
 
+// 🎯 ฟังก์ชันระเบิดท่าไม้ตาย (Ultimate) ที่ปรับแก้ให้ลดเลือดบอส 1 HP
 function useTDUltimate() {
     if (typeof isParentUser !== 'undefined' && typeof isDailyLimitEnabled !== 'undefined' && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined') {
         if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
-            alert("หนูเล่นครบโควต้ารวมวันนี้แล้วครับ! พรุ่งนี้ค่อยมาเล่นใหม่นะ 🎈");
-            return;
+            alert("หนูเล่นครบโควต้ารวมวันนี้แล้วครับ! พรุ่งนี้ค่อยมาเล่นใหม่นะ 🎈");[span_1](start_span)[span_1](end_span)
+            return;[span_2](start_span)[span_2](end_span)
         }
     }
 
-    if (tdUltimateCount <= 0 || tdEnemies.length === 0 || tdIsGameCleared || tdHp <= 0) return;
+    if (tdUltimateCount <= 0 || tdEnemies.length === 0 || tdIsGameCleared || tdHp <= 0) return;[span_3](start_span)[span_3](end_span)
 
-    tdUltimateCount--;
-    updateTDUltUI();
-    tdShakeTimer = 20;
+    tdUltimateCount--;[span_4](start_span)[span_4](end_span)
+    updateTDUltUI();[span_5](start_span)[span_5](end_span)
+    tdShakeTimer = 20;[span_6](start_span)[span_6](end_span)
 
-    createTDExplosion(tdHero.x, tdHero.y, 40, '#FFD166');
-    const coinReward = getCoinRewardForWave(tdWave);
+    createTDExplosion(tdHero.x, tdHero.y, 40, '#FFD166');[span_7](start_span)[span_7](end_span)
+    const coinReward = getCoinRewardForWave(tdWave);[span_8](start_span)[span_8](end_span)
 
-    for (let i = tdEnemies.length - 1; i >= 0; i--) {
-        const enemy = tdEnemies[i];
-        createTDExplosion(enemy.x, enemy.y, 25, '#FF70A6');
+    for (let i = tdEnemies.length - 1; i >= 0; i--) {[span_9](start_span)[span_9](end_span)
+        const enemy = tdEnemies[i];[span_10](start_span)[span_10](end_span)
+        createTDExplosion(enemy.x, enemy.y, 25, '#FF70A6');[span_11](start_span)[span_11](end_span)
 
-        if (enemy.isBoss) {
-            enemy.hp -= 3;
-            if (enemy.hp <= 0) {
-                enemy.dead = true;
-                tdEnemies.splice(i, 1);
-                tdScore += 200;
-                tdCoins += 100;
-                tdTotalKillsInWave += 1;
-            } else {
-                enemy.resetQuestion();
+        if (enemy.isBoss) {[span_12](start_span)[span_12](end_span)
+            // 🔧 ปรับตรงนี้: ระเบิดลดเลือดบอสเพียง 1 HP
+            enemy.hp -= 1; 
+            
+            if (enemy.hp <= 0) {[span_13](start_span)[span_13](end_span)
+                enemy.dead = true;[span_14](start_span)[span_14](end_span)
+                tdEnemies.splice(i, 1);[span_15](start_span)[span_15](end_span)
+                tdScore += 200;[span_16](start_span)[span_16](end_span)
+                tdCoins += 100;[span_17](start_span)[span_17](end_span)
+                tdTotalKillsInWave += 1;[span_18](start_span)[span_18](end_span)
+            } else {[span_19](start_span)[span_19](end_span)
+                enemy.resetQuestion();[span_20](start_span)[span_20](end_span)
             }
-        } else {
-            enemy.dead = true;
-            tdEnemies.splice(i, 1);
-            tdScore += 10;
-            tdCoins += coinReward;
-            tdTotalKillsInWave += 1;
+        } else {[span_21](start_span)[span_21](end_span)
+            enemy.dead = true;[span_22](start_span)[span_22](end_span)
+            tdEnemies.splice(i, 1);[span_23](start_span)[span_23](end_span)
+            tdScore += 10;[span_24](start_span)[span_24](end_span)
+            tdCoins += coinReward;[span_25](start_span)[span_25](end_span)
+            tdTotalKillsInWave += 1;[span_26](start_span)[span_26](end_span)
         }
     }
 
-    tdCurrentTarget = null;
+    tdCurrentTarget = null;[span_27](start_span)[span_27](end_span)
 
-    const scoreEl = document.getElementById('td-score'); if (scoreEl) scoreEl.innerText = tdScore;
-    const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;
-    updateTDCoinsUI();
+    const scoreEl = document.getElementById('td-score'); if (scoreEl) scoreEl.innerText = tdScore;[span_28](start_span)[span_28](end_span)
+    const killsEl = document.getElementById('td-kills'); if (killsEl) killsEl.innerText = tdTotalKillsInWave;[span_29](start_span)[span_29](end_span)
+    updateTDCoinsUI();[span_30](start_span)[span_30](end_span)
 
-    checkGameEndState();
+    checkGameEndState();[span_31](start_span)[span_31](end_span)
 }
 
 function updateTDUltUI() {
