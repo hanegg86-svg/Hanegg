@@ -109,8 +109,12 @@ function renderDungeonUI() {
     // ตรวจสอบสถานะ Daily Limit
     const isQuotaExceeded = (typeof isParentUser !== 'undefined' && !isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds);
 
-    // กำหนดการแสดงผล CSS Grid เป็น 5 คอลัมน์ ความสูงขั้นต่ำไม่จมหาย
-    board.className = "grid grid-cols-5 gap-1.5 w-full max-w-[340px] mx-auto py-2 min-h-[260px]";
+    // 🔧 บังคับการแสดงผล CSS Grid แบบ Inline ชัดเจน ป้องกัน Layout โดนบีบเป็น 0px
+    board.className = "w-full max-w-[340px] mx-auto my-3";
+    board.style.display = "grid";
+    board.style.gridTemplateColumns = "repeat(5, 1fr)";
+    board.style.gap = "6px";
+    board.style.minHeight = "250px";
     board.innerHTML = '';
 
     for (let r = 0; r < dungeonGridSize; r++) {
@@ -124,23 +128,44 @@ function renderDungeonUI() {
             const isSelectablePath = (canMoveRight || canMoveDown) && !isQuotaExceeded;
 
             const btn = document.createElement('button');
-            let bgClass = "bg-slate-800 border-slate-700 text-slate-300";
             
+            // กำหนด Inline Style เพื่อบังคับปุ่มแสดงผลเป็นสี่เหลี่ยมแน่นอน
+            btn.style.height = "48px";
+            btn.style.width = "100%";
+            btn.style.borderRadius = "12px";
+            btn.style.display = "flex";
+            btn.style.flexDirection = "column";
+            btn.style.alignItems = "center";
+            btn.style.justifyContent = "center";
+            btn.style.fontWeight = "bold";
+            btn.style.fontSize = "11px";
+            btn.style.border = "1px solid";
+            btn.style.transition = "all 0.15s ease";
+
             if (isPlayerHere) {
-                bgClass = "bg-indigo-600 border-indigo-400 text-white font-extrabold ring-2 ring-indigo-300 animate-pulse";
+                btn.style.backgroundColor = "#4f46e5";
+                btn.style.borderColor = "#818cf8";
+                btn.style.color = "#ffffff";
+                btn.style.boxShadow = "0 0 10px #818cf8";
             } else if (isSelectablePath) {
-                bgClass = "bg-purple-900/80 hover:bg-purple-700 border-purple-400 text-purple-100 cursor-pointer active:scale-95 shadow-md";
+                btn.style.backgroundColor = "#581c87";
+                btn.style.borderColor = "#c084fc";
+                btn.style.color = "#f3e8ff";
+                btn.style.cursor = "pointer";
             } else {
-                bgClass = "bg-slate-950/60 border-slate-900 text-slate-600 cursor-not-allowed opacity-60";
+                btn.style.backgroundColor = "#020617";
+                btn.style.borderColor = "#0f172a";
+                btn.style.color = "#475569";
+                btn.style.opacity = "0.5";
+                btn.style.cursor = "not-allowed";
             }
 
-            btn.className = `h-12 w-full rounded-xl border flex flex-col items-center justify-center font-bold text-[10px] transition duration-150 ${bgClass}`;
             if (isQuotaExceeded) btn.disabled = true;
 
             if (isPlayerHere) {
-                btn.innerHTML = `<span class="text-sm">🧙‍♂️</span><span class="text-[8px] font-extrabold">${dungeonScore}</span>`;
+                btn.innerHTML = `<span style="font-size:14px;">🧙‍♂️</span><span style="font-size:9px; font-weight:800;">${dungeonScore}</span>`;
             } else {
-                btn.innerHTML = `<span class="font-kids">${cell.text}</span>`;
+                btn.innerHTML = `<span>${cell.text}</span>`;
             }
 
             btn.onclick = () => {
