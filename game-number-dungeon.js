@@ -30,17 +30,18 @@ function startDungeonGame(diff) {
     dungeonGridSize = 5;
     
     if (diff === 'hard') {
-        // สุ่มตั้งเป้าหมายคะแนนหลักให้อยู่ระหว่าง 300 - 400
+        // ระดับยาก: สุ่มเป้าหมายหลัก 300 - 400 (ช่วง +/- 50)
         dungeonTargetScore = Math.floor(Math.random() * 101) + 300; 
-        const minTarget = dungeonTargetScore - 25;
-        const maxTarget = dungeonTargetScore + 25;
+        const minTarget = dungeonTargetScore - 50;
+        const maxTarget = dungeonTargetScore + 50;
         
         const tag = document.getElementById('nd-diff-tag');
         if (tag) tag.innerText = `ระดับยากพิเศษ 🔥 (เป้าหมาย: ${minTarget} - ${maxTarget})`;
     } else {
+        // ระดับง่าย: เป้าหมายหลัก 150 (ช่วง +/- 75)
         dungeonTargetScore = 150;
-        const minTarget = dungeonTargetScore - 25;
-        const maxTarget = dungeonTargetScore + 25;
+        const minTarget = dungeonTargetScore - 75;
+        const maxTarget = dungeonTargetScore + 75;
         
         const tag = document.getElementById('nd-diff-tag');
         if (tag) tag.innerText = `ระดับท้าทาย ⚡ (เป้าหมาย: ${minTarget} - ${maxTarget})`;
@@ -96,10 +97,12 @@ function renderDungeonUI() {
     if (hpText) hpText.innerText = dungeonHP;
     if (scoreText) scoreText.innerText = dungeonScore;
     
-    // แสดงช่วงเป้าหมาย (+/- 25) ให้ผู้เล่นเห็นบน UI
+    // กำหนด Range ช่วงเป้าหมายตามระดับความยาก (ยาก = +/- 50, ง่าย = +/- 75)
+    const currentDiffRange = (dungeonTargetScore >= 300) ? 50 : 75;
+    const minTarget = dungeonTargetScore - currentDiffRange;
+    const maxTarget = dungeonTargetScore + currentDiffRange;
+
     if (targetText) {
-        const minTarget = dungeonTargetScore - 25;
-        const maxTarget = dungeonTargetScore + 25;
         targetText.innerText = `${minTarget} - ${maxTarget}`;
     }
 
@@ -109,7 +112,7 @@ function renderDungeonUI() {
     // ตรวจสอบสถานะ Daily Limit
     const isQuotaExceeded = (typeof isParentUser !== 'undefined' && !isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds);
 
-    // 🔧 บังคับการแสดงผล CSS Grid แบบ Inline ชัดเจน ป้องกัน Layout โดนบีบเป็น 0px
+    // บังคับการแสดงผล CSS Grid
     board.className = "w-full max-w-[340px] mx-auto my-3";
     board.style.display = "grid";
     board.style.gridTemplateColumns = "repeat(5, 1fr)";
@@ -122,14 +125,12 @@ function renderDungeonUI() {
             const cell = dungeonMap[r][c];
             const isPlayerHere = (r === dungeonPlayerX && c === dungeonPlayerY);
             
-            // กฎบีบเส้นทางเดิน: เดินได้เฉพาะ ขวา (c + 1) หรือ ลง (r + 1)
-            const canMoveRight = (r === dungeonPlayerX && c === dungeonPlayerY + 1);
-            const canMoveDown = (r === dungeonPlayerX + 1 && c === dungeonPlayerY);
-            const isSelectablePath = (canMoveRight || canMoveDown) && !isQuotaExceeded;
+            // กฎการเคลื่อนที่: เดินย้อนกลับ/ไปข้างหน้า ได้ 4 ทิศทาง (ติดกับผู้เล่น 1 ช่อง)
+            const isAdjacent = (Math.abs(r - dungeonPlayerX) + Math.abs(c - dungeonPlayerY)) === 1;
+            const isSelectablePath = isAdjacent && !isQuotaExceeded;
 
             const btn = document.createElement('button');
             
-            // กำหนด Inline Style เพื่อบังคับปุ่มแสดงผลเป็นสี่เหลี่ยมแน่นอน
             btn.style.height = "48px";
             btn.style.width = "100%";
             btn.style.borderRadius = "12px";
@@ -210,10 +211,11 @@ function moveDungeonPlayer(r, c) {
             startDungeonGame('easy');
         }, 100);
     } else if (r === 4 && c === 4) { // ตรวจสอบเมื่อถึงทางออกที่ช่อง (4,4)
-        const minTarget = dungeonTargetScore - 25;
-        const maxTarget = dungeonTargetScore + 25;
+        const currentDiffRange = (dungeonTargetScore >= 300) ? 50 : 75;
+        const minTarget = dungeonTargetScore - currentDiffRange;
+        const maxTarget = dungeonTargetScore + currentDiffRange;
 
-        // เช็กว่าคะแนนอยู่ในช่วง [dungeonTargetScore - 25, dungeonTargetScore + 25] หรือไม่
+        // เช็กว่าคะแนนอยู่ในช่วงเป้าหมายหรือไม่
         if (dungeonScore >= minTarget && dungeonScore <= maxTarget) {
             setTimeout(() => {
                 showCompletionModalDungeon();
