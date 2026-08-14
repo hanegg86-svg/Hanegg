@@ -47,15 +47,16 @@ function setTDDifficulty(diff) {
     const easyBtn = document.getElementById("td-diff-easy");
     const hardBtn = document.getElementById("td-diff-hard");
     
-    const activeClass = "flex-1 py-1 rounded-xl text-[11px] font-black text-white shadow-xs transition ";
-    const inactiveClass = "flex-1 py-1 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-200 transition";
+    // --- เปลี่ยนสไตล์ปุ่มเป็น 3D มาริโอ้ ---
+    const activeClass = "flex-1 py-1.5 rounded-xl text-[11px] font-black text-white shadow-[0_4px_0_0_rgba(0,0,0,0.2)] border-2 transition-all active:translate-y-1 active:shadow-none ";
+    const inactiveClass = "flex-1 py-1.5 rounded-xl text-[11px] font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none ";
 
     if (easyBtn && hardBtn) {
         if (diff === 'easy') {
-            easyBtn.className = activeClass + "bg-emerald-500";
+            easyBtn.className = activeClass + "bg-emerald-500 border-emerald-700";
             hardBtn.className = inactiveClass;
         } else {
-            hardBtn.className = activeClass + "bg-rose-500";
+            hardBtn.className = activeClass + "bg-rose-500 border-rose-700";
             easyBtn.className = inactiveClass;
         }
     }

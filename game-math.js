@@ -17,12 +17,16 @@ let mathBombQuota = 2; // จำกัดการใช้ระเบิด 2 
 function setMathDifficulty(diff) {
     mathDifficulty = diff;
     const easyBtn = document.getElementById("math-diff-easy"), medBtn = document.getElementById("math-diff-medium"), hardBtn = document.getElementById("math-diff-hard"), diffTag = document.getElementById("math-diff-tag");
-    const activeClass = "flex-1 py-1 rounded-xl text-[11px] font-black text-white shadow-xs transition ", inactiveClass = "flex-1 py-1 rounded-xl text-[11px] font-black text-slate-600 hover:bg-slate-200 transition";
+    
+    // --- เปลี่ยนสไตล์ปุ่มเป็น 3D มาริโอ้ ---
+    const activeClass = "flex-1 py-1.5 rounded-xl text-[11px] font-black text-white shadow-[0_4px_0_0_rgba(0,0,0,0.2)] border-2 transition-all active:translate-y-1 active:shadow-none ";
+    const inactiveClass = "flex-1 py-1.5 rounded-xl text-[11px] font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none ";
+
     easyBtn.className = inactiveClass; medBtn.className = inactiveClass; hardBtn.className = inactiveClass;
 
-    if (diff === 'easy') { easyBtn.className = activeClass + "bg-emerald-500"; diffTag.innerText = "บวกลบ (4 ตัว)"; diffTag.className = "text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full font-kids"; } 
-    else if (diff === 'medium') { medBtn.className = activeClass + "bg-indigo-500"; diffTag.innerText = "บวกลบคูณหาร (4 ตัว)"; diffTag.className = "text-[10px] font-bold text-indigo-800 bg-indigo-100 px-2.5 py-0.5 rounded-full font-kids"; } 
-    else { hardBtn.className = activeClass + "bg-rose-500"; diffTag.innerText = "บวกลบคูณหาร (5 ตัว)"; diffTag.className = "text-[10px] font-bold text-rose-800 bg-rose-100 px-2.5 py-0.5 rounded-full font-kids"; }
+    if (diff === 'easy') { easyBtn.className = activeClass + "bg-emerald-500 border-emerald-700"; diffTag.innerText = "บวกลบ (4 ตัว)"; diffTag.className = "text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full font-kids border border-emerald-200"; } 
+    else if (diff === 'medium') { medBtn.className = activeClass + "bg-indigo-500 border-indigo-700"; diffTag.innerText = "บวกลบคูณหาร (4 ตัว)"; diffTag.className = "text-[10px] font-bold text-indigo-800 bg-indigo-100 px-2.5 py-0.5 rounded-full font-kids border border-indigo-200"; } 
+    else { hardBtn.className = activeClass + "bg-rose-500 border-rose-700"; diffTag.innerText = "บวกลบคูณหาร (5 ตัว)"; diffTag.className = "text-[10px] font-bold text-rose-800 bg-rose-100 px-2.5 py-0.5 rounded-full font-kids border border-rose-200"; }
     mathQuestionIndex = 1; 
     mathBombQuota = 2; // รีเซ็ตโควต้าระเบิดเมื่อเปลี่ยนระดับความยาก
     generateMathPuzzle();
@@ -71,14 +75,16 @@ function renderMathBoard() {
     container.innerHTML = "";
     mathCurrentNumbers.forEach((num, index) => {
         const btn = document.createElement("button");
-        btn.className = `w-11 h-11 rounded-full font-bold text-base text-white shadow-xs flex items-center justify-center bubble-btn font-kids transition-all transform `;
+        
+        // --- เปลี่ยนบล็อกตัวเลขให้เป็น 3D กดได้ ---
+        btn.className = `w-12 h-12 rounded-2xl font-black text-lg text-white shadow-[0_4px_0_0_rgba(0,0,0,0.2)] border-2 flex items-center justify-center transition-all active:translate-y-1 active:shadow-none font-kids transform `;
         
         if (isBombActive) {
-            btn.className += "bg-rose-500 hover:bg-rose-600 animate-pulse scale-105 ring-2 ring-rose-300";
+            btn.className += "bg-rose-500 border-rose-700 hover:bg-rose-600 animate-pulse scale-105";
         } else if (mathSelectedNum1Idx === index || mathSelectedNum2Idx === index) {
-            btn.className += "bg-indigo-600 ring-2 ring-indigo-300 scale-105";
+            btn.className += "bg-pink-500 border-pink-700 scale-105"; // สีพีชตอนโดนเลือก
         } else {
-            btn.className += "bg-indigo-500 hover:bg-indigo-600";
+            btn.className += "bg-indigo-500 border-indigo-700 hover:bg-indigo-600";
         }
         
         btn.innerText = num; 

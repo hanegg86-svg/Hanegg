@@ -131,34 +131,18 @@ function renderDungeonUI() {
 
             const btn = document.createElement('button');
             
-            btn.style.height = "48px";
-            btn.style.width = "100%";
-            btn.style.borderRadius = "12px";
-            btn.style.display = "flex";
-            btn.style.flexDirection = "column";
-            btn.style.alignItems = "center";
-            btn.style.justifyContent = "center";
-            btn.style.fontWeight = "bold";
-            btn.style.fontSize = "11px";
-            btn.style.border = "1px solid";
-            btn.style.transition = "all 0.15s ease";
-
+            // --- ใช้คลาส Tailwind ผสมสำหรับปุ่ม 3D แทน inline style เดิม ---
+            btn.className = "w-full h-[48px] rounded-xl flex flex-col items-center justify-center font-bold text-[11px] transition-all ";
+            
             if (isPlayerHere) {
-                btn.style.backgroundColor = "#4f46e5";
-                btn.style.borderColor = "#818cf8";
-                btn.style.color = "#ffffff";
-                btn.style.boxShadow = "0 0 10px #818cf8";
+                // ช่องที่เรายืนอยู่ (สีฟ้าโดดเด่น)
+                btn.className += "bg-sky-500 border-2 border-sky-700 text-white shadow-[0_4px_0_0_#0369a1] scale-105 z-10 ";
             } else if (isSelectablePath) {
-                btn.style.backgroundColor = "#581c87";
-                btn.style.borderColor = "#c084fc";
-                btn.style.color = "#f3e8ff";
-                btn.style.cursor = "pointer";
+                // ช่องที่เดินไปได้ (สีม่วง 3D กดเด้งได้)
+                btn.className += "bg-purple-600 border-2 border-purple-800 text-white shadow-[0_4px_0_0_#581c87] cursor-pointer active:translate-y-1 active:shadow-none hover:bg-purple-500 ";
             } else {
-                btn.style.backgroundColor = "#020617";
-                btn.style.borderColor = "#0f172a";
-                btn.style.color = "#475569";
-                btn.style.opacity = "0.5";
-                btn.style.cursor = "not-allowed";
+                // ช่องที่เดินไม่ได้ (สีเทาเข้มแบนๆ)
+                btn.className += "bg-slate-800 border-2 border-slate-900 text-slate-500 opacity-60 cursor-not-allowed ";
             }
 
             if (isQuotaExceeded) btn.disabled = true;

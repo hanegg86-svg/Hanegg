@@ -8,13 +8,17 @@ function openStoryCreator() { closeCameraForStory(); document.getElementById("st
 
 function selectStoryLang(lang) {
     selectedStoryLang = lang;
-    document.getElementById("story-lang-th").className = lang === 'TH' ? "flex-1 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-xs transition" : "flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-700 transition";
-    document.getElementById("story-lang-en").className = lang === 'EN' ? "flex-1 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-xs transition" : "flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-700 transition";
+    const activeClass = "flex-1 py-1.5 rounded-xl text-xs font-black bg-indigo-600 border-2 border-indigo-800 text-white shadow-[0_4px_0_0_#3730a3] transition-all active:translate-y-1 active:shadow-none";
+    const inactiveClass = "flex-1 py-1.5 rounded-xl text-xs font-black bg-white border-2 border-slate-300 text-slate-700 shadow-[0_4px_0_0_#cbd5e1] hover:bg-slate-50 transition-all active:translate-y-1 active:shadow-none";
+    
+    document.getElementById("story-lang-th").className = lang === 'TH' ? activeClass : inactiveClass;
+    document.getElementById("story-lang-en").className = lang === 'EN' ? activeClass : inactiveClass;
 }
 
 function selectStoryHero(hero) {
     selectedStoryHero = hero;
-    const normal = "p-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex flex-col items-center transition", active = "p-2.5 rounded-2xl border-2 border-indigo-500 bg-indigo-50 flex flex-col items-center transition shadow-xs scale-105";
+    const normal = "p-2.5 rounded-2xl border-2 border-slate-300 bg-white hover:bg-slate-50 flex flex-col items-center transition-all shadow-[0_4px_0_0_#cbd5e1] active:translate-y-1 active:shadow-none";
+    const active = "p-2.5 rounded-2xl border-2 border-pink-600 bg-pink-100 flex flex-col items-center transition-all shadow-[0_4px_0_0_#be185d] scale-105 active:translate-y-1 active:shadow-none";
     document.getElementById("story-hero-poon").className = hero === 'พูน' ? active : normal;
     document.getElementById("story-hero-ploern").className = hero === 'เพลิน' ? active : normal;
     document.getElementById("story-hero-both").className = hero === 'พูนและเพลิน' ? active : normal;
@@ -22,7 +26,8 @@ function selectStoryHero(hero) {
 
 function selectStoryTheme(theme) {
     selectedStoryTheme = theme;
-    const normal = "p-2 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2 text-xs font-bold text-slate-700", active = "p-2 rounded-xl border-2 border-indigo-500 bg-indigo-50 flex items-center gap-2 text-xs font-bold text-indigo-900 shadow-xs scale-105";
+    const normal = "p-2 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 flex items-center gap-2 text-xs font-black text-slate-700 shadow-[0_4px_0_0_#cbd5e1] transition-all active:translate-y-1 active:shadow-none";
+    const active = "p-2 rounded-xl border-2 border-indigo-600 bg-indigo-100 flex items-center gap-2 text-xs font-black text-indigo-900 shadow-[0_4px_0_0_#4f46e5] scale-105 transition-all active:translate-y-1 active:shadow-none";
     document.getElementById("story-theme-space").className = theme === 'อวกาศ' ? active : normal;
     document.getElementById("story-theme-magic").className = theme === 'เมืองเวทมนตร์' ? active : normal;
     document.getElementById("story-theme-dino").className = theme === 'ดินแดนไดโนเสาร์' ? active : normal;
@@ -31,7 +36,8 @@ function selectStoryTheme(theme) {
 
 function selectStoryPet(pet) {
     selectedStoryPet = pet;
-    const normal = "p-2 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center text-xs font-bold text-slate-700", active = "p-2 rounded-xl border-2 border-indigo-500 bg-indigo-50 flex flex-col items-center transition shadow-xs scale-105";
+    const normal = "p-2 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 flex flex-col items-center text-xs font-black text-slate-700 shadow-[0_4px_0_0_#cbd5e1] transition-all active:translate-y-1 active:shadow-none";
+    const active = "p-2 rounded-xl border-2 border-amber-500 bg-amber-50 flex flex-col items-center transition-all shadow-[0_4px_0_0_#d97706] scale-105 active:translate-y-1 active:shadow-none";
     document.getElementById("story-pet-dog").className = pet === 'เจ้าหมาน้อย' ? active : normal;
     document.getElementById("story-pet-robot").className = pet === 'หุ่นยนต์จิ๋ว' ? active : normal;
     document.getElementById("story-pet-cat").className = pet === 'เจ้าแมวเหมียว' ? active : normal;

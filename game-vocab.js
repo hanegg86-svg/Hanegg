@@ -17,22 +17,23 @@ function switchVocabPlayMode(mode) {
     const spellingSec = document.getElementById("spelling-section");
     const matchingSec = document.getElementById("matching-section");
 
-    [cardsBtn, spellBtn, matchBtn].forEach(btn => {
-        if (btn) btn.className = "flex-1 py-1 rounded-xl text-xs font-bold text-indigo-700 hover:bg-white/50 transition";
-    });
+    const activeClass = "flex-1 py-1.5 rounded-xl text-xs font-black bg-white border-2 border-indigo-200 text-indigo-900 shadow-[0_3px_0_0_#c7d2fe] transition-all active:translate-y-1 active:shadow-none";
+    const inactiveClass = "flex-1 py-1.5 rounded-xl text-xs font-black text-indigo-700 hover:bg-white/50 border-2 border-transparent transition-all";
+
+    [cardsBtn, spellBtn, matchBtn].forEach(btn => { if (btn) btn.className = inactiveClass; });
 
     if (mode === 'cards') {
-        if (cardsBtn) cardsBtn.className = "flex-1 py-1 rounded-xl text-xs font-bold bg-white text-indigo-900 shadow-2xs transition";
+        if (cardsBtn) cardsBtn.className = activeClass;
         if (flashcardSec) flashcardSec.classList.remove("hidden");
         if (spellingSec) spellingSec.classList.add("hidden");
         if (matchingSec) matchingSec.classList.add("hidden");
     } else if (mode === 'spell') {
-        if (spellBtn) spellBtn.className = "flex-1 py-1 rounded-xl text-xs font-bold bg-white text-indigo-900 shadow-2xs transition";
+        if (spellBtn) spellBtn.className = activeClass;
         if (flashcardSec) flashcardSec.classList.add("hidden");
         if (spellingSec) spellingSec.classList.remove("hidden");
         if (matchingSec) matchingSec.classList.add("hidden");
     } else if (mode === 'match') {
-        if (matchBtn) matchBtn.className = "flex-1 py-1 rounded-xl text-xs font-bold bg-white text-indigo-900 shadow-2xs transition";
+        if (matchBtn) matchBtn.className = activeClass;
         if (flashcardSec) flashcardSec.classList.add("hidden");
         if (spellingSec) spellingSec.classList.add("hidden");
         if (matchingSec) matchingSec.classList.remove("hidden");
@@ -253,8 +254,9 @@ function renderMatchingCards() {
             contentHtml = `<span class="font-extrabold text-purple-900 text-base font-kids pointer-events-none">${card.text}</span>`;
         }
 
+        // --- เพิ่มขอบหนา 2px และ shadow ให้การ์ดจับคู่เด้งๆ ---
         return `
-            <button id="match-btn-${card.id}" onclick="handleMatchCardClick('${card.id}')" class="match-card bg-white border-2 border-slate-200 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[85px] shadow-2xs hover:border-indigo-300 active:scale-95 transition text-center">
+            <button id="match-btn-${card.id}" onclick="handleMatchCardClick('${card.id}')" class="match-card bg-white border-2 border-slate-300 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[85px] shadow-[0_4px_0_0_#cbd5e1] hover:border-indigo-400 active:translate-y-1 active:shadow-none transition-all text-center">
                 ${contentHtml}
             </button>
         `;

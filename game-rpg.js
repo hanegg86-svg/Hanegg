@@ -72,15 +72,16 @@ function updateRPGUI() {
             if (curLvl >= s.max) {
                 btnEl.disabled = true;
                 btnEl.innerText = "MAX";
-                btnEl.className = "px-3 py-1 bg-slate-200 text-slate-400 font-bold text-xs rounded-xl cursor-not-allowed";
+                btnEl.className = "px-3 py-1.5 bg-slate-200 border-2 border-slate-300 text-slate-400 font-black text-xs rounded-xl cursor-not-allowed shadow-none";
             } else if (availableSP <= 0) {
                 btnEl.disabled = true;
                 btnEl.innerText = "อัปเกรด";
-                btnEl.className = "px-3 py-1 bg-slate-200 text-slate-400 font-bold text-xs rounded-xl cursor-not-allowed";
+                btnEl.className = "px-3 py-1.5 bg-slate-100 border-2 border-slate-300 text-slate-400 font-black text-xs rounded-xl cursor-not-allowed shadow-none";
             } else {
                 btnEl.disabled = false;
                 btnEl.innerText = "อัปเกรด (+1 SP)";
-                btnEl.className = "px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-2xs active:scale-95 transition";
+                // --- ปุ่มสีส้มทองขอบหนาสไตล์มาริโอ้ ---
+                btnEl.className = "px-3 py-1.5 bg-amber-400 hover:bg-amber-500 text-amber-950 border-2 border-amber-600 font-black text-xs rounded-xl shadow-[0_4px_0_0_#b45309] active:scale-95 active:translate-y-1 active:shadow-none transition-all";
             }
         }
     });
