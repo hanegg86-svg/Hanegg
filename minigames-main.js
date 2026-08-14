@@ -18,8 +18,10 @@ function switchMiniGame(subGame) {
 
     const langSwitchBox = document.getElementById("lang-switch-box");
 
-    const activeClass = "flex-1 py-1.5 px-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition whitespace-nowrap";
-    const inactiveClass = "flex-1 py-1.5 px-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition whitespace-nowrap";
+    // --- อัปเดตคลาส CSS เป็นธีม 3D มาริโอ้/พีช ---
+    const activeClass = "flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-pink-500 text-white shadow-[0_4px_0_0_#be185d] border-2 border-pink-700 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap";
+    const inactiveClass = "flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap";
+    // --------------------------------------------------
 
     [btnVocab, btnMath, btnStory, btnTd, btnDungeon].forEach(b => { if (b) b.className = inactiveClass; });
     [vocabContainer, mathContainer, storyContainer, tdContainer, dungeonContainer].forEach(c => {
