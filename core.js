@@ -5,9 +5,9 @@
 // Global Application State
 let vocabList = [];
 let currentIndex = 0;
-let currentSubject = 'EN'; // 'EN' or 'TH'
-let currentProfile = 'พูน'; // Default profile
-let pendingProfile = null; // Profile awaiting PIN verification
+let currentSubject = 'EN';
+let currentProfile = 'พูน';
+let pendingProfile = null;
 let userStars = 0;
 let userEXP = 0;
 let userLevel = 1;
@@ -17,16 +17,14 @@ let userLevel = 1;
 // --------------------------------------------------------------------------
 
 function initData() {
-    // โหลดโปรไฟล์ล่าสุดที่เคยเลือกไว้
     const savedProfile = localStorage.getItem('current_user_profile');
     if (savedProfile) {
         currentProfile = savedProfile;
     }
 
-    // โหลดสถิติผู้ใช้
     loadUserData(currentProfile);
 
-    // ซ่อน Splash Screen บน iOS/Mobile เมื่อโหลดเสร็จ
+    // Hide Splash Screen
     setTimeout(() => {
         const splash = document.getElementById('ios-splash-screen');
         if (splash) {
@@ -40,12 +38,10 @@ function loadUserData(profileName) {
     currentProfile = profileName;
     localStorage.setItem('current_user_profile', profileName);
 
-    // ดึงข้อมูลดาวและ EXP ของโปรไฟล์นั้นๆ
     userStars = parseInt(localStorage.getItem(`stars_${profileName}`) || '0', 10);
     userEXP = parseInt(localStorage.getItem(`exp_${profileName}`) || '0', 10);
     userLevel = calculateLevel(userEXP);
 
-    // อัปเดต UI ใน Header และ Hero Card
     updateHeaderUI();
     updateHeroUI();
     updateParentControlsUI();
@@ -96,7 +92,6 @@ function updateHeroUI() {
 function updateParentControlsUI() {
     const isParent = (currentProfile === 'พ่อนะ' || currentProfile === 'แม่พัด');
     
-    // ซ่อน/แสดง เมนูผู้ปกครอง
     const parentCreateQuest = document.getElementById('parent-create-quest-box');
     const parentManageStars = document.getElementById('parent-manage-stars-box');
     const parentAddReward = document.getElementById('parent-add-reward-section');
@@ -110,35 +105,34 @@ function updateParentControlsUI() {
 
 
 // --------------------------------------------------------------------------
-// 2. PROFILE & AUTHENTICATION (FIXED AUTO-CLOSE MODAL)
+// 2. PROFILE & AUTHENTICATION (AUTO CLOSE ALL MODALS ON VERIFICATION)
 // --------------------------------------------------------------------------
 
 function openProfileModal() {
     const modal = document.getElementById('profile-modal');
     if (modal) {
         modal.classList.remove('hidden');
-        modal.classList.add('z-[100]');
     }
 }
 
 function closeProfileModal() {
     const modal = document.getElementById('profile-modal');
-    if (modal) modal.classList.add('hidden');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
 }
 
 function selectProfile(name, isParent) {
     if (isParent) {
         pendingProfile = name;
-        // เปิด Modal ใส่ PIN
         const pinModal = document.getElementById('pin-modal');
         const pinTarget = document.getElementById('pin-target-name');
+        
         if (pinTarget) pinTarget.innerText = `เข้าสู่ระบบสำหรับ ${name}`;
         if (pinModal) {
             pinModal.classList.remove('hidden');
-            pinModal.classList.add('z-[110]');
         }
     } else {
-        // ถ้าเป็นเด็ก สลับโปรไฟล์ได้ทันที
         loadUserData(name);
         closeProfileModal();
     }
@@ -151,7 +145,7 @@ function closePinModal() {
     if (modal) modal.classList.add('hidden');
 }
 
-// 🟢 FIX 1: ยืนยัน PIN ถูกต้องแล้วสั่งปิด Modal ทั้งสองตัวให้อัตโนมัติทันที
+// 🟢 FIX: สั่งปิดทั้ง PIN Modal และ Profile Modal อัตโนมัติเมื่อรหัสถูกต้อง
 function verifyPin() {
     const pinInput = document.getElementById('pin-input');
     const enteredPin = pinInput ? pinInput.value.trim() : '';
@@ -160,14 +154,13 @@ function verifyPin() {
     if (enteredPin === savedPin) {
         currentProfile = pendingProfile || 'พ่อนะ';
         
-        // ล้างค่าอินพุต
         if (pinInput) pinInput.value = '';
 
-        // ปิด Modal อัตโนมัติ ไม่ต้องกดปิดเอง
+        // 🟢 ปิดทั้งสอง Popup พร้อมกันทันที
         closePinModal();
         closeProfileModal();
 
-        // โหลดสิทธิ์และข้อมูลผู้ใช้
+        // โหลดข้อมูล UI ตามสิทธิ์
         loadUserData(currentProfile);
 
         if (typeof showToast === 'function') {
@@ -181,21 +174,20 @@ function verifyPin() {
 
 
 // --------------------------------------------------------------------------
-// 3. NOTIFICATION SYSTEM (FIXED CLICKABLE & RENDER)
+// 3. NOTIFICATION SYSTEM (FIXED OPEN & RENDER)
 // --------------------------------------------------------------------------
 
-// 🟢 FIX 2: ปรับ z-index และเรนเดอร์รายการแจ้งเตือนเมื่อกดเปิด Notice
+// 🟢 FIX: ฟังก์ชันเปิดหน้าต่าง Notice และเรนเดอร์ข้อมูล
 function openNotifyModal() {
     const modal = document.getElementById('notify-modal');
     if (!modal) return;
 
     modal.classList.remove('hidden');
-    modal.classList.add('z-[110]');
 
-    // เรนเดอร์รายการ
+    // เรนเดอร์รายการแจ้งเตือน
     renderNotificationList();
 
-    // ซ่อนสัญลักษณ์จุดแดง
+    // เคลียร์จุดแดง
     const badge = document.getElementById('notify-badge');
     const dot = document.getElementById('notify-dot');
     if (badge) badge.classList.add('hidden');
@@ -217,12 +209,11 @@ function addNotification(title, message, icon = '🎈') {
         time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
     };
 
-    logs.unshift(newLog); // เพิ่มรายการใหม่อยู่บนสุด
-    if (logs.length > 20) logs.pop(); // เก็บไม่เกิน 20 รายการ
+    logs.unshift(newLog);
+    if (logs.length > 20) logs.pop();
 
     localStorage.setItem('app_notify_logs', JSON.stringify(logs));
 
-    // แสดงสัญลักษณ์จุดแดง
     const badge = document.getElementById('notify-badge');
     const dot = document.getElementById('notify-dot');
     if (badge) badge.classList.remove('hidden');
@@ -271,12 +262,10 @@ function switchMainTab(tabName) {
     const btnGame = document.getElementById('nav-btn-game');
     const btnShop = document.getElementById('nav-btn-shop');
 
-    // Hide All
     if (questTab) questTab.classList.add('hidden');
     if (gameTab) gameTab.classList.add('hidden');
     if (shopTab) shopTab.classList.add('hidden');
 
-    // Reset Nav Styles
     [btnQuest, btnGame, btnShop].forEach(btn => {
         if (btn) {
             btn.classList.remove('text-indigo-600');
@@ -284,7 +273,6 @@ function switchMainTab(tabName) {
         }
     });
 
-    // Show Selected Tab
     if (tabName === 'quest') {
         if (questTab) questTab.classList.remove('hidden');
         if (btnQuest) {
@@ -314,15 +302,12 @@ function switchMainTab(tabName) {
 
 
 // --------------------------------------------------------------------------
-// 5. SETTINGS & CLOUD MODALS
+// 5. UTILITY & TOAST HELPERS
 // --------------------------------------------------------------------------
 
 function openKeyModal() {
     const modal = document.getElementById('key-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('z-[100]');
-    }
+    if (modal) modal.classList.remove('hidden');
 }
 
 function closeKeyModal() {
@@ -330,20 +315,6 @@ function closeKeyModal() {
     if (modal) modal.classList.add('hidden');
 }
 
-function saveApiKey() {
-    const apiKeyInput = document.getElementById('input-api-key');
-    const pinInput = document.getElementById('input-parent-pin');
-
-    if (apiKeyInput) localStorage.setItem('gemini_api_key', apiKeyInput.value.trim());
-    if (pinInput && pinInput.value.trim() !== '') {
-        localStorage.setItem('parent_pin', pinInput.value.trim());
-    }
-
-    alert('บันทึกการตั้งค่าเรียบร้อยแล้วครับ! ✨');
-    closeKeyModal();
-}
-
-// Toast Helper Function
 function showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'fixed top-16 left-1/2 -translate-x-1/2 bg-slate-800/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg z-[200] transition-all font-kids';
