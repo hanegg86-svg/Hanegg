@@ -1,475 +1,537 @@
-// --- QUESTS AND REWARDS SHOP SYSTEM ---
-
-// Daily Bonus Claim Function
-function claimDailyChestBonus() {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const chestClaimKey = `daily_chest_claimed_${currentProfile}_${todayStr}`;
-    
-    if (localStorage.getItem(chestClaimKey) === 'true') {
-        alert("🎁 หนูเปิดกล่องสมบัติประจำวันไปแล้วนะจ๊ะ มาใหม่พรุ่งนี้นะ!");
-        return;
+function saveParentQuestsToStorage() {
+    if (isFirebaseActive && dbRefParentQuests) {
+        const { set } = window.firebaseModules;
+        set(dbRefParentQuests, parentQuestsList);
+    } else {
+        localStorage.setItem("kids_parent_quests", JSON.stringify(parentQuestsList));
     }
-    
-    const bonusStars = 1;
-    totalStars += bonusStars;
-    saveUserStars();
-    addEXPToUser(50);
-    
-    localStorage.setItem(chestClaimKey, 'true');
-    
-    alert(`🎉 ยินดีด้วย! เจ้ากล้วย Nano Banana มอบโบนัสพิเศษให้หนู 🌟 +${bonusStars} ดาว และ +50 EXP!`);
     renderParentQuestsList();
-}
-
-function renderParentQuestsList() {
-    const container = document.getElementById('parent-quests-list');
-    if (!container) return;
-
-    if (!parentQuests || parentQuests.length === 0) {
-        container.innerHTML = `
-            <div class="text-center text-xs text-purple-400 py-6 font-bold bg-purple-50/50 rounded-2xl border border-dashed border-purple-200">
-                ยังไม่มีภารกิจจากคุณพ่อคุณแม่ในขณะนี้ ✨
-            </div>
-        `;
-        return;
-    }
-
-    // Filter quests for current child user
-    const filteredQuests = parentQuests.filter(q => {
-        if (!q.assignedTo || q.assignedTo.length === 0) return true;
-        if (currentProfile === 'พ่อนะ' || currentProfile === 'แม่พัด') return true;
-        return q.assignedTo.includes(currentProfile);
-    });
-
-    if (filteredQuests.length === 0) {
-        container.innerHTML = `
-            <div class="text-center text-xs text-purple-400 py-6 font-bold bg-purple-50/50 rounded-2xl border border-dashed border-purple-200">
-                ไม่มีภารกิจสำหรับ ${currentProfile} ในตอนนี้ 🎈
-            </div>
-        `;
-        return;
-    }
-
-    const isParent = (currentProfile === 'พ่อนะ' || currentProfile === 'แม่พัด');
-
-    container.innerHTML = filteredQuests.map((quest) => {
-        const assignedText = (!quest.assignedTo || quest.assignedTo.length === 0) 
-            ? 'ทุกคน' 
-            : quest.assignedTo.join(', ');
-
-        return `
-            <div class="bg-gradient-to-r from-purple-50 via-pink-50 to-amber-50 border-2 border-purple-100 rounded-2xl p-3 flex items-center justify-between shadow-2xs hover:shadow-md transition">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-10 h-10 bg-white rounded-xl border border-purple-200 flex items-center justify-center text-xl shadow-xs">
-                        🎯
-                    </div>
-                    <div>
-                        <h4 class="font-black text-xs text-slate-800 font-kids">${quest.title}</h4>
-                        <div class="flex items-center gap-1.5 mt-0.5">
-                            <span class="text-[10px] font-black text-amber-600 bg-amber-100/80 px-2 py-0.5 rounded-full">
-                                ⭐ +${quest.stars} ดาว
-                            </span>
-                            <span class="text-[9px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-md border border-indigo-100">
-                                👤 ${assignedText}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-1">
-                    ${isParent ? `
-                        <button onclick="openAssignModal('${quest.id}')" class="p-1.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition" title="มอบหมาย">
-                            <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <button onclick="deleteParentQuest('${quest.id}')" class="p-1.5 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition" title="ลบภารกิจ">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        </button>
-                    ` : ''}
-                    
-                    <button onclick="requestCompleteQuest('${quest.id}')" class="bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white font-black px-3 py-1.5 rounded-xl text-xs shadow-xs border border-white transition font-kids">
-                        ส่งภารกิจ 🚀
-                    </button>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    if (window.lucide) lucide.createIcons();
 }
 
 function createNewParentQuest() {
-    const titleInput = document.getElementById('new-quest-title');
-    const starsInput = document.getElementById('new-quest-stars');
-    const poonCheck = document.getElementById('quest-assign-poon');
-    const ploernCheck = document.getElementById('quest-assign-ploern');
+    const title = document.getElementById("new-quest-title").value.trim();
+    const stars = parseInt(document.getElementById("new-quest-stars").value, 10);
+    const assignPoon = document.getElementById("quest-assign-poon").checked;
+    const assignPloern = document.getElementById("quest-assign-ploern").checked;
 
-    if (!titleInput || !starsInput) return;
+    if (!title || isNaN(stars) || stars <= 0) { alert("กรุณากรอกชื่อภารกิจและจำนวนดาวให้ถูกต้องครับ"); return; }
 
-    const title = titleInput.value.trim();
-    const stars = parseInt(starsInput.value) || 1;
+    const assignees = [];
+    if (assignPoon) assignees.push("พูน");
+    if (assignPloern) assignees.push("เพลิน");
 
-    if (!title) {
-        alert("กรุณากรอกชื่อภารกิจครับ");
-        return;
-    }
+    const newQuest = { id: Date.now().toString(), title: title, stars: stars, assignees: assignees, lastAssignedAt: Date.now() };
+    parentQuestsList.push(newQuest);
+    saveParentQuestsToStorage();
 
-    const assignedTo = [];
-    if (poonCheck && poonCheck.checked) assignedTo.push('พูน');
-    if (ploernCheck && ploernCheck.checked) assignedTo.push('เพลิน');
-
-    const newQuest = {
-        id: 'quest_' + Date.now(),
-        title: title,
-        stars: stars,
-        assignedTo: assignedTo,
-        createdBy: currentProfile,
-        createdAt: new Date().toISOString()
-    };
-
-    if (!parentQuests) parentQuests = [];
-    parentQuests.unshift(newQuest);
-
-    saveParentQuests();
-    renderParentQuestsList();
-
-    titleInput.value = '';
-    starsInput.value = '';
-    alert("✨ เพิ่มภารกิจเรียบร้อยแล้ว!");
+    document.getElementById("new-quest-title").value = "";
+    document.getElementById("new-quest-stars").value = "";
+    alert(`สร้างภารกิจ "${title}" สำเร็จ!`);
 }
 
-function deleteParentQuest(questId) {
-    if (!confirm("คุณพ่อ/คุณแม่ ต้องการลบภารกิจนี้ใช่ไหมครับ?")) return;
-
-    parentQuests = parentQuests.filter(q => q.id !== questId);
-    saveParentQuests();
-    renderParentQuestsList();
-}
-
-function requestCompleteQuest(questId) {
-    const quest = parentQuests.find(q => q.id === questId);
+function deleteParentQuest(id) {
+    const quest = parentQuestsList.find(q => q.id === id);
     if (!quest) return;
 
-    if (currentProfile === 'พ่อนะ' || currentProfile === 'แม่พัด') {
-        alert("คุณพ่อ/คุณแม่สามารถอนุมัติภารกิจผ่านรายการแจ้งเตือนได้ครับ");
-        return;
+    if (confirm(`คุณต้องการลบภารกิจ "${quest.title}" ใช่หรือไม่?`)) {
+        parentQuestsList = parentQuestsList.filter(q => q.id !== id);
+        if (isFirebaseActive && dbRefNotify) {
+            const { ref, remove } = window.firebaseModules;
+            const db = window.firebaseModules.getDatabase();
+            notificationsList.forEach(n => {
+                if (n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title) {
+                    remove(ref(db, `kids_notifications/${n.id || n.timestamp}`));
+                }
+            });
+        } else {
+            notificationsList = notificationsList.filter(n => !(n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title));
+        }
+        saveParentQuestsToStorage();
     }
-
-    // Add star and exp
-    totalStars += quest.stars;
-    saveUserStars();
-    addEXPToUser(100);
-
-    // Create notification for parents
-    const notifyItem = {
-        id: 'notify_' + Date.now(),
-        type: 'quest_complete',
-        childName: currentProfile,
-        title: `พิชิตภารกิจ: ${quest.title}`,
-        starsEarned: quest.stars,
-        timestamp: new Date().toISOString()
-    };
-
-    if (!parentNotifications) parentNotifications = [];
-    parentNotifications.unshift(notifyItem);
-    saveParentNotifications();
-
-    alert(`🎉 เก่งมากน้อง${currentProfile}! หนูทำภารกิจ "${quest.title}" สำเร็จ รับไปเลย ⭐ +${quest.stars} ดาว และ +100 EXP!`);
-    renderParentQuestsList();
-}
-
-function adjustChildStars(isAdding) {
-    const childSelect = document.getElementById('manage-star-child');
-    const countInput = document.getElementById('manage-star-count');
-    const reasonInput = document.getElementById('manage-star-reason');
-
-    if (!childSelect || !countInput) return;
-
-    const childName = childSelect.value;
-    const count = parseInt(countInput.value) || 0;
-    const reason = reasonInput ? reasonInput.value.trim() : '';
-
-    if (count <= 0) {
-        alert("กรุณาระบุจำนวนดาวให้ถูกต้องครับ");
-        return;
-    }
-
-    const starKey = `user_stars_${childName}`;
-    let currentChildStars = parseInt(localStorage.getItem(starKey)) || 0;
-
-    if (isAdding) {
-        currentChildStars += count;
-    } else {
-        currentChildStars = Math.max(0, currentChildStars - count);
-    }
-
-    localStorage.setItem(starKey, currentChildStars.toString());
-
-    if (currentProfile === childName) {
-        totalStars = currentChildStars;
-        updateScoreDisplay();
-    }
-
-    // Save notification
-    const notifyItem = {
-        id: 'notify_' + Date.now(),
-        type: isAdding ? 'star_added' : 'star_removed',
-        childName: childName,
-        title: `${isAdding ? 'ได้รับดาวเพิ่ม' : 'ถูกหักดาว'} ${count} ดวง${reason ? ` (${reason})` : ''}`,
-        starsEarned: isAdding ? count : -count,
-        timestamp: new Date().toISOString()
-    };
-
-    if (!parentNotifications) parentNotifications = [];
-    parentNotifications.unshift(notifyItem);
-    saveParentNotifications();
-
-    countInput.value = '';
-    if (reasonInput) reasonInput.value = '';
-
-    alert(`✨ ${isAdding ? 'เพิ่ม' : 'ลด'}ดาวให้ น้อง${childName} เรียบร้อยแล้ว (รวมเป็น ${currentChildStars} ดาว)`);
 }
 
 function openAssignModal(questId) {
-    const quest = parentQuests.find(q => q.id === questId);
+    const quest = parentQuestsList.find(q => q.id === questId);
     if (!quest) return;
+    document.getElementById("assign-quest-id").value = quest.id;
+    document.getElementById("assign-quest-title").innerText = quest.title;
 
-    document.getElementById('assign-quest-id').value = questId;
-    document.getElementById('assign-quest-title').innerText = quest.title;
-
-    document.getElementById('reassign-poon').checked = quest.assignedTo.includes('พูน');
-    document.getElementById('reassign-ploern').checked = quest.assignedTo.includes('เพลิน');
-
-    document.getElementById('assign-quest-modal').classList.remove('hidden');
+    const assignees = quest.assignees || ["พูน", "เพลิน"];
+    document.getElementById("reassign-poon").checked = assignees.includes("พูน");
+    document.getElementById("reassign-ploern").checked = assignees.includes("เพลิน");
+    document.getElementById("assign-quest-modal").classList.remove("hidden");
 }
 
-function closeAssignModal() {
-    document.getElementById('assign-quest-modal').classList.add('hidden');
-}
+function closeAssignModal() { document.getElementById("assign-quest-modal").classList.add("hidden"); }
 
 function saveQuestAssignment() {
-    const questId = document.getElementById('assign-quest-id').value;
-    const quest = parentQuests.find(q => q.id === questId);
+    const id = document.getElementById("assign-quest-id").value;
+    const quest = parentQuestsList.find(q => q.id === id);
     if (!quest) return;
 
-    const assignedTo = [];
-    if (document.getElementById('reassign-poon').checked) assignedTo.push('พูน');
-    if (document.getElementById('reassign-ploern').checked) assignedTo.push('เพลิน');
+    const assignPoon = document.getElementById("reassign-poon").checked;
+    const assignPloern = document.getElementById("reassign-ploern").checked;
 
-    quest.assignedTo = assignedTo;
-    saveParentQuests();
-    renderParentQuestsList();
-    closeAssignModal();
-}
+    const newAssignees = [];
+    if (assignPoon) newAssignees.push("พูน");
+    if (assignPloern) newAssignees.push("เพลิน");
 
-function saveParentQuests() {
-    localStorage.setItem('parent_quests_data', JSON.stringify(parentQuests));
-    if (window.firebaseModules && window.db) {
-        const { ref, set } = window.firebaseModules;
-        set(ref(window.db, 'parent_quests'), parentQuests);
-    }
-}
+    quest.assignees = newAssignees;
+    quest.lastAssignedAt = Date.now();
 
-function saveParentNotifications() {
-    localStorage.setItem('parent_notifications_data', JSON.stringify(parentNotifications));
-    if (window.firebaseModules && window.db) {
-        const { ref, set } = window.firebaseModules;
-        set(ref(window.db, 'parent_notifications'), parentNotifications);
-    }
-}
-
-// Rewards Shop Methods
-function switchRewardTab(tabName) {
-    const shopView = document.getElementById('reward-shop-view');
-    const invView = document.getElementById('reward-inventory-view');
-    const shopBtn = document.getElementById('shop-tab-btn');
-    const invBtn = document.getElementById('inventory-tab-btn');
-
-    if (tabName === 'shop') {
-        shopView.classList.remove('hidden');
-        invView.classList.add('hidden');
-        shopBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition";
-        invBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 transition";
+    if (isFirebaseActive && dbRefNotify) {
+        const { ref, remove } = window.firebaseModules;
+        const db = window.firebaseModules.getDatabase();
+        notificationsList.forEach(n => {
+            if (n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title) {
+                remove(ref(db, `kids_notifications/${n.id || n.timestamp}`));
+            }
+        });
     } else {
-        shopView.classList.add('hidden');
-        invView.classList.remove('hidden');
-        invBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition";
-        shopBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 transition";
-        renderInventoryList();
+        notificationsList = notificationsList.filter(n => !(n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title));
     }
+    saveParentQuestsToStorage();
+    closeAssignModal();
+    alert(`แจกภารกิจ "${quest.title}" ให้เด็กๆ เรียบร้อยแล้ว! ✨`);
 }
 
-function renderRewardsShopList() {
-    const container = document.getElementById('rewards-list-container');
-    const userStarSpan = document.getElementById('quest-user-stars');
-
-    if (userStarSpan) userStarSpan.innerText = `⭐ ${totalStars}`;
+// --- FIX BUG: แก้ไขฟังก์ชันแสดงรายการภารกิจ เพื่อลบภารกิจที่ตรวจผ่านแล้วออกจากหน้าฝั่งเด็ก ---
+function renderParentQuestsList() {
+    const container = document.getElementById("parent-quests-list");
     if (!container) return;
 
-    if (!rewardItems || rewardItems.length === 0) {
-        container.innerHTML = `
-            <div class="text-center text-xs text-slate-400 py-6 font-bold">
-                ยังไม่มีของรางวัลในร้านค้า
-            </div>
-        `;
+    let filteredQuests = parentQuestsList;
+    if (!isParentUser && currentUser) {
+        filteredQuests = parentQuestsList.filter(q => {
+            const assignees = q.assignees || ["พูน", "เพลิน"];
+            const isForUser = assignees.includes(currentUser);
+            if (!isForUser) return false;
+
+            // 1. ถ้า พ่อนะ/แม่พัด กดตรวจผ่าน (approved) แล้วสำหรับเด็กคนนี้ ให้ซ่อนทันที
+            const isApproved = notificationsList.some(n => 
+                n.type === 'SUBMIT_QUEST' && 
+                n.user === currentUser && 
+                n.details && n.details.questTitle === q.title && 
+                n.status === 'approved'
+            );
+            if (isApproved) return false;
+
+            return true;
+        });
+    }
+
+    if (!filteredQuests || filteredQuests.length === 0) {
+        container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">ยังไม่มีภารกิจค้างส่ง</div>`;
         return;
     }
 
-    const isParent = (currentProfile === 'พ่อนะ' || currentProfile === 'แม่พัด');
-
-    container.innerHTML = rewardItems.map((item) => {
-        const canAfford = totalStars >= item.stars;
-
+    container.innerHTML = filteredQuests.map(q => {
+        let actionButtonHtml = '';
+        if (isParentUser) {
+            actionButtonHtml = `
+                <button onclick="openAssignModal('${q.id}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-2 rounded-xl text-xs font-bold border border-indigo-200 flex items-center gap-1">🎯 Assign</button>
+                <button onclick="deleteParentQuest('${q.id}')" class="bg-rose-50 text-rose-700 hover:bg-rose-100 p-2 rounded-xl text-xs font-bold border border-rose-200">🗑️ ลบ</button>
+            `;
+        } else {
+            const existingNotify = notificationsList.find(n => 
+                n.type === 'SUBMIT_QUEST' && 
+                n.user === currentUser && 
+                n.details && n.details.questTitle === q.title && 
+                n.status === 'pending'
+            );
+            
+            if (existingNotify) {
+                actionButtonHtml = `<span class="bg-amber-100 text-amber-800 font-bold py-1.5 px-2.5 rounded-xl text-[11px] border border-amber-200">⏳ รอพ่อนะ/แม่พัด ตรวจ</span>`;
+            } else {
+                actionButtonHtml = `<button onclick="submitParentQuestForCheck('${q.title}', ${q.stars})" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-2 px-3 rounded-xl text-xs shadow-xs">กดส่งภารกิจ ✨</button>`;
+            }
+        }
         return `
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-between shadow-2xs">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-amber-100 text-amber-800 rounded-xl flex items-center justify-center text-xl font-bold border border-amber-200">
-                        🎁
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-xs text-slate-800 font-kids">${item.name}</h4>
-                        <span class="text-[10px] font-black text-amber-500 font-kids">⭐ ใช้ ${item.stars} ดาว</span>
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex justify-between items-center shadow-2xs">
+                <div>
+                    <div class="font-bold text-slate-800 text-xs mb-1 font-kids">${q.title}</div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">รางวัล ⭐ ${q.stars} ดวง</span>
+                        <span class="text-[10px] text-slate-400 font-bold">🎯 ${q.assignees && q.assignees.length > 0 ? q.assignees.join(', ') : 'ทุกคน'}</span>
                     </div>
                 </div>
-
-                <div class="flex items-center gap-1">
-                    ${isParent ? `
-                        <button onclick="deleteRewardItem('${item.id}')" class="p-1.5 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition" title="ลบรางวัล">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        </button>
-                    ` : ''}
-
-                    <button onclick="redeemReward('${item.id}')" ${!canAfford ? 'disabled' : ''} class="${canAfford ? 'bg-amber-500 hover:bg-amber-600 text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'} font-bold px-3 py-1.5 rounded-xl text-xs shadow-2xs transition font-kids">
-                        ${canAfford ? 'แลกเลย 🎉' : 'ดาวไม่พอ'}
-                    </button>
-                </div>
-            </div>
-        `;
+                <div class="flex items-center gap-1.5">${actionButtonHtml}</div>
+            </div>`;
     }).join('');
+}
 
-    if (window.lucide) lucide.createIcons();
+function submitParentQuestForCheck(questTitle, stars) {
+    if (confirm(`คุณได้ทำภารกิจ "${questTitle}" เรียบร้อยแล้ว และต้องการส่งให้ พ่อนะ / แม่พัด ตรวจใช่ไหมครับ?`)) {
+        sendInAppNotification('SUBMIT_QUEST', { questTitle: questTitle, starsReward: stars });
+        renderParentQuestsList();
+        alert(`ส่งภารกิจ "${questTitle}" ถึงพ่อนะและแม่พัดเพื่อตรวจเรียบร้อยแล้วครับ! ✨`);
+    }
+}
+
+function saveRewardsToStorage() {
+    if (isFirebaseActive && dbRefRewards) {
+        const { set } = window.firebaseModules;
+        set(dbRefRewards, rewardsList);
+    } else {
+        localStorage.setItem("kids_rewards_list", JSON.stringify(rewardsList));
+    }
+    renderRewardsList();
 }
 
 function addNewRewardItem() {
-    const nameInput = document.getElementById('new-reward-name');
-    const starsInput = document.getElementById('new-reward-stars');
+    const name = document.getElementById("new-reward-name").value.trim();
+    const stars = parseInt(document.getElementById("new-reward-stars").value, 10);
+    if (!name || isNaN(stars) || stars <= 0) { alert("กรุณากรอกชื่อรางวัลและจำนวนดาวให้ถูกต้องครับ"); return; }
+    rewardsList.push({ id: Date.now().toString(), name: name, stars: stars });
+    saveRewardsToStorage();
+    document.getElementById("new-reward-name").value = "";
+    document.getElementById("new-reward-stars").value = "";
+    alert(`เพิ่มรางวัล "${name}" เรียบร้อยแล้ว!`);
+}
 
-    if (!nameInput || !starsInput) return;
+function deleteRewardItem(id) {
+    if (confirm("คุณต้องการลบของรางวัลนี้ใช่หรือไม่?")) {
+        rewardsList = rewardsList.filter(r => r.id !== id);
+        saveRewardsToStorage();
+    }
+}
 
-    const name = nameInput.value.trim();
-    const stars = parseInt(starsInput.value) || 1;
+function switchRewardTab(tab) {
+    const shopBtn = document.getElementById("shop-tab-btn");
+    const invBtn = document.getElementById("inventory-tab-btn");
+    const shopView = document.getElementById("reward-shop-view");
+    const invView = document.getElementById("reward-inventory-view");
+    if (tab === 'shop') {
+        shopBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition";
+        invBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 transition";
+        shopView.classList.remove("hidden"); invView.classList.add("hidden");
+    } else {
+        invBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs transition";
+        shopBtn.className = "flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 transition";
+        invView.classList.remove("hidden"); shopView.classList.add("hidden");
+        renderUserInventory();
+    }
+}
 
-    if (!name) {
-        alert("กรุณากรอกชื่อของรางวัลครับ");
+function renderRewardsList() {
+    const container = document.getElementById("rewards-list-container");
+    if (!rewardsList || rewardsList.length === 0) {
+        container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">ยังไม่มีรายการของรางวัล</div>`;
         return;
     }
-
-    const newItem = {
-        id: 'reward_' + Date.now(),
-        name: name,
-        stars: stars
-    };
-
-    if (!rewardItems) rewardItems = [];
-    rewardItems.push(newItem);
-
-    saveRewardItems();
-    renderRewardsShopList();
-
-    nameInput.value = '';
-    starsInput.value = '';
-    alert("✨ เพิ่มของรางวัลเรียบร้อยแล้ว!");
+    container.innerHTML = rewardsList.map(r => `
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex justify-between items-center shadow-2xs">
+            <div>
+                <div class="font-bold text-slate-800 text-xs font-kids">${r.name}</div>
+                <div class="text-[10px] text-amber-600 font-bold">ใช้ ${r.stars} ดาว ⭐</div>
+            </div>
+            <div class="flex items-center gap-1.5">
+                ${isParentUser ? `<button onclick="deleteRewardItem('${r.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 p-2 rounded-xl text-xs font-bold border border-rose-200">🗑️ ลบ</button>` : `<button onclick="requestReward('${r.name}', ${r.stars})" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold py-1.5 px-3 rounded-xl shadow-xs">กดส่งคำขอแลก ✨</button>`}
+            </div>
+        </div>`).join('');
 }
 
-function deleteRewardItem(itemId) {
-    if (!confirm("คุณพ่อ/คุณแม่ ต้องการลบของรางวัลนี้ใช่ไหมครับ?")) return;
-
-    rewardItems = rewardItems.filter(r => r.id !== itemId);
-    saveRewardItems();
-    renderRewardsShopList();
-}
-
-function redeemReward(itemId) {
-    const item = rewardItems.find(r => r.id === itemId);
-    if (!item) return;
-
-    if (totalStars < item.stars) {
-        alert("ดาวสะสมยังไม่พอครับ ลองทำภารกิจเพิ่มดูนะ!");
-        return;
+function requestReward(rewardName, starsReq) {
+    if (totalStars < starsReq) { alert(`ดาวสะสมไม่พอครับ! ต้องการ ${starsReq} ดาว (ตอนนี้มี ${totalStars} ดาว)`); return; }
+    if (confirm(`คุณต้องการใช้ ${starsReq} ดาว เพื่อส่งคำขอแลก "${rewardName}" ถึงพ่อนะ และ แม่พัด ใช่ไหมครับ?`)) {
+        totalStars -= starsReq;
+        saveUserStars();
+        sendInAppNotification('REQUEST_REWARD', { rewardName: rewardName, starsUsed: starsReq });
+        alert(`ส่งคำขอแลก "${rewardName}" ถึงพ่อนะและแม่พัดแล้วครับ! รอคุณพ่อคุณแม่ออนุมัตินะครับ ✨`);
     }
-
-    if (!confirm(`คุณหนูต้องการใช้ ⭐ ${item.stars} ดาว เพื่อแลก "${item.name}" ใช่ไหมครับ?`)) return;
-
-    totalStars -= item.stars;
-    saveUserStars();
-
-    const myRedeemedItem = {
-        id: 'inv_' + Date.now(),
-        name: item.name,
-        stars: item.stars,
-        redeemedAt: new Date().toISOString()
-    };
-
-    const invKey = `user_inventory_${currentProfile}`;
-    let myInv = JSON.parse(localStorage.getItem(invKey)) || [];
-    myInv.unshift(myRedeemedItem);
-    localStorage.setItem(invKey, JSON.stringify(myInv));
-
-    // Create notification
-    const notifyItem = {
-        id: 'notify_' + Date.now(),
-        type: 'reward_redeem',
-        childName: currentProfile,
-        title: `แลกของรางวัล: ${item.name}`,
-        starsEarned: -item.stars,
-        timestamp: new Date().toISOString()
-    };
-
-    if (!parentNotifications) parentNotifications = [];
-    parentNotifications.unshift(notifyItem);
-    saveParentNotifications();
-
-    alert(`🎉 แลกรางวัล "${item.name}" เรียบร้อยแล้ว! นำไปยื่นให้คุณพ่อคุณแม่ได้เลยครับ`);
-    renderRewardsShopList();
 }
 
-function renderInventoryList() {
-    const container = document.getElementById('inventory-list-container');
+function addRewardToUserInventory(userName, rewardName) {
+    const item = { invId: Date.now().toString(), name: rewardName, date: new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }), timestamp: Date.now() };
+    if (isFirebaseActive) {
+        const { push, ref } = window.firebaseModules;
+        const db = window.firebaseModules.getDatabase();
+        push(ref(db, `user_inventory/${userName}`), item);
+    } else {
+        const localKey = `user_inventory_${userName}`;
+        const currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
+        currentInv.unshift(item);
+        localStorage.setItem(localKey, JSON.stringify(currentInv));
+    }
+    loadUserStars();
+}
+
+function deleteInventoryItemDirectly(ownerChild, invId) {
+    const targetItem = userInventoryList.find(x => x.invId === invId);
+    const actualOwner = ownerChild || (targetItem ? targetItem.owner : currentUser);
+    if (!actualOwner) return;
+
+    if (confirm(`ลบของรางวัลนี้ออกจากกระเป๋าของน้อง ${actualOwner} ใช่ไหมครับ?`)) {
+        const localIdToRemove = targetItem ? (targetItem.originalInvId || invId) : invId;
+        const localKey = `user_inventory_${actualOwner}`;
+        let currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
+        currentInv = currentInv.filter(x => x.invId !== localIdToRemove && x.invId !== invId);
+        localStorage.setItem(localKey, JSON.stringify(currentInv));
+        userInventoryList = userInventoryList.filter(x => x.invId !== invId);
+        renderUserInventory();
+        if (isFirebaseActive) {
+            const { ref, remove } = window.firebaseModules;
+            const db = window.firebaseModules.getDatabase();
+            remove(ref(db, `user_inventory/${actualOwner}/${invId}`));
+        }
+    }
+}
+
+function useInventoryItem(ownerChild, invId) {
+    const targetItem = userInventoryList.find(x => x.invId === invId);
+    const actualOwner = ownerChild || (targetItem ? targetItem.owner : currentUser);
+    if (!actualOwner) return;
+
+    if (confirm("คุณใช้งานรางวัลนี้แล้วใช่ไหมครับ?")) {
+        const localIdToRemove = targetItem ? (targetItem.originalInvId || invId) : invId;
+        const localKey = `user_inventory_${actualOwner}`;
+        let currentInv = JSON.parse(localStorage.getItem(localKey) || "[]");
+        currentInv = currentInv.filter(x => x.invId !== localIdToRemove && x.invId !== invId);
+        localStorage.setItem(localKey, JSON.stringify(currentInv));
+        userInventoryList = userInventoryList.filter(x => x.invId !== invId);
+        renderUserInventory();
+        if (isFirebaseActive) {
+            const { ref, remove } = window.firebaseModules;
+            const db = window.firebaseModules.getDatabase();
+            remove(ref(db, `user_inventory/${actualOwner}/${invId}`));
+        }
+    }
+}
+
+function renderUserInventory() {
+    const container = document.getElementById("inventory-list-container");
     if (!container) return;
-
-    const invKey = `user_inventory_${currentProfile}`;
-    const myInv = JSON.parse(localStorage.getItem(invKey)) || [];
-
-    if (myInv.length === 0) {
-        container.innerHTML = `
-            <div class="text-center text-xs text-slate-400 py-8 font-bold">
-                ยังไม่มีของรางวัลในกระเป๋า
+    if (!userInventoryList || userInventoryList.length === 0) {
+        container.innerHTML = `<div class="text-center text-xs text-slate-400 py-8">ยังไม่มีของรางวัลในกระเป๋า</div>`;
+        return;
+    }
+    container.innerHTML = userInventoryList.map(item => `
+        <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-2.5 flex justify-between items-center shadow-2xs">
+            <div>
+                <div class="font-bold text-emerald-950 text-xs font-kids">${item.name}</div>
+                <div class="text-[9px] font-bold text-emerald-700">${isParentUser ? `<span class="text-indigo-800 font-bold">🎒 ของ: น้อง${item.owner} | </span>` : ''}อนุมัติเมื่อ ${item.date}</div>
             </div>
-        `;
+            <div class="flex items-center gap-1">
+                <button onclick="useInventoryItem('${item.owner}', '${item.invId}')" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-1 px-2.5 rounded-xl text-[11px] shadow-2xs">✨ ใช้แล้ว</button>
+                ${isParentUser ? `<button onclick="deleteInventoryItemDirectly('${item.owner}', '${item.invId}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold p-1 rounded-xl text-[11px] border border-rose-200">🗑️ ลบ</button>` : ''}
+            </div>
+        </div>`).join('');
+}
+
+function sendInAppNotification(type, details) {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+    const dateStr = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+    const newNotify = { type: type, user: currentUser || 'ผู้ปกครอง', subject: subjectMode === 'EN' ? 'ภาษาอังกฤษ 🇬🇧' : 'ภาษาไทย 🇹🇭', details: details, status: 'pending', time: `${dateStr} • ${timeStr}`, timestamp: Date.now() };
+
+    if (isFirebaseActive && dbRefNotify) {
+        const { push } = window.firebaseModules;
+        push(dbRefNotify, newNotify);
+    } else {
+        notificationsList.unshift(newNotify);
+        renderNotifications();
+    }
+}
+
+function deleteNotification(notifyId) {
+    if (confirm("ต้องการลบการแจ้งเตือนนี้ใช่หรือไม่?")) {
+        notificationsList = notificationsList.filter(n => (n.id || n.timestamp.toString()) !== notifyId.toString());
+        renderNotifications();
+        if (isFirebaseActive && dbRefNotify) {
+            const { ref, remove } = window.firebaseModules;
+            const db = window.firebaseModules.getDatabase();
+            remove(ref(db, `kids_notifications/${notifyId}`));
+        }
+    }
+}
+
+function clearAllNotifications() {
+    if (confirm("คุณต้องการลบประวัติคำขอและการแจ้งเตือนทั้งหมดใช่หรือไม่?")) {
+        notificationsList = [];
+        renderNotifications();
+        if (isFirebaseActive && dbRefNotify) {
+            const { set } = window.firebaseModules;
+            const db = window.firebaseModules.getDatabase();
+            set(dbRefNotify, null);
+        }
+    }
+}
+
+function autoCleanupOldNotifications() {
+    const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const oldItems = notificationsList.filter(n => (now - (n.timestamp || 0)) > TWO_DAYS_MS);
+    if (oldItems.length > 0) {
+        oldItems.forEach(item => {
+            const itemKey = item.id || item.timestamp;
+            if (isFirebaseActive) {
+                const { ref, remove } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                remove(ref(db, `kids_notifications/${itemKey}`));
+            }
+        });
+        notificationsList = notificationsList.filter(n => (now - (n.timestamp || 0)) <= TWO_DAYS_MS);
+    }
+}
+
+function renderNotifications() {
+    autoCleanupOldNotifications();
+    const listEl = document.getElementById("notify-list");
+    const parentActionsBox = document.getElementById("notify-parent-actions");
+
+    if (parentActionsBox) {
+        if (isParentUser && notificationsList.length > 0) parentActionsBox.classList.remove("hidden");
+        else parentActionsBox.classList.add("hidden");
+    }
+
+    if (!listEl) return;
+    if (notificationsList.length === 0) {
+        listEl.innerHTML = `<div class="text-center text-xs text-slate-400 py-8">ยังไม่มีรายการแจ้งเตือนล่าสุด</div>`;
         return;
     }
 
-    container.innerHTML = myInv.map((item) => `
-        <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3 flex items-center justify-between shadow-2xs">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center text-xl font-bold shadow-2xs">
-                    🎈
-                </div>
-                <div>
-                    <h4 class="font-bold text-xs text-indigo-950 font-kids">${item.name}</h4>
-                    <span class="text-[10px] text-indigo-500 font-bold">ใช้ไป ⭐ ${item.stars} ดาว</span>
-                </div>
-            </div>
-            <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-bold">
-                พร้อมรับรางวัล ✨
-            </span>
-        </div>
-    `).join('');
+    const avatars = { 'พ่อนะ': '👨‍💼', 'แม่พัด': '👩‍💼', 'พูน': '👦', 'เพลิน': '👧' };
+    listEl.innerHTML = notificationsList.map(n => {
+        const isPending = n.status === 'pending';
+        const itemKey = n.id || n.timestamp;
+        const deleteBtnHtml = `<button onclick="deleteNotification('${itemKey}')" class="text-[10px] bg-rose-50 text-rose-700 hover:bg-rose-100 px-2 py-0.5 rounded-lg font-bold border border-rose-200 ml-auto active:scale-95 transition">🗑️ ลบ</button>`;
+
+        if (n.type === 'MANUAL_STAR_ADJUST') {
+            return `<div class="p-3 ${n.details.change > 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'} rounded-2xl border flex items-start gap-2.5 shadow-2xs relative">
+                <span class="text-2xl bg-white p-1.5 rounded-xl border border-slate-200">${avatars[n.user] || '👨‍💼'}</span>
+                <div class="flex-1">
+                    <div class="flex justify-between items-center mb-0.5"><span class="font-bold text-xs ${n.details.change > 0 ? 'text-emerald-950' : 'text-rose-950'} font-kids">${n.details.change > 0 ? '⭐ ปรับเพิ่มดาว!' : '🔻 ถูกลดดาว!'}</span><span class="text-[9px] font-bold text-slate-400">${n.time}</span></div>
+                    <p class="text-[11px] font-bold text-slate-700">${n.user} ได้${n.details.change > 0 ? 'เพิ่มดาวให้' : 'ลดดาว'} น้อง <span class="text-indigo-800 font-bold">${n.details.childName}</span> จำนวน <span class="font-bold ${n.details.change > 0 ? 'text-emerald-600' : 'text-rose-600'}">${Math.abs(n.details.change)} ดาว</span></p>
+                    <p class="text-[10px] text-slate-500 font-medium mt-0.5">เหตุผล: "${n.details.reason}"</p>
+                </div>${deleteBtnHtml}</div>`;
+        } else if (n.type === 'REQUEST_REWARD') {
+            return `<div class="p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 flex flex-col gap-2 shadow-2xs">
+                <div class="flex items-start gap-2.5"><span class="text-2xl bg-white p-1.5 rounded-xl border border-indigo-100">${avatars[n.user] || '👦'}</span><div class="flex-1">
+                    <div class="flex justify-between items-center mb-0.5"><span class="font-bold text-xs text-indigo-950 font-kids">🎁 คำขอแลกรางวัล!</span><span class="text-[9px] font-bold text-slate-400">${n.time}</span></div>
+                    <p class="text-[11px] text-slate-700 font-bold">น้อง <span class="text-indigo-700 font-bold">${n.user}</span> ขอแลก: <span class="text-emerald-700 font-bold">${n.details.rewardName}</span> (ใช้ ${n.details.starsUsed} ดาว)</p>
+                </div></div>
+                ${isParentUser && isPending ? `
+                    <div class="flex gap-1.5 mt-1 border-t border-indigo-100 pt-2">
+                        <button onclick="approveReward('${itemKey}', '${n.user}', '${n.details.rewardName}', ${n.details.starsUsed}, true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1 rounded-xl text-[11px] shadow-2xs">✅ อนุมัติรางวัล</button>
+                        <button onclick="approveReward('${itemKey}', '${n.user}', '${n.details.rewardName}', ${n.details.starsUsed}, false)" class="bg-rose-50 text-rose-700 hover:bg-rose-100 active:scale-95 font-bold py-1 px-2.5 rounded-xl text-[11px] border border-rose-200">❌ ปฏิเสธ</button>
+                    </div>` : `
+                    <div class="flex justify-between items-center text-[10px] font-bold bg-white/80 p-1 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-rose-600' : 'text-indigo-800'}">
+                        <span>Status: ${n.status === 'approved' ? '✅ อนุมัติและย้ายไปกระเป๋าแล้ว' : n.status === 'rejected' ? '❌ คำขอถูกปฏิเสธ' : '⏳ รอพ่อนะ/แม่พัด อนุมัติ'}</span>${deleteBtnHtml}
+                    </div>`}</div>`;
+        } else if (n.type === 'SUBMIT_QUEST') {
+            return `<div class="p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 flex flex-col gap-2 shadow-2xs">
+                <div class="flex items-start gap-2.5"><span class="text-2xl bg-white p-1.5 rounded-xl border border-indigo-100">${avatars[n.user] || '👦'}</span><div class="flex-1">
+                    <div class="flex justify-between items-center mb-0.5"><span class="font-bold text-xs text-indigo-950 font-kids">📋 ส่งตรวจภารกิจ!</span><span class="text-[9px] font-bold text-slate-400">${n.time}</span></div>
+                    <p class="text-[11px] text-slate-700 font-bold">น้อง <span class="text-indigo-700 font-bold">${n.user}</span> ส่งภารกิจ: <span class="text-emerald-700 font-bold">${n.details.questTitle}</span> (รับ ⭐ ${n.details.starsReward} ดาว)</p>
+                </div></div>
+                ${isParentUser && isPending ? `
+                    <div class="flex gap-1.5 mt-1 border-t border-indigo-100 pt-2">
+                        <button onclick="approveParentQuest('${itemKey}', '${n.user}', ${n.details.starsReward}, true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1 rounded-xl text-[11px] shadow-2xs">✅ ตรวจผ่าน (แจก ⭐ ${n.details.starsReward} ดาว)</button>
+                        <button onclick="approveParentQuest('${itemKey}', '${n.user}', ${n.details.starsReward}, false)" class="bg-rose-50 text-rose-700 hover:bg-rose-100 active:scale-95 font-bold py-1 px-2.5 rounded-xl text-[11px] border border-rose-200">❌ ไม่ผ่าน</button>
+                    </div>` : `
+                    <div class="flex justify-between items-center text-[10px] font-bold bg-white/80 p-1 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-rose-600' : 'text-indigo-800'}">
+                        <span>Status: ${n.status === 'approved' ? '✅ ตรวจผ่านแล้ว! ได้รับดาวเรียบร้อย' : n.status === 'rejected' ? '❌ ไม่ผ่าน' : '⏳ รอพ่อนะ/แม่พัด ตรวจ'}</span>${deleteBtnHtml}
+                    </div>`}</div>`;
+        } else if (n.type === 'COMPLETED_MATH_TD') {
+            return `<div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-start gap-2.5 shadow-2xs">
+                <span class="text-2xl bg-white p-1.5 rounded-xl border border-slate-200">${avatars[n.user] || '👦'}</span><div class="flex-1">
+                <div class="flex justify-between items-center mb-0.5"><span class="font-bold text-xs text-slate-800 font-kids">${n.user} เล่นเกม Math TD ได้คะแนนสูง! ⚔️</span><span class="text-[9px] font-bold text-slate-400">${n.time}</span></div>
+                <p class="text-[11px] text-slate-600 font-medium">คะแนนรวม <span class="font-bold text-indigo-600">${n.details.score}</span> | ได้รับ <span class="font-bold text-amber-500">⭐ ${n.details.stars} ดวง</span></p></div>${deleteBtnHtml}</div>`;
+        } else {
+            return `<div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-start gap-2.5 shadow-2xs">
+                <span class="text-2xl bg-white p-1.5 rounded-xl border border-slate-200">${avatars[n.user] || '👦'}</span><div class="flex-1">
+                <div class="flex justify-between items-center mb-0.5"><span class="font-bold text-xs text-slate-800 font-kids">${n.user} ทำกิจกรรมสำเร็จ! 🎉</span><span class="text-[9px] font-bold text-slate-400">${n.time}</span></div>
+                <p class="text-[11px] text-slate-600 font-medium">ได้รับ <span class="font-bold text-amber-500">⭐ 1 ดวง</span></p></div>${deleteBtnHtml}</div>`;
+        }
+    }).join('');
 }
 
-function saveRewardItems() {
-    localStorage.setItem('reward_items_data', JSON.stringify(rewardItems));
-    if (window.firebaseModules && window.db) {
-        const { ref, set } = window.firebaseModules;
-        set(ref(window.db, 'reward_items'), rewardItems);
+function approveParentQuest(notifyId, userName, starsReward, isApproved) {
+    if (isApproved) {
+        if (isFirebaseActive) {
+            const { ref, get, set } = window.firebaseModules;
+            const db = window.firebaseModules.getDatabase();
+            const userStarRef = ref(db, `user_stars/${userName}`);
+            get(userStarRef).then(snapshot => { set(userStarRef, (snapshot.val() || 0) + starsReward); });
+            const userExpRef = ref(db, `user_exp/${userName}`);
+            get(userExpRef).then(snapshot => { set(userExpRef, (snapshot.val() || 0) + (starsReward * 100)); });
+        } else {
+            const localStarKey = `total_stars_${userName}`;
+            localStorage.setItem(localStarKey, (parseInt(localStorage.getItem(localStarKey) || "0", 10) + starsReward).toString());
+            const localExpKey = `user_exp_${userName}`;
+            localStorage.setItem(localExpKey, (parseInt(localStorage.getItem(localExpKey) || "0", 10) + (starsReward * 100)).toString());
+            if (userName === currentUser) {
+                totalStars += starsReward;
+                document.getElementById("score").innerText = totalStars;
+                currentChildEXP += (starsReward * 100);
+                updateUserLevelAndAvatarDisplay();
+            }
+        }
+        alert(`ตรวจผ่านแล้ว! เพิ่ม ⭐ ${starsReward} ดาว และ +${starsReward * 100} EXP ให้น้อง ${userName} เรียบร้อยครับ`);
+    } else { alert(`ปฏิเสธภารกิจเรียบร้อยแล้ว`); }
+
+    if (isFirebaseActive && dbRefNotify) {
+        const { ref, update } = window.firebaseModules;
+        const db = window.firebaseModules.getDatabase();
+        update(ref(db, `kids_notifications/${notifyId}`), { status: isApproved ? 'approved' : 'rejected' });
+    } else {
+        const item = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
+        if (item) item.status = isApproved ? 'approved' : 'rejected';
+        renderNotifications(); renderParentQuestsList();
     }
 }
+
+function approveReward(notifyId, userName, rewardName, starsUsed, isApproved) {
+    if (isApproved) {
+        addRewardToUserInventory(userName, rewardName);
+        alert(`อนุมัติรางวัล "${rewardName}" ให้น้อง ${userName} เรียบร้อยแล้ว! (ย้ายเข้ากระเป๋าของน้องแล้ว)`);
+    } else { alert(`ปฏิเสธคำขอเรียบร้อยแล้ว`); }
+
+    if (isFirebaseActive && dbRefNotify) {
+        const { ref, update } = window.firebaseModules;
+        const db = window.firebaseModules.getDatabase();
+        update(ref(db, `kids_notifications/${notifyId}`), { status: isApproved ? 'approved' : 'rejected' });
+    } else {
+        const item = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
+        if (item) item.status = isApproved ? 'approved' : 'rejected';
+        renderNotifications();
+    }
+}
+
+function adjustChildStars(isAdding) {
+    const targetChild = document.getElementById("manage-star-child").value;
+    const starCount = parseInt(document.getElementById("manage-star-count").value, 10);
+    const reason = document.getElementById("manage-star-reason").value.trim() || (isAdding ? "รางวัลพิเศษ" : "ถูกหักดาว");
+
+    if (isNaN(starCount) || starCount <= 0) { alert("กรุณากรอกจำนวนดาวให้ถูกต้องครับ"); return; }
+    const changeAmount = isAdding ? starCount : -starCount;
+
+    if (isFirebaseActive) {
+        const { ref, get, set } = window.firebaseModules;
+        const db = window.firebaseModules.getDatabase();
+        const starRef = ref(db, `user_stars/${targetChild}`);
+        get(starRef).then(snapshot => {
+            const newStars = Math.max(0, (snapshot.val() || 0) + changeAmount);
+            set(starRef, newStars);
+            sendInAppNotification('MANUAL_STAR_ADJUST', { childName: targetChild, change: changeAmount, reason: reason });
+            alert(`${isAdding ? 'เพิ่ม' : 'ลด'}ดาวให้น้อง ${targetChild} จำนวน ${starCount} ดวง เรียบร้อยแล้ว! (ดาวคงเหลือ: ${newStars})`);
+        });
+    } else {
+        const localKey = `total_stars_${targetChild}`;
+        const newStars = Math.max(0, parseInt(localStorage.getItem(localKey) || "0", 10) + changeAmount);
+        localStorage.setItem(localKey, newStars.toString());
+        if (targetChild === currentUser) { totalStars = newStars; document.getElementById("score").innerText = totalStars; }
+        sendInAppNotification('MANUAL_STAR_ADJUST', { childName: targetChild, change: changeAmount, reason: reason });
+        alert(`${isAdding ? 'เพิ่ม' : 'ลด'}ดาวให้น้อง ${targetChild} จำนวน ${starCount} ดวง เรียบร้อยแล้ว! (ดาวคงเหลือ: ${newStars})`);
+    }
+    document.getElementById("manage-star-count").value = "";
+    document.getElementById("manage-star-reason").value = "";
+}
+
+function openNotifyModal() {
+    document.getElementById("notify-badge").classList.add("hidden");
+    document.getElementById("notify-dot").classList.add("hidden");
+    renderNotifications();
+    document.getElementById("notify-modal").classList.remove("hidden");
+}
+function closeNotifyModal() { document.getElementById("notify-modal").classList.add("hidden"); }
