@@ -986,30 +986,33 @@
         </div>
     </div>
 
-    <!-- User Selection Modal -->
-    <div id="profile-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl text-center border border-slate-100">
-            <h3 class="text-lg font-bold font-kids text-slate-800 mb-4">ใครกำลังใช้งานอยู่เอ่ย? 🎈</h3>
+    <!-- User Selection Modal (FIXED CLICKABLE WITH HIGH Z-INDEX & CLOSE BUTTON) -->
+    <div id="profile-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-all">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl text-center border border-slate-100 relative z-[101]">
+            <button onclick="closeProfileModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 class="text-lg font-bold font-kids text-slate-800 mb-4 pr-6">ใครกำลังใช้งานอยู่เอ่ย? 🎈</h3>
             <div class="grid grid-cols-2 gap-3 mb-2">
-                <button onclick="selectProfile('พ่อนะ', true)" class="p-3.5 bg-blue-50/60 border border-blue-200 rounded-2xl flex flex-col items-center hover:bg-blue-100 active:scale-95 transition">
+                <button onclick="selectProfile('พ่อนะ', true)" class="p-3.5 bg-blue-50/80 border-2 border-blue-200 rounded-2xl flex flex-col items-center hover:bg-blue-100 active:scale-95 transition cursor-pointer">
                     <span class="text-3xl mb-1">👨‍💼</span>
-                    <span class="font-bold text-blue-900 text-sm">พ่อนะ</span>
-                    <span class="text-[9px] text-blue-500">(ใส่รหัสผ่าน)</span>
+                    <span class="font-bold text-blue-900 text-sm font-kids">พ่อนะ</span>
+                    <span class="text-[9px] text-blue-500 font-bold">(ใส่รหัสผ่าน)</span>
                 </button>
-                <button onclick="selectProfile('แม่พัด', true)" class="p-3.5 bg-pink-50/60 border border-pink-200 rounded-2xl flex flex-col items-center hover:bg-pink-100 active:scale-95 transition">
+                <button onclick="selectProfile('แม่พัด', true)" class="p-3.5 bg-pink-50/80 border-2 border-pink-200 rounded-2xl flex flex-col items-center hover:bg-pink-100 active:scale-95 transition cursor-pointer">
                     <span class="text-3xl mb-1">👩‍💼</span>
-                    <span class="font-bold text-pink-900 text-sm">แม่พัด</span>
-                    <span class="text-[9px] text-pink-500">(ใส่รหัสผ่าน)</span>
+                    <span class="font-bold text-pink-900 text-sm font-kids">แม่พัด</span>
+                    <span class="text-[9px] text-pink-500 font-bold">(ใส่รหัสผ่าน)</span>
                 </button>
-                <button onclick="selectProfile('พูน', false)" class="p-3.5 bg-indigo-50/60 border border-indigo-200 rounded-2xl flex flex-col items-center hover:bg-indigo-100 active:scale-95 transition">
+                <button onclick="selectProfile('พูน', false)" class="p-3.5 bg-indigo-50/80 border-2 border-indigo-200 rounded-2xl flex flex-col items-center hover:bg-indigo-100 active:scale-95 transition cursor-pointer">
                     <span class="text-3xl mb-1">👦</span>
-                    <span class="font-bold text-indigo-900 text-sm">พูน</span>
-                    <span class="text-[9px] text-indigo-600">สะกดคำศัพท์</span>
+                    <span class="font-bold text-indigo-900 text-sm font-kids">พูน</span>
+                    <span class="text-[9px] text-indigo-600 font-bold">สะกดคำศัพท์</span>
                 </button>
-                <button onclick="selectProfile('เพลิน', false)" class="p-3.5 bg-amber-50/60 border border-amber-200 rounded-2xl flex flex-col items-center hover:bg-amber-100 active:scale-95 transition">
+                <button onclick="selectProfile('เพลิน', false)" class="p-3.5 bg-amber-50/80 border-2 border-amber-200 rounded-2xl flex flex-col items-center hover:bg-amber-100 active:scale-95 transition cursor-pointer">
                     <span class="text-3xl mb-1">👧</span>
-                    <span class="font-bold text-amber-900 text-sm">เพลิน</span>
-                    <span class="text-[9px] text-amber-600">สะกดคำศัพท์</span>
+                    <span class="font-bold text-amber-900 text-sm font-kids">เพลิน</span>
+                    <span class="text-[9px] text-amber-600 font-bold">สะกดคำศัพท์</span>
                 </button>
             </div>
         </div>
@@ -1196,6 +1199,12 @@
     <script src="./game-number-dungeon.js"></script>
 
     <script>
+        // Helper function สำหรับปิด Modal เลือกผู้ใช้
+        function closeProfileModal() {
+            const modal = document.getElementById('profile-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
         lucide.createIcons();
         initData();
     </script>
