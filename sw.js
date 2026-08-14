@@ -1,7 +1,7 @@
 // Path: ./sw.js
 
-// เปลี่ยนเวอร์ชันแคชเป็น v12 เพื่อบังคับล้างแคชเก่าทิ้งแล้วดึงไฟล์ใหม่ทันที
-const CACHE_NAME = 'kids-vocab-v12';
+// เปลี่ยนเวอร์ชันแคชเป็น v13 เพื่อบังคับล้างแคชเก่าทิ้งแล้วดึงไฟล์ใหม่ทันที
+const CACHE_NAME = 'kids-vocab-v13';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -26,7 +26,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching updated app assets v12');
+      console.log('[Service Worker] Caching updated app assets v13');
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );

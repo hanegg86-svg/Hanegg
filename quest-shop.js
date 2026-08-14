@@ -95,7 +95,6 @@ function saveQuestAssignment() {
     alert(`แจกภารกิจ "${quest.title}" ให้เด็กๆ เรียบร้อยแล้ว! ✨`);
 }
 
-// --- FIX BUG: แก้ไขฟังก์ชันแสดงรายการภารกิจ เพื่อลบภารกิจที่ตรวจผ่านแล้วออกจากหน้าฝั่งเด็ก ---
 function renderParentQuestsList() {
     const container = document.getElementById("parent-quests-list");
     if (!container) return;
@@ -106,6 +105,16 @@ function renderParentQuestsList() {
             const assignees = q.assignees || ["พูน", "เพลิน"];
             const isForUser = assignees.includes(currentUser);
             if (!isForUser) return false;
+
+            // --- ส่วนที่เพิ่มใหม่: ตรวจสอบสถานะการทำสำเร็จแบบถาวร ---
+            const completedTime = (q.completedBy && q.completedBy[currentUser]) ? q.completedBy[currentUser] : 0;
+            const assignedTime = q.lastAssignedAt || 0;
+            
+            // ถ้าเวลาที่ทำสำเร็จ (completedTime) ใหม่กว่าหรือเท่ากับ เวลาที่มอบหมาย (assignedTime) แปลว่าทำเสร็จแล้ว ให้ซ่อน
+            if (completedTime > 0 && completedTime >= assignedTime) {
+                return false;
+            }
+            // -------------------------------------------------
 
             // 1. ถ้า พ่อนะ/แม่พัด กดตรวจผ่าน (approved) แล้วสำหรับเด็กคนนี้ ให้ซ่อนทันที
             const isApproved = notificationsList.some(n => 
@@ -467,6 +476,19 @@ function approveParentQuest(notifyId, userName, starsReward, isApproved) {
                 updateUserLevelAndAvatarDisplay();
             }
         }
+
+        // --- ส่วนที่เพิ่มใหม่: บันทึกเวลาที่ทำเสร็จลงในข้อมูลภารกิจโดยตรง ---
+        const notifyItem = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
+        if (notifyItem && notifyItem.details && notifyItem.details.questTitle) {
+            const quest = parentQuestsList.find(q => q.title === notifyItem.details.questTitle);
+            if (quest) {
+                if (!quest.completedBy) quest.completedBy = {};
+                quest.completedBy[userName] = Date.now();
+                saveParentQuestsToStorage();
+            }
+        }
+        // -----------------------------------------------------------
+
         alert(`ตรวจผ่านแล้ว! เพิ่ม ⭐ ${starsReward} ดาว และ +${starsReward * 100} EXP ให้น้อง ${userName} เรียบร้อยครับ`);
     } else { alert(`ปฏิเสธภารกิจเรียบร้อยแล้ว`); }
 
