@@ -1,7 +1,18 @@
 // Path: ./game-td.js
 // ==========================================
-// --- MATH HERO TD GAME ENGINE (FIXED ULTIMATE BOMB BUTTON & UI) ---
+// --- MATH HERO TD GAME ENGINE (WITH CUSTOM IMAGES & 3D UI) ---
 // ==========================================
+
+// --- โหลดรูปภาพมอนสเตอร์ ---
+const imgMushroom = new Image();
+imgMushroom.src = "mushroom.png";
+
+const imgTurtle = new Image();
+imgTurtle.src = "turtle.png";
+
+const imgBoss = new Image();
+imgBoss.src = "boss.png";
+
 let tdCanvas, tdCtx, tdChoiceBtns, tdQuestionDisplay, tdUltBtn, tdUltCountDisplay;
 let tdHp = 10, tdScore = 0, tdWave = 1, tdTotalKillsInWave = 0, tdUltimateCount = 1, tdIsGameCleared = false;
 let tdCoins = 0, tdSlowTimer = 0, tdFreezeTimer = 0;
@@ -86,6 +97,9 @@ class TDEnemy {
         this.isBoss = isBoss;
         this.maxHp = isBoss ? 10 : 1;
         this.hp = this.maxHp;
+
+        // สุ่มเลือกว่าลูกน้องจะเป็นเห็ดหรือเต่า
+        this.enemyType = Math.random() > 0.5 ? 'mushroom' : 'turtle';
 
         const speedMultiplier = (tdDifficulty === 'easy') ? 0.7 : 1.0;
         let speedBase = ((0.6 + (tdWave - 1) * 0.12) * speedMultiplier) * 1.265;
@@ -211,115 +225,58 @@ class TDEnemy {
         tdCtx.translate(this.x, this.y);
 
         if (this.penaltyTimer > 0) {
-            tdCtx.shadowColor = '#FF70A6'; tdCtx.shadowBlur = 18;
+            tdCtx.shadowColor = '#FF70A6'; 
+            tdCtx.shadowBlur = 18;
         }
 
-        let enemyBg = this.isBoss ? '#4A00E0' : '#FF85A1';
-        if (tdWave >= 11 && !this.isBoss) enemyBg = '#2A0845';
-        else if (tdWave >= 9 && !this.isBoss) enemyBg = '#8B0000';
-        else if (tdWave >= 7 && !this.isBoss) enemyBg = '#C70039';
-        else if (tdWave >= 4 && !this.isBoss) enemyBg = '#FF5733';
-        if (isTarget) enemyBg = '#FFD166';
-        if (this.penaltyTimer > 0) enemyBg = '#FF477E';
+        // --- เลือกว่าจะวาดรูปไหน ---
+        let imgToDraw;
+        if (this.isBoss) {
+            imgToDraw = imgBoss;
+        } else if (this.enemyType === 'turtle') {
+            imgToDraw = imgTurtle;
+        } else {
+            imgToDraw = imgMushroom;
+        }
 
-        drawRoundedRect(tdCtx, -this.size, -this.size, this.size * 2, this.size * 2, this.isBoss ? 20 : 12);
-        tdCtx.fillStyle = enemyBg;
-        tdCtx.fill();
-        tdCtx.lineWidth = isTarget ? 5 : 3;
-        tdCtx.strokeStyle = this.isBoss ? '#FFD166' : '#FFFFFF';
-        tdCtx.stroke();
+        const imgSize = this.isBoss ? this.size * 2.8 : this.size * 2.5; 
+        
+        // ถ้ารูปโหลดเสร็จแล้ว ให้วาดรูป
+        if (imgToDraw.complete && imgToDraw.naturalHeight !== 0) {
+            if (isTarget) {
+                tdCtx.shadowColor = '#FFD166';
+                tdCtx.shadowBlur = 15;
+            }
+            tdCtx.drawImage(imgToDraw, -imgSize/2, -imgSize/2, imgSize, imgSize);
+        } else {
+            // ถ้ารูปยังไม่มา ให้วาดวงกลมสำรองไปก่อน
+            tdCtx.fillStyle = this.isBoss ? '#4A00E0' : '#FF85A1';
+            tdCtx.beginPath();
+            tdCtx.arc(0, 0, this.size, 0, Math.PI * 2);
+            tdCtx.fill();
+        }
 
+        // --- วาดหลอดเลือด (เฉพาะบอส) ---
         if (this.isBoss) {
             const barWidth = 90;
             const barHeight = 10;
             tdCtx.fillStyle = '#000000';
-            tdCtx.fillRect(-barWidth / 2, -this.size - 20, barWidth, barHeight);
+            tdCtx.fillRect(-barWidth / 2, -this.size - 25, barWidth, barHeight);
             tdCtx.fillStyle = '#FF0055';
-            tdCtx.fillRect(-barWidth / 2, -this.size - 20, (barWidth * (this.hp / this.maxHp)), barHeight);
+            tdCtx.fillRect(-barWidth / 2, -this.size - 25, (barWidth * (this.hp / this.maxHp)), barHeight);
             tdCtx.strokeStyle = '#FFFFFF';
             tdCtx.lineWidth = 1.5;
-            tdCtx.strokeRect(-barWidth / 2, -this.size - 20, barWidth, barHeight);
+            tdCtx.strokeRect(-barWidth / 2, -this.size - 25, barWidth, barHeight);
         }
-
-        if (this.isBoss) {
-            tdCtx.fillStyle = '#10002B';
-            tdCtx.beginPath(); tdCtx.arc(0, -this.size * 0.4, 25, 0, Math.PI * 2); tdCtx.fill();
-
-            tdCtx.fillStyle = '#C70039';
-            tdCtx.beginPath(); tdCtx.moveTo(-18, -this.size * 0.7); tdCtx.lineTo(-35, -this.size * 1.1); tdCtx.lineTo(-8, -this.size * 0.8); tdCtx.fill();
-            tdCtx.beginPath(); tdCtx.moveTo(18, -this.size * 0.7); tdCtx.lineTo(35, -this.size * 1.1); tdCtx.lineTo(8, -this.size * 0.8); tdCtx.fill();
-
-            tdCtx.fillStyle = '#FF0000';
-            tdCtx.beginPath(); tdCtx.arc(-10, -this.size * 0.4, 8, 0, Math.PI * 2); tdCtx.arc(10, -this.size * 0.4, 8, 0, Math.PI * 2); tdCtx.fill();
-            tdCtx.fillStyle = '#FFFF00'; 
-            tdCtx.beginPath(); tdCtx.arc(-10, -this.size * 0.4, 3, 0, Math.PI * 2); tdCtx.arc(10, -this.size * 0.4, 3, 0, Math.PI * 2); tdCtx.fill();
-
-            tdCtx.fillStyle = enemyBg;
-            tdCtx.fillRect(-this.size - 15, -15, 15, 30);
-            
-            tdCtx.save();
-            tdCtx.translate(-this.size - 20, 0);
-            tdCtx.rotate(-Math.PI / 4);
-
-            tdCtx.fillStyle = '#E2E8F0';
-            tdCtx.beginPath(); tdCtx.moveTo(0, -5); tdCtx.lineTo(60, -5); tdCtx.lineTo(70, 0); tdCtx.lineTo(60, 5); tdCtx.lineTo(0, 5); tdCtx.closePath(); tdCtx.fill();
-            tdCtx.strokeStyle = '#FFFFFF'; tdCtx.lineWidth = 1; tdCtx.stroke();
-            tdCtx.fillStyle = '#FFD166'; tdCtx.fillRect(-5, -10, 8, 20);
-            tdCtx.fillStyle = '#708090'; tdCtx.fillRect(-15, -3, 10, 6);
-            tdCtx.restore();
-
-            tdCtx.fillStyle = enemyBg;
-            tdCtx.fillRect(this.size, -15, 15, 30);
-
-            tdCtx.fillStyle = '#94A3B8';
-            drawRoundedRect(tdCtx, this.size + 10, -25, 40, 50, 8);
-            tdCtx.fill();
-            tdCtx.strokeStyle = '#FFFFFF'; tdCtx.lineWidth = 3; tdCtx.stroke();
-            tdCtx.fillStyle = '#FFFFFF';
-            tdCtx.beginPath(); tdCtx.arc(this.size + 30, -5, 8, 0, Math.PI * 2); tdCtx.fill();
-            tdCtx.fillRect(this.size + 26, 3, 8, 5);
-            tdCtx.fillStyle = '#000000';
-            tdCtx.beginPath(); tdCtx.arc(this.size + 27, -5, 2, 0, Math.PI * 2); tdCtx.arc(this.size + 33, -5, 2, 0, Math.PI * 2); tdCtx.fill();
-
-        } else if (tdWave >= 11) {
-            tdCtx.fillStyle = '#10002B';
-            tdCtx.beginPath(); tdCtx.moveTo(-16, -this.size); tdCtx.lineTo(-26, -this.size - 18); tdCtx.lineTo(-2, -this.size - 2); tdCtx.fill();
-            tdCtx.beginPath(); tdCtx.moveTo(16, -this.size); tdCtx.lineTo(26, -this.size - 18); tdCtx.lineTo(2, -this.size - 2); tdCtx.fill();
-
-            tdCtx.strokeStyle = '#FF0055'; tdCtx.lineWidth = 4;
-            tdCtx.beginPath(); tdCtx.moveTo(-18, -16); tdCtx.lineTo(-2, -4); tdCtx.stroke();
-            tdCtx.beginPath(); tdCtx.moveTo(18, -16); tdCtx.lineTo(2, -4); tdCtx.stroke();
-
-            tdCtx.fillStyle = '#FF0000';
-            tdCtx.beginPath(); tdCtx.arc(-9, -2, 7, 0, Math.PI * 2); tdCtx.arc(9, -2, 7, 0, Math.PI * 2); tdCtx.fill();
-            tdCtx.fillStyle = '#000000';
-            tdCtx.beginPath(); tdCtx.arc(-9, -2, 2, 0, Math.PI * 2); tdCtx.arc(9, -2, 2, 0, Math.PI * 2); tdCtx.fill();
-
-            tdCtx.fillStyle = '#000000';
-            tdCtx.beginPath(); tdCtx.arc(0, 9, 9, 0, Math.PI); tdCtx.fill();
-            tdCtx.fillStyle = '#FFFFFF';
-            tdCtx.beginPath(); tdCtx.moveTo(-6, 9); tdCtx.lineTo(-4, 15); tdCtx.lineTo(-2, 9); tdCtx.fill();
-            tdCtx.beginPath(); tdCtx.moveTo(2, 9); tdCtx.lineTo(4, 15); tdCtx.lineTo(6, 9); tdCtx.fill();
-        } else {
-            tdCtx.fillStyle = '#FFD166';
-            tdCtx.beginPath(); tdCtx.moveTo(-12, -this.size); tdCtx.lineTo(-18, -this.size - 10); tdCtx.lineTo(-6, -this.size - 2); tdCtx.fill();
-            tdCtx.beginPath(); tdCtx.moveTo(12, -this.size); tdCtx.lineTo(18, -this.size - 10); tdCtx.lineTo(6, -this.size - 2); tdCtx.fill();
-
-            tdCtx.fillStyle = '#FFFFFF';
-            tdCtx.beginPath(); tdCtx.arc(-8, -4, 6, 0, Math.PI * 2); tdCtx.arc(8, -4, 6, 0, Math.PI * 2); tdCtx.fill();
-            tdCtx.fillStyle = '#2D3748';
-            tdCtx.beginPath(); tdCtx.arc(-8, -4, 3, 0, Math.PI * 2); tdCtx.arc(8, -4, 3, 0, Math.PI * 2); tdCtx.fill();
-            tdCtx.beginPath(); tdCtx.arc(0, 6, 5, 0, Math.PI); tdCtx.strokeStyle = '#2D3748'; tdCtx.lineWidth = 2; tdCtx.stroke();
-        }
-
         tdCtx.restore();
 
+        // --- วาดป้ายโจทย์คณิตศาสตร์ ---
         const textMargin = 10;
         tdCtx.font = 'bold 18px Quicksand, Arial';
         const displayQuestion = (this.penaltyTimer > 0) ? "!! SPEED 2x !!" : (this.isBoss ? `[HP:${this.hp}/10] ${this.question}` : this.question);
         const textWidth = tdCtx.measureText(displayQuestion).width;
 
-        let boxY = this.y - (this.isBoss ? 78 : 55);
+        let boxY = this.y - (this.isBoss ? 85 : 65);
         if (boxY - 30 < 5) boxY = 5 + 30;
 
         tdCtx.fillStyle = (this.penaltyTimer > 0) ? '#FF477E' : (isTarget ? 'rgba(255, 209, 102, 0.95)' : 'rgba(255, 255, 255, 0.9)');
@@ -344,7 +301,6 @@ function initMathTDGame() {
     tdUltBtn = document.getElementById('td-ultimate-btn');
     tdUltCountDisplay = document.getElementById('td-ult-count');
 
-    // ผูก Event ให้ปุ่มระเบิดตรงนี้เพื่อให้กดสั่งงานได้แน่นอน
     if (tdUltBtn) {
         tdUltBtn.onclick = useTDUltimate;
     }
@@ -538,7 +494,6 @@ function checkGameEndState() {
     }
 }
 
-// 🎯 ฟังก์ชันระเบิดท่าไม้ตาย (Ultimate) ที่ปรับแก้ให้ทำงานได้สมบูรณ์
 function useTDUltimate() {
     if (tdUltimateCount <= 0) {
         alert("จำนวนระเบิดหมดแล้ว! สามารถซื้อเพิ่มได้ในร้านค้าครับ");
@@ -559,7 +514,6 @@ function useTDUltimate() {
         createTDExplosion(enemy.x, enemy.y, 25, '#FF70A6');
 
         if (enemy.isBoss) {
-            // ระเบิดลดเลือดบอส 1 HP
             enemy.hp -= 1; 
             
             if (enemy.hp <= 0) {
@@ -592,7 +546,6 @@ function useTDUltimate() {
 function updateTDUltUI() {
     if (tdUltCountDisplay) tdUltCountDisplay.innerText = tdUltimateCount;
     if (tdUltBtn) {
-        // ปลดล็อกให้สามารถกดได้เมื่อมีระเบิดเหลืออยู่
         const isDisabled = tdUltimateCount <= 0;
         tdUltBtn.disabled = isDisabled;
 
