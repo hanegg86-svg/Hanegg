@@ -163,6 +163,23 @@ function updateCard() {
     document.getElementById("set-progress-text").innerText = `ชุดที่ ${currentSetNum} (คำที่ ${posInSet}/5)`;
     document.getElementById("spell-input").value = "";
     document.getElementById("speech-status").innerText = "";
+
+    // 🎯 อัปเดตป้ายผู้เรียน (target-assigned-badge) ตาม assignees ของการ์ดใบนี้
+    const badgeEl = document.getElementById("target-assigned-badge");
+    if (badgeEl) {
+        const assignees = item.assignees || [];
+        if (assignees.length === 0 || (assignees.includes("พูน") && assignees.includes("เพลิน"))) {
+            badgeEl.innerText = "🎯 เรียนได้ทุกคน";
+            badgeEl.className = "text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full font-bold border border-indigo-100";
+        } else if (assignees.includes("พูน")) {
+            badgeEl.innerText = "👦 สำหรับน้องพูน";
+            badgeEl.className = "text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-bold border border-blue-100";
+        } else if (assignees.includes("เพลิน")) {
+            badgeEl.innerText = "👧 สำหรับน้องเพลิน";
+            badgeEl.className = "text-xs bg-pink-50 text-pink-700 px-2.5 py-1 rounded-full font-bold border border-pink-100";
+        }
+    }
+
     checkDailyLimitStatus();
 }
 
@@ -482,7 +499,6 @@ async function askGeminiAI() {
     const btn = document.getElementById("ai-btn");
     btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> Gemini กำลังสร้าง...`; btn.classList.add('opacity-70');
     
-    // ⚡ ENDPOINT MODEL: Gemini 3.5 Flash Lite
     const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
 
     try {
@@ -505,7 +521,6 @@ function openGeminiForImage() {
     const targetWord = document.getElementById("input-en").value.trim() || document.getElementById("input-th").value.trim();
     if (!targetWord) { alert("กรุณาพิมพ์คำศัพท์ก่อนครับ"); return; }
     
-    // 🍄 IMAGE PROMPT: ธีม Super Mario World สำหรับเด็ก
     const imagePrompt = `A cute vibrant 3D digital illustration in iconic Super Mario World style for kids, featuring "${targetWord}". Bright saturated colors, cheerful Nintendo game art aesthetic, Mushroom Kingdom background elements, clear isolated focus on the main subject. **CRITICAL REQUIREMENT: NO TEXT, NO LETTERS, NO WORDS IN THE IMAGE AT ALL.**`;
     
     if (navigator.clipboard && navigator.clipboard.writeText) {
