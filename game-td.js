@@ -1,6 +1,6 @@
 // Path: ./game-td.js
 // ==========================================
-// --- MATH HERO TD GAME ENGINE (WITH CUSTOM IMAGES & ASPECT RATIO FIX) ---
+// --- MATH HERO TD GAME ENGINE (PERFECT SCALE & BIGGER IMAGES) ---
 // ==========================================
 
 // --- โหลดรูปภาพมอนสเตอร์ ---
@@ -203,7 +203,7 @@ class TDEnemy {
 
         if (aheadEnemy) {
             const distToAhead = Math.hypot(aheadEnemy.x - this.x, aheadEnemy.y - this.y);
-            const minGap = this.isBoss ? 140 : 110;
+            const minGap = this.isBoss ? 150 : 110;
             if (distToAhead < minGap && this.penaltyTimer <= 0) {
                 currentSpeed = Math.max(0, aheadEnemy.speed * (distToAhead / minGap));
             }
@@ -239,29 +239,34 @@ class TDEnemy {
             imgToDraw = imgMushroom;
         }
 
-        const maxImgSize = this.isBoss ? this.size * 2.8 : this.size * 2.5; 
+        // 🌟 ปรับขนาดฐานให้ใหญ่ขึ้นสะใจ! 🌟
+        const baseSize = this.isBoss ? 110 : 75; 
         
-        // ถ้ารูปโหลดเสร็จแล้วและเจอไฟล์ ให้วาดรูปตามสัดส่วนจริง
+        let drawWidth = baseSize;
+        let drawHeight = baseSize;
+
+        // ถ้ารูปโหลดเสร็จแล้วและเจอไฟล์ ให้คำนวณสัดส่วนรูปภาพให้สมดุล
         if (imgToDraw.complete && imgToDraw.naturalHeight !== 0) {
             if (isTarget) {
                 tdCtx.shadowColor = '#FFD166';
                 tdCtx.shadowBlur = 15;
             }
             
-            // คำนวณสัดส่วนรูปภาพไม่ให้บี้แบน
-            let drawWidth = maxImgSize;
-            let drawHeight = maxImgSize;
-            const ratio = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
+            const imgRatio = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
             
-            if (ratio > 1) {
-                drawHeight = maxImgSize / ratio; // รูปกว้างกว่าสูง
+            if (imgRatio > 1) {
+                // รูปกว้างกว่าสูง
+                drawHeight = baseSize / imgRatio;
             } else {
-                drawWidth = maxImgSize * ratio;  // รูปสูงกว่ากว้าง
+                // รูปสูงกว่ากว้าง
+                drawWidth = baseSize * imgRatio;
             }
 
             tdCtx.drawImage(imgToDraw, -drawWidth/2, -drawHeight/2, drawWidth, drawHeight);
         } else {
-            // ถ้ารูปยังไม่มา หรือหาไฟล์ไม่เจอ ให้วาดวงกลมสำรองไปก่อน
+            // ถ้ารูปยังไม่มา หรือหาไฟล์ไม่เจอ ให้วาดวงกลมสำรอง
+            drawWidth = this.size * 2;
+            drawHeight = this.size * 2;
             tdCtx.fillStyle = this.isBoss ? '#4A00E0' : '#FF85A1';
             tdCtx.beginPath();
             tdCtx.arc(0, 0, this.size, 0, Math.PI * 2);
@@ -270,15 +275,17 @@ class TDEnemy {
 
         // --- วาดหลอดเลือด (เฉพาะบอส) ---
         if (this.isBoss) {
-            const barWidth = 90;
+            const barWidth = Math.max(90, drawWidth); 
             const barHeight = 10;
+            const barY = -drawHeight/2 - 20; // ให้ลอยเหนือตัวบอส
+            
             tdCtx.fillStyle = '#000000';
-            tdCtx.fillRect(-barWidth / 2, -this.size - 25, barWidth, barHeight);
+            tdCtx.fillRect(-barWidth / 2, barY, barWidth, barHeight);
             tdCtx.fillStyle = '#FF0055';
-            tdCtx.fillRect(-barWidth / 2, -this.size - 25, (barWidth * (this.hp / this.maxHp)), barHeight);
+            tdCtx.fillRect(-barWidth / 2, barY, (barWidth * (this.hp / this.maxHp)), barHeight);
             tdCtx.strokeStyle = '#FFFFFF';
             tdCtx.lineWidth = 1.5;
-            tdCtx.strokeRect(-barWidth / 2, -this.size - 25, barWidth, barHeight);
+            tdCtx.strokeRect(-barWidth / 2, barY, barWidth, barHeight);
         }
         tdCtx.restore();
 
@@ -288,8 +295,9 @@ class TDEnemy {
         const displayQuestion = (this.penaltyTimer > 0) ? "!! SPEED 2x !!" : (this.isBoss ? `[HP:${this.hp}/10] ${this.question}` : this.question);
         const textWidth = tdCtx.measureText(displayQuestion).width;
 
-        let boxY = this.y - (this.isBoss ? 85 : 65);
-        if (boxY - 30 < 5) boxY = 5 + 30;
+        // 🌟 ปรับให้ป้ายคำถามลอยขึ้นไปอยู่เหนือตัวละครเสมอ 🌟
+        let boxY = this.y - (drawHeight / 2) - (this.isBoss ? 45 : 30);
+        if (boxY - 30 < 5) boxY = 5 + 30; // ป้องกันป้ายทะลุขอบจอด้านบน
 
         tdCtx.fillStyle = (this.penaltyTimer > 0) ? '#FF477E' : (isTarget ? 'rgba(255, 209, 102, 0.95)' : 'rgba(255, 255, 255, 0.9)');
         drawRoundedRect(tdCtx, this.x - (textWidth / 2) - textMargin, boxY - 26, textWidth + (textMargin * 2), 28, 8);
