@@ -314,13 +314,33 @@ function closePinModal() {
     pendingProfile = null;
 }
 
+// ========================================================
+// ฟังก์ชัน setProfile ที่อัปเดตรูปประจำตัว Header เรียบร้อย
+// ========================================================
 function setProfile(name, isParent) {
     currentUser = name;
     isParentUser = isParent;
     document.getElementById("user-name").innerText = name;
     
-    const avatars = { 'พ่อนะ': '👨‍💼', 'แม่พัด': '👩‍💼', 'พูน': '👦', 'เพลิน': '👧' };
-    document.getElementById("user-avatar").innerText = avatars[name] || '👤';
+    const avatarImages = { 
+        'พ่อนะ': 'luigi.png', 
+        'แม่พัด': 'rosalina.png', 
+        'พูน': 'mario.png', 
+        'เพลิน': 'peach.png' 
+    };
+
+    const avatarImgEl = document.getElementById("user-avatar-img");
+    const avatarEmojiEl = document.getElementById("user-avatar");
+
+    if (avatarImages[name]) {
+        avatarImgEl.src = avatarImages[name];
+        avatarImgEl.classList.remove("hidden");
+        avatarEmojiEl.classList.add("hidden");
+    } else {
+        avatarEmojiEl.innerText = '👤';
+        avatarEmojiEl.classList.remove("hidden");
+        avatarImgEl.classList.add("hidden");
+    }
 
     const addBtn = document.getElementById("btn-add-vocab");
     const btnKey = document.getElementById("btn-key");
@@ -450,8 +470,6 @@ function updateUserLevelAndAvatarDisplay() {
     if (isParentUser || !currentUser) {
         document.getElementById("exp-bar-container").classList.add("hidden");
         document.getElementById("user-level-tag").classList.add("hidden");
-        document.getElementById("user-avatar-img").classList.add("hidden");
-        document.getElementById("user-avatar").classList.remove("hidden");
     } else {
         document.getElementById("user-level-tag").innerText = `Lv.${currentChildLevel}`;
         document.getElementById("user-level-tag").classList.remove("hidden");
@@ -461,20 +479,6 @@ function updateUserLevelAndAvatarDisplay() {
         const pct = Math.min(100, Math.round((lvlData.currentLevelEXP / lvlData.nextLevelReqEXP) * 100));
         document.getElementById("exp-progress").style.width = `${pct}%`;
         document.getElementById("exp-val-text").innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
-
-        const avatarImg = document.getElementById("user-avatar-img");
-        const avatarEmoji = document.getElementById("user-avatar");
-        const childAvatars = levelAvatarsConfig[currentUser] || {};
-        const customAvatarUrl = childAvatars[currentChildLevel];
-
-        if (customAvatarUrl) {
-            avatarImg.src = customAvatarUrl;
-            avatarImg.classList.remove("hidden");
-            avatarEmoji.classList.add("hidden");
-        } else {
-            avatarImg.classList.add("hidden");
-            avatarEmoji.classList.remove("hidden");
-        }
     }
 
     const heroNameEl = document.getElementById("hero-user-name");
