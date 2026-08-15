@@ -1,6 +1,6 @@
 // Path: ./game-td.js
 // ==========================================
-// --- MATH HERO TD GAME ENGINE (WITH CUSTOM IMAGES & 3D UI) ---
+// --- MATH HERO TD GAME ENGINE (WITH CUSTOM IMAGES & ASPECT RATIO FIX) ---
 // ==========================================
 
 // --- โหลดรูปภาพมอนสเตอร์ ---
@@ -239,17 +239,29 @@ class TDEnemy {
             imgToDraw = imgMushroom;
         }
 
-        const imgSize = this.isBoss ? this.size * 2.8 : this.size * 2.5; 
+        const maxImgSize = this.isBoss ? this.size * 2.8 : this.size * 2.5; 
         
-        // ถ้ารูปโหลดเสร็จแล้ว ให้วาดรูป
+        // ถ้ารูปโหลดเสร็จแล้วและเจอไฟล์ ให้วาดรูปตามสัดส่วนจริง
         if (imgToDraw.complete && imgToDraw.naturalHeight !== 0) {
             if (isTarget) {
                 tdCtx.shadowColor = '#FFD166';
                 tdCtx.shadowBlur = 15;
             }
-            tdCtx.drawImage(imgToDraw, -imgSize/2, -imgSize/2, imgSize, imgSize);
+            
+            // คำนวณสัดส่วนรูปภาพไม่ให้บี้แบน
+            let drawWidth = maxImgSize;
+            let drawHeight = maxImgSize;
+            const ratio = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
+            
+            if (ratio > 1) {
+                drawHeight = maxImgSize / ratio; // รูปกว้างกว่าสูง
+            } else {
+                drawWidth = maxImgSize * ratio;  // รูปสูงกว่ากว้าง
+            }
+
+            tdCtx.drawImage(imgToDraw, -drawWidth/2, -drawHeight/2, drawWidth, drawHeight);
         } else {
-            // ถ้ารูปยังไม่มา ให้วาดวงกลมสำรองไปก่อน
+            // ถ้ารูปยังไม่มา หรือหาไฟล์ไม่เจอ ให้วาดวงกลมสำรองไปก่อน
             tdCtx.fillStyle = this.isBoss ? '#4A00E0' : '#FF85A1';
             tdCtx.beginPath();
             tdCtx.arc(0, 0, this.size, 0, Math.PI * 2);
