@@ -164,7 +164,7 @@ function updateCard() {
     document.getElementById("spell-input").value = "";
     document.getElementById("speech-status").innerText = "";
 
-    // 🎯 อัปเดตป้ายผู้เรียน (target-assigned-badge) ตาม assignees ของการ์ดใบนี้
+    // 🎯 อัปเดตป้ายผู้เรียน (target-assigned-badge)
     const badgeEl = document.getElementById("target-assigned-badge");
     if (badgeEl) {
         const assignees = item.assignees || [];
@@ -585,9 +585,17 @@ async function scanImageWithGemini() {
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner"></span> Gemini 3.5 Flash Lite กำลังวิเคราะห์รูป...`;
 
-    const prompt = `วิเคราะห์รูปภาพนี้ ดึงคำศัพท์ภาษาอังกฤษที่พบในรูปภาพ หรือวัตถุหลักๆ ในรูปภาพออกมาเป็นรายการคำศัพท์สำหรับเด็ก พร้อมคำแปลภาษาไทย คำอ่านทับศัพท์ภาษาไทย และเลือก Emoji 1 ตัวที่ตรงกับคำนั้นมากที่สุด 
-    ตอบกลับเป็น JSON Array ของ Object รูปแบบนี้เท่านั้น ห้ามใส่คำอธิบายเพิ่มเติม:
-    [{"en": "Apple", "th": "แอปเปิ้ล", "phonetic": "แอป-เปิ้ล", "emoji": "🍎"}]`;
+    // 💡 ปรับ Prompt ให้รองรับทั้งภาษาอังกฤษ (EN) และภาษาไทย (TH) ตามโหมดที่เปิดอยู่
+    let prompt = "";
+    if (subjectMode === 'EN') {
+        prompt = `วิเคราะห์รูปภาพนี้ ดึงคำศัพท์ภาษาอังกฤษที่พบในรูปภาพ หรือวัตถุหลักๆ ในรูปภาพออกมาเป็นรายการคำศัพท์สำหรับเด็ก พร้อมคำแปลภาษาไทย คำอ่านทับศัพท์ภาษาไทย และเลือก Emoji 1 ตัวที่ตรงกับคำนั้นมากที่สุด 
+        ตอบกลับเป็น JSON Array ของ Object รูปแบบนี้เท่านั้น ห้ามใส่คำอธิบายเพิ่มเติม:
+        [{"en": "Apple", "th": "แอปเปิ้ล", "phonetic": "แอป-เปิ้ล", "emoji": "🍎"}]`;
+    } else {
+        prompt = `วิเคราะห์รูปภาพนี้ ดึงคำศัพท์ภาษาไทยที่พบในรูปภาพ (เช่น ในตาราง Word List หรือข้อความภาษาไทยในรูป) ออกมาเป็นรายการคำศัพท์สำหรับเด็ก พร้อมแปลเป็นภาษาอังกฤษ และสร้าง "คำอ่านแบบเว้นวรรคให้อ่านง่ายสำหรับเด็ก" (phonetic) รวมทั้งเลือก Emoji 1 ตัวที่ตรงกับคำนั้นมากที่สุด
+        ตอบกลับเป็น JSON Array ของ Object รูปแบบนี้เท่านั้น ห้ามใส่คำอธิบายเพิ่มเติม:
+        [{"th": "ตระหนก", "en": "Panic", "phonetic": "ตระ-หนก", "emoji": "😨"}]`;
+    }
 
     const base64Data = tempOcrBase64.split(',')[1];
     const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
@@ -629,19 +637,23 @@ function renderOcrPreviewList() {
     const container = document.getElementById("ocr-items-list");
     document.getElementById("ocr-count").innerText = ocrExtractedList.length;
 
-    container.innerHTML = ocrExtractedList.map((item, index) => `
-        <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-            <input type="checkbox" id="ocr-check-${index}" checked class="w-5 h-5 accent-indigo-600 rounded">
-            <span class="text-2xl">${item.emoji || '💡'}</span>
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                    <span class="font-black text-indigo-900 text-sm">${item.en}</span>
-                    <span class="text-xs text-slate-400">[ ${item.phonetic || item.th} ]</span>
+    container.innerHTML = ocrExtractedList.map((item, index) => {
+        const mainText = subjectMode === 'EN' ? item.en : item.th;
+        const subText = subjectMode === 'EN' ? item.th : (item.en || item.th);
+        return `
+            <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <input type="checkbox" id="ocr-check-${index}" checked class="w-5 h-5 accent-indigo-600 rounded">
+                <span class="text-2xl">${item.emoji || '💡'}</span>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <span class="font-black text-indigo-900 text-sm">${mainText}</span>
+                        <span class="text-xs text-slate-400">[ ${item.phonetic || subText} ]</span>
+                    </div>
+                    <div class="text-xs font-bold text-slate-600">${subText}</div>
                 </div>
-                <div class="text-xs font-bold text-slate-600">${item.th}</div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function saveSelectedOcrVocab() {
@@ -651,11 +663,16 @@ function saveSelectedOcrVocab() {
     ocrExtractedList.forEach((item, index) => {
         const checkbox = document.getElementById(`ocr-check-${index}`);
         if (checkbox && checkbox.checked) {
-            const exists = rawVocabList.some(x => x.en.toLowerCase() === item.en.toLowerCase());
+            // เช็กซ้ำตามโหมด
+            const exists = rawVocabList.some(x => {
+                if (subjectMode === 'EN') return x.en && item.en && x.en.toLowerCase() === item.en.toLowerCase();
+                return x.th && item.th && x.th.trim() === item.th.trim();
+            });
+
             if (!exists) {
                 rawVocabList.push({
-                    en: item.en,
-                    th: item.th,
+                    en: item.en || item.th,
+                    th: item.th || item.en,
                     phonetic: item.phonetic || item.th,
                     emoji: item.emoji || "✨",
                     image: null,
