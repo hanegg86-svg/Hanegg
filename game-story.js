@@ -70,8 +70,20 @@ async function generateAIStory() {
 - ให้สุ่มสิ่งของในบ้านที่มีความหลากหลาย จากคลังตัวอย่างต่อไปนี้: [แก้วน้ำ, ช้อน, หมอน, ผ้าเช็ดหน้า, ร่ม, หูฟัง, นาฬิกา, ขวดน้ำ, หวี, ส้ม, กล้วย, แอปเปิ้ล, ขนม, กล่องนม, ดินสอ, ยางลบ, ไม้บรรทัด, สีไม้, สมุด, กรรไกรป้าน, รองเท้า, ถุงเท้า, หมวก, แว่นตา, ตุ๊กตา, รถของเล่น, บล็อกตัวต่อ, ลูกบอล]
 - ห้ามเลือกสิ่งของซ้ำกัน
 - กำหนดค่า "targetItemTH" (ชื่อภาษาไทย) และ "targetItemEN" (ชื่อภาษาอังกฤษ)
+
+กฎสำหรับการแสดงภาพประกอบ (Images & Emojis):
+- คุณมีคลังรูปภาพตัวละครและไอเทมดังนี้ ให้สุ่มเลือกใช้ให้สอดคล้องกับเนื้อเรื่องในแต่ละหน้า (ถ้ามีตัวละครหรือฉากที่ตรงกัน):
+  - "mario.png" (มาริโอ้)
+  - "luigi.png" (ลุยจิ)
+  - "peach.png" (เจ้าหญิงพีช)
+  - "rosalina.png" (เจ้าหญิงโรซาลิน่า)
+  - "dk.png" (ดองกี้คอง)
+  - "bowser_jr.png" (บาวเซอร์จูเนียร์)
+  - "question_block.png" (บล็อกปริศนา)
+- หากหน้าที่แต่งมีตัวละครหรือไอเทมที่ตรงกับรูปภาพ ให้ระบุชื่อไฟล์รูปภาพนั้นใน key "image" (ตัวอย่าง: "image": "mario.png")
+- หากหน้าที่แต่งไม่มีรูปภาพที่ตรงกัน ให้ปล่อย key "image" เป็น null แล้วใส่แค่ "emoji"
 ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น (ห้ามมี markdown):
-{"title": "ชื่อเรื่องนิทาน", "pages": [{"page": 1, "text": "...", "emoji": "🚀"}, {"page": 2, "text": "...", "emoji": "🔍", "isItemHunt": true, "targetItemTH": "แก้วน้ำ", "targetItemEN": "water cup"}]}`;
+{"title": "ชื่อเรื่องนิทาน", "pages": [{"page": 1, "text": "...", "emoji": "🚀", "image": "mario.png"}, {"page": 2, "text": "...", "emoji": "🔍", "image": null, "isItemHunt": true, "targetItemTH": "แก้วน้ำ", "targetItemEN": "water cup"}]}`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
     try {
@@ -93,7 +105,19 @@ function renderStoryPage() {
     document.getElementById("story-title-display").innerText = generatedStoryData.title || "นิทาน AI";
     document.getElementById("story-page-indicator").innerText = `หน้า ${currentStoryPage + 1} / ${generatedStoryData.pages.length}`;
     document.getElementById("story-text-display").innerText = pageData.text;
-    document.getElementById("story-image-emoji").innerText = pageData.emoji || "📖";
+    
+    const emojiEl = document.getElementById("story-image-emoji");
+    const imgEl = document.getElementById("story-image-pic");
+    
+    if (pageData.image && pageData.image !== "null" && pageData.image.trim() !== "") {
+        emojiEl.classList.add("hidden");
+        imgEl.classList.remove("hidden");
+        imgEl.src = pageData.image; 
+    } else {
+        imgEl.classList.add("hidden");
+        emojiEl.classList.remove("hidden");
+        emojiEl.innerText = pageData.emoji || "📖";
+    }
 
     // อัปเดต RPG Header UI ทุกครั้งที่เปลี่ยนหน้า
     if (typeof updateRPGUI === 'function') updateRPGUI();
