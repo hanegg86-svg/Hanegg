@@ -85,7 +85,7 @@ async function generateAIStory() {
 ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น (ห้ามมี markdown):
 {"title": "ชื่อเรื่องนิทาน", "pages": [{"page": 1, "text": "...", "emoji": "🚀", "image": "mario.png"}, {"page": 2, "text": "...", "emoji": "🔍", "image": null, "isItemHunt": true, "targetItemTH": "แก้วน้ำ", "targetItemEN": "water cup"}]}`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
     try {
         const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.85 } }) });
         const data = await response.json();
@@ -191,7 +191,7 @@ async function captureAndAnalyzeStoryImage() {
         : ``;
 
     const prompt = `วิเคราะห์รูปภาพนี้อย่างละเอียดและตรงไปตรงมา: ในรูปภาพนี้มีสิ่งของหรือวัตถุที่ตรงกับ หรือใกล้เคียงกับคำว่า "${targetItemName}" หรือไม่? ${hintInstruction} ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น: {"found": true/false, "detected_object": "ระบุสิ่งที่เห็นในภาพเป็นภาษาไทย", "comment": "คำชมเชยสั้นๆ เหมาะสำหรับเด็ก", "hint": "คำใบ้สั้นๆ (ถ้าหาไม่เจอ)"}`;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
 
     try {
         const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }] }) });
