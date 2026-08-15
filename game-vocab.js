@@ -7,6 +7,9 @@ let matchCardsList = [];
 let selectedMatchCards = [];
 let matchedPairsCount = 0;
 
+let tempOcrBase64 = null;
+let ocrExtractedList = [];
+
 function switchVocabPlayMode(mode) {
     vocabSubMode = mode;
     const cardsBtn = document.getElementById("vocab-mode-cards");
@@ -201,7 +204,6 @@ function startMatchingGame() {
     selectedMatchCards = [];
     matchedPairsCount = 0;
 
-    // สุ่มคำศัพท์ 8 คำ (หรือเท่าที่มีถ้าไม่ถึง 8 คำ)
     const targetPairsCount = Math.min(8, filteredVocabList.length);
     const shuffledList = [...filteredVocabList];
     shuffleArray(shuffledList);
@@ -209,27 +211,13 @@ function startMatchingGame() {
 
     matchCardsList = [];
     selectedVocab.forEach((item, idx) => {
-        // เพิ่มการ์ดภาษาอังกฤษ
         matchCardsList.push({
-            id: `en-${idx}`,
-            pairId: idx,
-            type: 'EN',
-            text: item.en,
-            emoji: item.emoji,
-            image: item.image,
-            spokenText: item.en,
-            lang: 'en-US'
+            id: `en-${idx}`, pairId: idx, type: 'EN', text: item.en,
+            emoji: item.emoji, image: item.image, spokenText: item.en, lang: 'en-US'
         });
-        // เพิ่มการ์ดภาษาไทย
         matchCardsList.push({
-            id: `th-${idx}`,
-            pairId: idx,
-            type: 'TH',
-            text: item.th,
-            emoji: item.emoji,
-            image: item.image,
-            spokenText: item.th,
-            lang: 'th-TH'
+            id: `th-${idx}`, pairId: idx, type: 'TH', text: item.th,
+            emoji: item.emoji, image: item.image, spokenText: item.th, lang: 'th-TH'
         });
     });
 
@@ -254,7 +242,6 @@ function renderMatchingCards() {
             contentHtml = `<span class="font-extrabold text-purple-900 text-base font-kids pointer-events-none">${card.text}</span>`;
         }
 
-        // --- เพิ่มขอบหนา 2px และ shadow ให้การ์ดจับคู่เด้งๆ ---
         return `
             <button id="match-btn-${card.id}" onclick="handleMatchCardClick('${card.id}')" class="match-card bg-white border-2 border-slate-300 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[85px] shadow-[0_4px_0_0_#cbd5e1] hover:border-indigo-400 active:translate-y-1 active:shadow-none transition-all text-center">
                 ${contentHtml}
@@ -272,16 +259,13 @@ function handleMatchCardClick(cardId) {
     const card = matchCardsList.find(c => c.id === cardId);
     if (!card) return;
 
-    // อ่านเสียงคำที่แตะ
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(card.spokenText);
-        utterance.lang = card.lang;
-        utterance.rate = 0.9;
+        utterance.lang = card.lang; utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
     }
 
-    // ถ้ากดการ์ดเดิมซ้ำ ให้ยกเลิกการเลือก
     if (selectedMatchCards.length === 1 && selectedMatchCards[0].id === cardId) {
         selectedMatchCards = [];
         const btn = document.getElementById(`match-btn-${cardId}`);
@@ -297,7 +281,6 @@ function handleMatchCardClick(cardId) {
         const [card1, card2] = selectedMatchCards;
 
         if (card1.pairId === card2.pairId && card1.type !== card2.type) {
-            // จับคู่ถูก!
             matchedPairsCount++;
             updateMatchProgress();
 
@@ -308,17 +291,13 @@ function handleMatchCardClick(cardId) {
                 if (btn2) btn2.classList.add("matched");
                 selectedMatchCards = [];
 
-                // เช็คว่าจับคู่ครบตามเป้าหมาย (สูงสุด 8 คู่) แล้วหรือยัง
                 const totalPairs = Math.min(8, Math.floor(matchCardsList.length / 2));
                 if (matchedPairsCount >= totalPairs) {
-                    setTimeout(() => {
-                        triggerCompletionModal();
-                    }, 500);
+                    setTimeout(() => { triggerCompletionModal(); }, 500);
                 }
             }, 300);
 
         } else {
-            // จับคู่ผิด
             setTimeout(() => {
                 const btn1 = document.getElementById(`match-btn-${card1.id}`);
                 const btn2 = document.getElementById(`match-btn-${card2.id}`);
@@ -481,6 +460,10 @@ function handleFormSubmit(e) {
     if (vocabSubMode === 'match') startMatchingGame();
 }
 
+// ==========================================
+// --- AI INTEGRATION (GEMINI 3.5 FLASH LITE) ---
+// ==========================================
+
 async function askGeminiAI() {
     const enInput = document.getElementById("input-en").value.trim();
     const thInput = document.getElementById("input-th").value.trim();
@@ -498,7 +481,9 @@ async function askGeminiAI() {
 
     const btn = document.getElementById("ai-btn");
     btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> Gemini กำลังสร้าง...`; btn.classList.add('opacity-70');
-    const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
+    
+    // ⚡ ENDPOINT MODEL: Gemini 3.5 Flash Lite
+    const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
 
     try {
         const response = await fetch(textUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1 } }) });
@@ -519,14 +504,170 @@ async function askGeminiAI() {
 function openGeminiForImage() {
     const targetWord = document.getElementById("input-en").value.trim() || document.getElementById("input-th").value.trim();
     if (!targetWord) { alert("กรุณาพิมพ์คำศัพท์ก่อนครับ"); return; }
-    const imagePrompt = `วาดรูปภาพการ์ตูนน่ารักๆ สำหรับเด็ก ของคำว่า "${targetWord}" ลายเส้นคลีนๆ 2D vector clipart พื้นหลังสีขาว isolated **ข้อสำคัญ: ห้ามใส่ตัวอักษร ข้อความ หรือคำศัพท์ใดๆ ลงในภาพเด็ดขาด (No text, no letters, no words)**`;
+    
+    // 🍄 IMAGE PROMPT: ธีม Super Mario World สำหรับเด็ก
+    const imagePrompt = `A cute vibrant 3D digital illustration in iconic Super Mario World style for kids, featuring "${targetWord}". Bright saturated colors, cheerful Nintendo game art aesthetic, Mushroom Kingdom background elements, clear isolated focus on the main subject. **CRITICAL REQUIREMENT: NO TEXT, NO LETTERS, NO WORDS IN THE IMAGE AT ALL.**`;
+    
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(imagePrompt).then(() => {
-            alert(`ก๊อปปี้คำสั่งเจนรูปแล้ว!\n\nกำลังเปิด Gemini... เมื่อถึงหน้าเว็บ ให้กด "วาง (Paste)" เพื่อเจนรูปได้เลยครับ`);
+            alert(`ก๊อปปี้คำสั่งเจนรูป (ธีม Mario 🍄) เรียบร้อย!\n\nกำลังเปิด Gemini... เมื่อถึงหน้าเว็บ ให้กด "วาง (Paste)" เพื่อเจนรูปได้เลยครับ`);
             window.open("https://gemini.google.com/app", "_blank");
         }).catch(() => { window.open("https://gemini.google.com/app", "_blank"); });
     } else { window.open("https://gemini.google.com/app", "_blank"); }
 }
+
+// ==========================================
+// --- IMAGE TO VOCAB (OCR & BULK INSERT) ---
+// ==========================================
+
+function openOcrModal() {
+    if (!isParentUser) return;
+    document.getElementById("ocr-upload-section").classList.remove("hidden");
+    document.getElementById("ocr-result-section").classList.add("hidden");
+    document.getElementById("ocr-img-preview-container").classList.add("hidden");
+    document.getElementById("ocr-file-input").value = "";
+    tempOcrBase64 = null;
+    ocrExtractedList = [];
+    document.getElementById("ocr-modal").classList.remove("hidden");
+}
+
+function closeOcrModal() {
+    document.getElementById("ocr-modal").classList.add("hidden");
+}
+
+function handleOcrImageSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement("canvas");
+            const maxDim = 800;
+            let width = img.width, height = img.height;
+            if (width > height) { if (width > maxDim) { height = Math.round((height * maxDim) / width); width = maxDim; } } 
+            else { if (height > maxDim) { width = Math.round((width * maxDim) / height); height = maxDim; } }
+            canvas.width = width; canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            tempOcrBase64 = canvas.toDataURL("image/jpeg", 0.8);
+            document.getElementById("ocr-img-preview").src = tempOcrBase64;
+            document.getElementById("ocr-img-preview-container").classList.remove("hidden");
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function scanImageWithGemini() {
+    const apiKey = localStorage.getItem("gemini_api_key");
+    if (!apiKey) { alert("กรุณาตั้งค่า Gemini API Key ก่อนครับ"); return; }
+    if (!tempOcrBase64) return;
+
+    const btn = document.getElementById("ocr-scan-btn");
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Gemini 3.5 Flash Lite กำลังวิเคราะห์รูป...`;
+
+    const prompt = `วิเคราะห์รูปภาพนี้ ดึงคำศัพท์ภาษาอังกฤษที่พบในรูปภาพ หรือวัตถุหลักๆ ในรูปภาพออกมาเป็นรายการคำศัพท์สำหรับเด็ก พร้อมคำแปลภาษาไทย คำอ่านทับศัพท์ภาษาไทย และเลือก Emoji 1 ตัวที่ตรงกับคำนั้นมากที่สุด 
+    ตอบกลับเป็น JSON Array ของ Object รูปแบบนี้เท่านั้น ห้ามใส่คำอธิบายเพิ่มเติม:
+    [{"en": "Apple", "th": "แอปเปิ้ล", "phonetic": "แอป-เปิ้ล", "emoji": "🍎"}]`;
+
+    const base64Data = tempOcrBase64.split(',')[1];
+    const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
+
+    try {
+        const response = await fetch(textUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [
+                        { text: prompt },
+                        { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+                    ]
+                }],
+                generationConfig: { temperature: 0.2 }
+            })
+        });
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+
+        const rawText = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
+        ocrExtractedList = JSON.parse(rawText);
+
+        renderOcrPreviewList();
+        document.getElementById("ocr-upload-section").classList.add("hidden");
+        document.getElementById("ocr-result-section").classList.remove("hidden");
+
+    } catch (error) {
+        alert("เกิดข้อผิดพลาดในการวิเคราะห์รูปภาพ: " + (error.message || "กรุณาลองใหม่อีกครั้ง"));
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `✨ สกัดคำศัพท์ด้วย Gemini 3.5 Flash Lite`;
+    }
+}
+
+function renderOcrPreviewList() {
+    const container = document.getElementById("ocr-items-list");
+    document.getElementById("ocr-count").innerText = ocrExtractedList.length;
+
+    container.innerHTML = ocrExtractedList.map((item, index) => `
+        <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+            <input type="checkbox" id="ocr-check-${index}" checked class="w-5 h-5 accent-indigo-600 rounded">
+            <span class="text-2xl">${item.emoji || '💡'}</span>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                    <span class="font-black text-indigo-900 text-sm">${item.en}</span>
+                    <span class="text-xs text-slate-400">[ ${item.phonetic || item.th} ]</span>
+                </div>
+                <div class="text-xs font-bold text-slate-600">${item.th}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function saveSelectedOcrVocab() {
+    let addedCount = 0;
+    const assignees = ["พูน", "เพลิน"];
+
+    ocrExtractedList.forEach((item, index) => {
+        const checkbox = document.getElementById(`ocr-check-${index}`);
+        if (checkbox && checkbox.checked) {
+            const exists = rawVocabList.some(x => x.en.toLowerCase() === item.en.toLowerCase());
+            if (!exists) {
+                rawVocabList.push({
+                    en: item.en,
+                    th: item.th,
+                    phonetic: item.phonetic || item.th,
+                    emoji: item.emoji || "✨",
+                    image: null,
+                    assignees: assignees
+                });
+                addedCount++;
+            }
+        }
+    });
+
+    if (addedCount > 0) {
+        saveToStorage();
+        filterVocabForUser();
+        currentIndex = rawVocabList.length - 1;
+        updateCard();
+        if (vocabSubMode === 'match') startMatchingGame();
+        alert(`🎉 เพิ่มคำศัพท์ใหม่สำเร็จทั้งหมด ${addedCount} คำเรียบร้อยแล้วครับ!`);
+    } else {
+        alert("ไม่ได้เลือกคำศัพท์ใหม่ หรือมีคำศัพท์เหล่านี้ในระบบอยู่แล้วครับ");
+    }
+
+    closeOcrModal();
+}
+
+// ==========================================
+// --- IMAGE RESIZING & HELPER FUNCTIONS ---
+// ==========================================
 
 function processResizedBase64(base64Src) {
     const img = new Image();
