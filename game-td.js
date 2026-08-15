@@ -1,6 +1,6 @@
 // Path: ./game-td.js
 // ==========================================
-// --- MATH HERO TD GAME ENGINE (PERFECT SCALE & BIGGER IMAGES) ---
+// --- MATH HERO TD GAME ENGINE (2X BIGGER MONSTERS) ---
 // ==========================================
 
 // --- โหลดรูปภาพมอนสเตอร์ ---
@@ -239,8 +239,8 @@ class TDEnemy {
             imgToDraw = imgMushroom;
         }
 
-        // 🌟 ปรับขนาดฐานให้ใหญ่ขึ้นสะใจ! 🌟
-        const baseSize = this.isBoss ? 110 : 75; 
+        // 🌟 ปรับขนาดฐานให้ใหญ่ขึ้น 2 เท่า! (จากเดิมลูกน้อง 75 -> 150, บอส 110 -> 220) 🌟
+        const baseSize = this.isBoss ? 220 : 150; 
         
         let drawWidth = baseSize;
         let drawHeight = baseSize;
@@ -295,8 +295,8 @@ class TDEnemy {
         const displayQuestion = (this.penaltyTimer > 0) ? "!! SPEED 2x !!" : (this.isBoss ? `[HP:${this.hp}/10] ${this.question}` : this.question);
         const textWidth = tdCtx.measureText(displayQuestion).width;
 
-        // 🌟 ปรับให้ป้ายคำถามลอยขึ้นไปอยู่เหนือตัวละครเสมอ 🌟
-        let boxY = this.y - (drawHeight / 2) - (this.isBoss ? 45 : 30);
+        // 🌟 ปรับให้ป้ายคำถามลอยสูงขึ้นอีก เพื่อหลบหัวมอนสเตอร์ที่ใหญ่ขึ้น 🌟
+        let boxY = this.y - (drawHeight / 2) - (this.isBoss ? 55 : 40);
         if (boxY - 30 < 5) boxY = 5 + 30; // ป้องกันป้ายทะลุขอบจอด้านบน
 
         tdCtx.fillStyle = (this.penaltyTimer > 0) ? '#FF477E' : (isTarget ? 'rgba(255, 209, 102, 0.95)' : 'rgba(255, 255, 255, 0.9)');
