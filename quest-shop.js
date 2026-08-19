@@ -1,3 +1,13 @@
+// ==========================================
+// --- QUESTS, SHOP & NOTIFICATION SYSTEM ---
+// ==========================================
+
+const skillNamesMap = {
+    'knowledge': '🧠 ความรู้',
+    'fitness': '💪 พลังกาย',
+    'wealth': '🪙 ความร่ำรวย'
+};
+
 function saveParentQuestsToStorage() {
     if (isFirebaseActive && dbRefParentQuests) {
         const { set } = window.firebaseModules;
@@ -14,18 +24,34 @@ function createNewParentQuest() {
     const assignPoon = document.getElementById("quest-assign-poon").checked;
     const assignPloern = document.getElementById("quest-assign-ploern").checked;
 
+    // --- ดึงค่า Skill ที่พ่อแม่กำหนด ---
+    const skillTypeEl = document.getElementById("new-quest-skill-type");
+    const skillPointsEl = document.getElementById("new-quest-skill-points");
+    const skillType = skillTypeEl ? skillTypeEl.value : 'none';
+    const skillPoints = parseInt(skillPointsEl ? skillPointsEl.value || "0" : "0", 10);
+
     if (!title || isNaN(stars) || stars <= 0) { alert("กรุณากรอกชื่อภารกิจและจำนวนดาวให้ถูกต้องครับ"); return; }
 
     const assignees = [];
     if (assignPoon) assignees.push("พูน");
     if (assignPloern) assignees.push("เพลิน");
 
-    const newQuest = { id: Date.now().toString(), title: title, stars: stars, assignees: assignees, lastAssignedAt: Date.now() };
+    const newQuest = { 
+        id: Date.now().toString(), 
+        title: title, 
+        stars: stars, 
+        skillType: skillType,
+        skillPoints: skillPoints,
+        assignees: assignees, 
+        lastAssignedAt: Date.now() 
+    };
+    
     parentQuestsList.push(newQuest);
     saveParentQuestsToStorage();
 
     document.getElementById("new-quest-title").value = "";
     document.getElementById("new-quest-stars").value = "";
+    if (skillPointsEl) skillPointsEl.value = "";
     alert(`สร้างภารกิจ "${title}" สำเร็จ!`);
 }
 
@@ -106,17 +132,13 @@ function renderParentQuestsList() {
             const isForUser = assignees.includes(currentUser);
             if (!isForUser) return false;
 
-            // --- ส่วนที่เพิ่มใหม่: ตรวจสอบสถานะการทำสำเร็จแบบถาวร ---
             const completedTime = (q.completedBy && q.completedBy[currentUser]) ? q.completedBy[currentUser] : 0;
             const assignedTime = q.lastAssignedAt || 0;
             
-            // ถ้าเวลาที่ทำสำเร็จ (completedTime) ใหม่กว่าหรือเท่ากับ เวลาที่มอบหมาย (assignedTime) แปลว่าทำเสร็จแล้ว ให้ซ่อน
             if (completedTime > 0 && completedTime >= assignedTime) {
                 return false;
             }
-            // -------------------------------------------------
 
-            // 1. ถ้า พ่อนะ/แม่พัด กดตรวจผ่าน (approved) แล้วสำหรับเด็กคนนี้ ให้ซ่อนทันที
             const isApproved = notificationsList.some(n => 
                 n.type === 'SUBMIT_QUEST' && 
                 n.user === currentUser && 
@@ -152,13 +174,22 @@ function renderParentQuestsList() {
             if (existingNotify) {
                 actionButtonHtml = `<span class="bg-amber-100 text-amber-800 font-bold py-1.5 px-2.5 rounded-xl text-[11px] border border-amber-200">⏳ รอพ่อนะ/แม่พัด ตรวจ</span>`;
             } else {
-                actionButtonHtml = `<button onclick="submitParentQuestForCheck('${q.title}', ${q.stars})" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-2 px-3 rounded-xl text-xs shadow-xs">กดส่งภารกิจ ✨</button>`;
+                actionButtonHtml = `<button onclick="submitParentQuestForCheck('${q.title}', ${q.stars}, '${q.skillType || 'none'}', ${q.skillPoints || 0})" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-2 px-3 rounded-xl text-xs shadow-xs">กดส่งภารกิจ ✨</button>`;
             }
         }
+
+        let skillTagHtml = '';
+        if (q.skillType && q.skillType !== 'none' && q.skillPoints > 0) {
+            skillTagHtml = `<span class="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-bold ml-1">${skillNamesMap[q.skillType] || ''} +${q.skillPoints}</span>`;
+        }
+
         return `
             <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex justify-between items-center shadow-2xs">
                 <div>
-                    <div class="font-bold text-slate-800 text-xs mb-1 font-kids">${q.title}</div>
+                    <div class="font-bold text-slate-800 text-xs mb-1 font-kids flex items-center flex-wrap">
+                        ${q.title}
+                        ${skillTagHtml}
+                    </div>
                     <div class="flex items-center gap-1.5">
                         <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">รางวัล ⭐ ${q.stars} ดวง</span>
                         <span class="text-[10px] text-slate-400 font-bold">🎯 ${q.assignees && q.assignees.length > 0 ? q.assignees.join(', ') : 'ทุกคน'}</span>
@@ -169,9 +200,14 @@ function renderParentQuestsList() {
     }).join('');
 }
 
-function submitParentQuestForCheck(questTitle, stars) {
+function submitParentQuestForCheck(questTitle, stars, skillType, skillPoints) {
     if (confirm(`คุณได้ทำภารกิจ "${questTitle}" เรียบร้อยแล้ว และต้องการส่งให้ พ่อนะ / แม่พัด ตรวจใช่ไหมครับ?`)) {
-        sendInAppNotification('SUBMIT_QUEST', { questTitle: questTitle, starsReward: stars });
+        sendInAppNotification('SUBMIT_QUEST', { 
+            questTitle: questTitle, 
+            starsReward: stars,
+            skillType: skillType || 'none',
+            skillPoints: skillPoints || 0
+        });
         renderParentQuestsList();
         alert(`ส่งภารกิจ "${questTitle}" ถึงพ่อนะและแม่พัดเพื่อตรวจเรียบร้อยแล้วครับ! ✨`);
     }
@@ -428,15 +464,20 @@ function renderNotifications() {
                         <span>Status: ${n.status === 'approved' ? '✅ อนุมัติและย้ายไปกระเป๋าแล้ว' : n.status === 'rejected' ? '❌ คำขอถูกปฏิเสธ' : '⏳ รอพ่อนะ/แม่พัด อนุมัติ'}</span>${deleteBtnHtml}
                     </div>`}</div>`;
         } else if (n.type === 'SUBMIT_QUEST') {
+            let skillText = '';
+            if (n.details.skillType && n.details.skillType !== 'none' && n.details.skillPoints > 0) {
+                skillText = ` และ ${skillNamesMap[n.details.skillType]} +${n.details.skillPoints}`;
+            }
+
             return `<div class="p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 flex flex-col gap-2 shadow-2xs">
                 <div class="flex items-start gap-2.5"><span class="text-2xl bg-white p-1.5 rounded-xl border border-indigo-100">${avatars[n.user] || '👦'}</span><div class="flex-1">
                     <div class="flex justify-between items-center mb-0.5"><span class="font-bold text-xs text-indigo-950 font-kids">📋 ส่งตรวจภารกิจ!</span><span class="text-[9px] font-bold text-slate-400">${n.time}</span></div>
-                    <p class="text-[11px] text-slate-700 font-bold">น้อง <span class="text-indigo-700 font-bold">${n.user}</span> ส่งภารกิจ: <span class="text-emerald-700 font-bold">${n.details.questTitle}</span> (รับ ⭐ ${n.details.starsReward} ดาว)</p>
+                    <p class="text-[11px] text-slate-700 font-bold">น้อง <span class="text-indigo-700 font-bold">${n.user}</span> ส่งภารกิจ: <span class="text-emerald-700 font-bold">${n.details.questTitle}</span> (รับ ⭐ ${n.details.starsReward} ดาว${skillText})</p>
                 </div></div>
                 ${isParentUser && isPending ? `
                     <div class="flex gap-1.5 mt-1 border-t border-indigo-100 pt-2">
-                        <button onclick="approveParentQuest('${itemKey}', '${n.user}', ${n.details.starsReward}, true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1 rounded-xl text-[11px] shadow-2xs">✅ ตรวจผ่าน (แจก ⭐ ${n.details.starsReward} ดาว)</button>
-                        <button onclick="approveParentQuest('${itemKey}', '${n.user}', ${n.details.starsReward}, false)" class="bg-rose-50 text-rose-700 hover:bg-rose-100 active:scale-95 font-bold py-1 px-2.5 rounded-xl text-[11px] border border-rose-200">❌ ไม่ผ่าน</button>
+                        <button onclick="approveParentQuest('${itemKey}', '${n.user}', ${n.details.starsReward}, '${n.details.skillType || 'none'}', ${n.details.skillPoints || 0}, true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1 rounded-xl text-[11px] shadow-2xs">✅ ตรวจผ่าน (แจก ⭐ ${n.details.starsReward} ดาว)</button>
+                        <button onclick="approveParentQuest('${itemKey}', '${n.user}', ${n.details.starsReward}, '${n.details.skillType || 'none'}', ${n.details.skillPoints || 0}, false)" class="bg-rose-50 text-rose-700 hover:bg-rose-100 active:scale-95 font-bold py-1 px-2.5 rounded-xl text-[11px] border border-rose-200">❌ ไม่ผ่าน</button>
                     </div>` : `
                     <div class="flex justify-between items-center text-[10px] font-bold bg-white/80 p-1 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-rose-600' : 'text-indigo-800'}">
                         <span>Status: ${n.status === 'approved' ? '✅ ตรวจผ่านแล้ว! ได้รับดาวเรียบร้อย' : n.status === 'rejected' ? '❌ ไม่ผ่าน' : '⏳ รอพ่อนะ/แม่พัด ตรวจ'}</span>${deleteBtnHtml}
@@ -455,7 +496,7 @@ function renderNotifications() {
     }).join('');
 }
 
-function approveParentQuest(notifyId, userName, starsReward, isApproved) {
+function approveParentQuest(notifyId, userName, starsReward, skillType, skillPoints, isApproved) {
     if (isApproved) {
         if (isFirebaseActive) {
             const { ref, get, set } = window.firebaseModules;
@@ -477,7 +518,12 @@ function approveParentQuest(notifyId, userName, starsReward, isApproved) {
             }
         }
 
-        // --- ส่วนที่เพิ่มใหม่: บันทึกเวลาที่ทำเสร็จลงในข้อมูลภารกิจโดยตรง ---
+        // 🌟 เพิ่มแต้ม Skill ให้เด็ก 🌟
+        if (skillType && skillType !== 'none' && skillPoints > 0) {
+            addSkillPointsToUser(userName, skillType, skillPoints);
+        }
+
+        // บันทึกเวลาทำเสร็จ
         const notifyItem = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
         if (notifyItem && notifyItem.details && notifyItem.details.questTitle) {
             const quest = parentQuestsList.find(q => q.title === notifyItem.details.questTitle);
@@ -487,7 +533,6 @@ function approveParentQuest(notifyId, userName, starsReward, isApproved) {
                 saveParentQuestsToStorage();
             }
         }
-        // -----------------------------------------------------------
 
         alert(`ตรวจผ่านแล้ว! เพิ่ม ⭐ ${starsReward} ดาว และ +${starsReward * 100} EXP ให้น้อง ${userName} เรียบร้อยครับ`);
     } else { alert(`ปฏิเสธภารกิจเรียบร้อยแล้ว`); }

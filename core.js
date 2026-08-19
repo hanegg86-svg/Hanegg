@@ -43,8 +43,8 @@ let defaultRewards = [
 ];
 
 let defaultParentQuests = [
-    { id: "1", title: "🧹 ช่วยเก็บของเล่นใส่กล่อง", stars: 2, assignees: ["พูน", "เพลิน"] },
-    { id: "2", title: "📚 ทำการบ้านประจำวันเสร็จตรงเวลา", stars: 3, assignees: ["พูน", "เพลิน"] }
+    { id: "1", title: "🧹 ช่วยเก็บของเล่นใส่กล่อง", stars: 2, skillType: "fitness", skillPoints: 5, assignees: ["พูน", "เพลิน"] },
+    { id: "2", title: "📚 ทำการบ้านประจำวันเสร็จตรงเวลา", stars: 3, skillType: "knowledge", skillPoints: 5, assignees: ["พูน", "เพลิน"] }
 ];
 
 let parentQuestsList = [];
@@ -76,7 +76,13 @@ let currentChildLevel = 1;
 let levelAvatarsConfig = { 'พูน': {}, 'เพลิน': {} };
 let selectedLvlConfigChild = 'พูน';
 
-let dbRefVocabEN, dbRefVocabTH, dbRefNotify, dbRefRewards, dbRefParentQuests, dbRefDailyConfig, dbRefLevelConfig;
+// 🌟 ข้อมูล SKILL ใหม่ของพูนและเพลิน 🌟
+let userSkillsList = {
+    'พูน': { knowledge: 0, fitness: 0, wealth: 0 },
+    'เพลิน': { knowledge: 0, fitness: 0, wealth: 0 }
+};
+
+let dbRefVocabEN, dbRefVocabTH, dbRefNotify, dbRefRewards, dbRefParentQuests, dbRefDailyConfig, dbRefLevelConfig, dbRefUserSkills;
 let isFirebaseActive = false;
 
 function getTodayDateString() {
@@ -90,6 +96,14 @@ function shuffleArray(array) {
         [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
+}
+
+// 🌟 ฟังก์ชันคำนวณ Level ของ Skill (ทุกๆ 10 แต้ม = 1 Level, สูงสุด Lv.5) 🌟
+function calculateSkillLevel(points) {
+    const pts = points || 0;
+    const level = Math.min(5, Math.floor(pts / 10));
+    const currentLevelPoints = pts % 10;
+    return { level, currentLevelPoints, isMax: level >= 5 };
 }
 
 function initData() {
@@ -186,10 +200,14 @@ function initFirebase() {
         const localQuests = localStorage.getItem("kids_parent_quests");
         parentQuestsList = localQuests ? JSON.parse(localQuests) : [...defaultParentQuests];
 
+        const localSkills = localStorage.getItem("kids_user_skills");
+        if (localSkills) userSkillsList = JSON.parse(localSkills);
+
         if(typeof filterVocabForUser === 'function') filterVocabForUser();
         if(typeof updateCard === 'function') updateCard();
         if(typeof renderRewardsList === 'function') renderRewardsList();
         if(typeof renderParentQuestsList === 'function') renderParentQuestsList();
+        renderUserSkillsUI();
         return;
     }
 
@@ -205,6 +223,7 @@ function initFirebase() {
         dbRefParentQuests = ref(db, 'kids_parent_quests');
         dbRefDailyConfig = ref(db, 'kids_daily_config');
         dbRefLevelConfig = ref(db, 'kids_level_config');
+        dbRefUserSkills = ref(db, 'user_skills');
 
         onValue(dbRefDailyConfig, (snapshot) => {
             const data = snapshot.val();
@@ -224,6 +243,14 @@ function initFirebase() {
                 levelAvatarsConfig = data.levelAvatars || { 'พูน': {}, 'เพลิน': {} };
                 document.getElementById("input-max-level").value = maxLevel;
                 updateUserLevelAndAvatarDisplay();
+            }
+        });
+
+        onValue(dbRefUserSkills, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                userSkillsList = data;
+                renderUserSkillsUI();
             }
         });
 
@@ -314,9 +341,6 @@ function closePinModal() {
     pendingProfile = null;
 }
 
-// ========================================================
-// ฟังก์ชัน setProfile ที่อัปเดตรูปประจำตัว Header เรียบร้อย
-// ========================================================
 function setProfile(name, isParent) {
     currentUser = name;
     isParentUser = isParent;
@@ -372,9 +396,70 @@ function setProfile(name, isParent) {
     currentIndex = 0;
     setCorrectAnswers = 0;
     loadUserStars();
+    renderUserSkillsUI();
     if(typeof updateCard === 'function') updateCard();
     if(typeof renderParentQuestsList === 'function') renderParentQuestsList();
     if(typeof renderNotifications === 'function') renderNotifications();
+}
+
+// 🌟 ฟังก์ชันเพิ่มแต้ม Skill และอัปเดตลงฐานข้อมูล 🌟
+function addSkillPointsToUser(childName, skillType, points) {
+    if (!childName || !skillType || points <= 0) return;
+    
+    if (!userSkillsList[childName]) {
+        userSkillsList[childName] = { knowledge: 0, fitness: 0, wealth: 0 };
+    }
+    
+    userSkillsList[childName][skillType] = (userSkillsList[childName][skillType] || 0) + points;
+
+    if (isFirebaseActive) {
+        const { ref, set } = window.firebaseModules;
+        const db = window.firebaseModules.getDatabase();
+        set(ref(db, `user_skills/${childName}`), userSkillsList[childName]);
+    } else {
+        localStorage.setItem("kids_user_skills", JSON.stringify(userSkillsList));
+    }
+    renderUserSkillsUI();
+}
+
+// 🌟 ฟังก์ชันแสดงผลหลอด Skill 3 ด้านหน้าโปรไฟล์เควส 🌟
+function renderUserSkillsUI() {
+    const container = document.getElementById("user-stats-skills-container");
+    if (!container) return;
+
+    if (!currentUser || isParentUser) {
+        container.classList.add("hidden");
+        return;
+    }
+    container.classList.remove("hidden");
+
+    const skills = userSkillsList[currentUser] || { knowledge: 0, fitness: 0, wealth: 0 };
+    
+    const skillConfig = [
+        { key: 'knowledge', name: '🧠 ความรู้', color: 'bg-blue-500' },
+        { key: 'fitness', name: '💪 พลังกาย', color: 'bg-emerald-500' },
+        { key: 'wealth', name: '🪙 ความร่ำรวย', color: 'bg-amber-500' }
+    ];
+
+    let html = '';
+    skillConfig.forEach(s => {
+        const pts = skills[s.key] || 0;
+        const lvlData = calculateSkillLevel(pts);
+        const progressPct = lvlData.isMax ? 100 : (lvlData.currentLevelPoints / 10) * 100;
+
+        html += `
+            <div class="bg-white p-2.5 rounded-2xl border border-indigo-100 shadow-2xs space-y-1">
+                <div class="flex justify-between items-center text-xs font-bold font-kids">
+                    <span class="text-slate-700">${s.name}</span>
+                    <span class="text-indigo-600">Lv.${lvlData.level} / 5 (${pts} แต้ม)</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div class="${s.color} h-full transition-all duration-500 rounded-full" style="width: ${progressPct}%"></div>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
 }
 
 function calculateLevelFromEXP(exp) {
