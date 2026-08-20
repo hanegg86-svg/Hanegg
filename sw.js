@@ -1,7 +1,7 @@
 // ==========================================
 // --- PWA SERVICE WORKER (UPDATED CACHE) ---
 // ==========================================
-const CACHE_NAME = 'kids-vocab-v6'; // ✨ ขยับเป็น v6 เพื่ออัปเดตโค้ดเกมสร้างเมือง 2x2
+const CACHE_NAME = 'kids-vocab-v7'; // ✨ ขยับเป็น v7
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -15,7 +15,7 @@ const ASSETS_TO_CACHE = [
     './game-story.js',
     './game-td.js',
     './game-number-dungeon.js',
-    './game-build.js',
+    './game-build2.js', // ✨ เปลี่ยนมาจำไฟล์ชื่อใหม่
     
     // 🎵 ไฟล์เสียงดนตรีประกอบ
     './bgm.mp3',
@@ -29,7 +29,7 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (event) => {
-    self.skipWaiting(); // บังคับให้ SW ตัวใหม่ทำงานทันที
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
     );
@@ -43,7 +43,7 @@ self.addEventListener('activate', (event) => {
             );
         })
     );
-    self.clients.claim(); // บังคับเตะ Cache เก่าทิ้ง
+    self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
