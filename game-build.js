@@ -155,11 +155,13 @@ function initTownBuilderGame() {
 function initBGMUI() {
     let bgmBtn = document.getElementById('btn-toggle-bgm');
     if (!bgmBtn) {
-        const controlsDiv = document.getElementById('controls');
+        const controlsDiv = document.getElementById('bgm-btn-container'); // เปลี่ยนมาเล็งที่กล่องใหม่
         if (controlsDiv) {
             bgmBtn = document.createElement('button');
             bgmBtn.id = 'btn-toggle-bgm';
             bgmBtn.onclick = toggleBGM;
+            // บังคับให้ปุ่มกว้างเต็มกล่องที่เตรียมไว้
+            bgmBtn.className = 'w-full h-full text-[11px] font-extrabold rounded-xl shadow-xs transition';
             controlsDiv.appendChild(bgmBtn);
         }
     }
@@ -180,10 +182,11 @@ function toggleBGM() {
 function updateBGMButton() {
     const btn = document.getElementById('btn-toggle-bgm');
     if (btn) {
-        btn.innerHTML = isBgmMuted ? '🔇 เสียงปิดอยู่' : '🔊 เสียงเปิดอยู่';
+        btn.innerHTML = isBgmMuted ? '🔇 ปิดเสียง' : '🔊 เปิดเสียง';
+        // อัปเดตสีตามสถานะ โดยรักษาขนาด w-full h-full ไว้
         btn.className = isBgmMuted 
-            ? 'bg-slate-500 hover:bg-slate-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs transition'
-            : 'bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs transition';
+            ? 'w-full h-full bg-slate-600 hover:bg-slate-700 text-white font-extrabold rounded-xl text-[11px] shadow-xs transition'
+            : 'w-full h-full bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold rounded-xl text-[11px] shadow-xs transition';
     }
 }
 
@@ -215,7 +218,7 @@ function toggleImmersiveMode() {
         if (floatBtn) floatBtn.style.setProperty('display', 'none', 'important');
 
         if (buildContainer) {
-            buildContainer.classList.remove("max-h-[calc(100vh-160px)]", "pb-12");
+            buildContainer.classList.remove("max-h-[calc(100vh-160px)]", "pb-12", "pb-24");
             buildContainer.classList.add("max-h-screen", "pb-4");
         }
         if (toggleBtn) toggleBtn.innerHTML = "👁️ แสดงแถบ";
@@ -228,7 +231,7 @@ function toggleImmersiveMode() {
         if (floatBtn) floatBtn.style.removeProperty('display');
 
         if (buildContainer) {
-            buildContainer.classList.add("max-h-[calc(100vh-160px)]", "pb-12");
+            buildContainer.classList.add("max-h-[calc(100vh-160px)]", "pb-24");
             buildContainer.classList.remove("max-h-screen", "pb-4");
         }
         if (toggleBtn) toggleBtn.innerHTML = "👁️ ซ่อนแถบ";
@@ -573,15 +576,15 @@ function triggerDisasterEvent() {
 
     if (roll < 0.35) {
         currentEvent = 'drought';
-        banner.className = 'w-full max-w-sm px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-orange-600 text-white shadow-xs';
+        banner.className = 'w-full px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-orange-600 text-white shadow-xs text-center';
         banner.innerText = '⚠️ เกิดภัยแล้ง! ฟาร์มผลิตอาหารลดลง 50% (30 วินาที)';
     } else if (roll < 0.70) {
         currentEvent = 'fire';
-        banner.className = 'w-full max-w-sm px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-rose-600 text-white shadow-xs animate-pulse';
+        banner.className = 'w-full px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-rose-600 text-white shadow-xs animate-pulse text-center';
         banner.innerText = '🔥 เกิดไฟไหม้! โรงไม้ผลิตไม้ลดลง 50% (30 วินาที)';
     } else {
         currentEvent = 'normal';
-        banner.className = 'w-full max-w-sm px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-emerald-600 text-white shadow-xs';
+        banner.className = 'w-full px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-emerald-600 text-white shadow-xs text-center';
         banner.innerText = '☀️ สภาพอากาศปกติ';
     }
 }

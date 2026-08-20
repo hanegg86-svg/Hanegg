@@ -1,7 +1,7 @@
 // ==========================================
 // --- PWA SERVICE WORKER (UPDATED CACHE) ---
 // ==========================================
-const CACHE_NAME = 'kids-vocab-v5'; // ✨ ขยับเป็น v5 เพื่ออัปเดตไฟล์เสียง
+const CACHE_NAME = 'kids-vocab-v6'; // ✨ ขยับเป็น v6 เพื่ออัปเดต UI หน้าสร้างเมือง
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
