@@ -9,6 +9,13 @@ const buildingImages = {
     lumber: ['./lumber_lvl1.png', './lumber_lvl2.png', './lumber_lvl3.png'].map(src => { const img = new Image(); img.src = src; return img; })
 };
 
+// 🎵 ระบบเสียง BGM
+let bgmAudio = new Audio('./bgm.mp3');
+bgmAudio.loop = true;
+let isBgmMuted = localStorage.getItem('kids_vocab_bgm_muted') === 'true';
+bgmAudio.muted = isBgmMuted;
+let hasBgmStarted = false;
+
 let buildCanvas, buildCtx;
 let buildAnimationId = null;
 let buildIntervalId = null;
@@ -20,7 +27,7 @@ let TILE_SIZE = 80;
 let resources = { wood: 25, gold: 50, food: 15 };
 let currentTool = 'select';
 let selectedTile = null;
-let movingFromTile = null; // ✨ ตัวแปรใหม่สำหรับเก็บพิกัดตึกที่กำลังจะย้าย
+let movingFromTile = null; // ตัวแปรสำหรับย้ายตึก
 let gameTime = 0;
 let isBuildGameOver = false;
 let isImmersiveMode = false;
@@ -118,7 +125,7 @@ function initTownBuilderGame() {
     resources = { wood: 25, gold: 50, food: 15 };
     currentTool = 'select';
     selectedTile = null;
-    movingFromTile = null; // ✨ เคลียร์ค่าเวลาย้อนกลับหรือเริ่มเกมใหม่
+    movingFromTile = null; 
     gameTime = 0;
     isBuildGameOver = false;
     currentEvent = 'normal';
@@ -139,8 +146,45 @@ function initTownBuilderGame() {
     if (buildAnimationId) cancelAnimationFrame(buildAnimationId);
     drawBuildCanvas();
 
+    initBGMUI(); // โหลด UI เสียง BGM
     updateBuildUI();
     updateActionPanel();
+}
+
+// 🎵 ฟังก์ชันจัดการ BGM
+function initBGMUI() {
+    let bgmBtn = document.getElementById('btn-toggle-bgm');
+    if (!bgmBtn) {
+        const controlsDiv = document.getElementById('controls');
+        if (controlsDiv) {
+            bgmBtn = document.createElement('button');
+            bgmBtn.id = 'btn-toggle-bgm';
+            bgmBtn.onclick = toggleBGM;
+            controlsDiv.appendChild(bgmBtn);
+        }
+    }
+    updateBGMButton();
+}
+
+function toggleBGM() {
+    isBgmMuted = !isBgmMuted;
+    bgmAudio.muted = isBgmMuted;
+    localStorage.setItem('kids_vocab_bgm_muted', isBgmMuted);
+    updateBGMButton();
+    if (!isBgmMuted && !hasBgmStarted) {
+        bgmAudio.play().catch(e => console.log("รอให้ผู้เล่นกดที่กระดานก่อนเล่นเสียง"));
+        hasBgmStarted = true;
+    }
+}
+
+function updateBGMButton() {
+    const btn = document.getElementById('btn-toggle-bgm');
+    if (btn) {
+        btn.innerHTML = isBgmMuted ? '🔇 เสียงปิดอยู่' : '🔊 เสียงเปิดอยู่';
+        btn.className = isBgmMuted 
+            ? 'bg-slate-500 hover:bg-slate-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs transition'
+            : 'bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs transition';
+    }
 }
 
 function resizeBuildCanvas() {
@@ -234,7 +278,7 @@ function getWorkerStats() {
 }
 
 function selectTool(tool) {
-    if (movingFromTile) cancelMove(); // ✨ ยกเลิกการย้ายหากเปลี่ยนเครื่องมือ
+    if (movingFromTile) cancelMove(); 
     currentTool = tool;
     document.querySelectorAll('#controls button').forEach(btn => btn.classList.remove('active'));
     const targetBtn = document.getElementById(`btn-${tool}`);
@@ -243,6 +287,12 @@ function selectTool(tool) {
 }
 
 function handleBuildCanvasClick(e) {
+    // 🎵 ลอจิกเริ่มเล่นเพลงตอนกดจอครั้งแรก
+    if (!hasBgmStarted && !isBgmMuted) {
+        bgmAudio.play().catch(err => console.log(err));
+        hasBgmStarted = true;
+    }
+
     if (isBuildGameOver) return;
     const rect = buildCanvas.getBoundingClientRect();
     const c = Math.floor((e.clientX - rect.left) / TILE_SIZE);
@@ -250,7 +300,6 @@ function handleBuildCanvasClick(e) {
 
     if (r >= GRID_SIZE || c >= GRID_SIZE) return;
 
-    // ✨ ตรวจสอบโหมดกำลังย้าย (Move Mode)
     if (movingFromTile) {
         selectedTile = { r, c };
         updateActionPanel();
@@ -265,20 +314,17 @@ function handleBuildCanvasClick(e) {
     }
 }
 
-// ✨ ฟังก์ชันเริ่มโหมดย้าย
 function startMovingBuilding(r, c) {
     movingFromTile = { r, c };
     selectedTile = { r, c };
     updateActionPanel();
 }
 
-// ✨ ฟังก์ชันยกเลิกโหมดย้าย
 function cancelMove() {
     movingFromTile = null;
     updateActionPanel();
 }
 
-// ✨ ฟังก์ชันยืนยันการย้าย
 function confirmMove() {
     if (!movingFromTile || !selectedTile) return;
     const fromR = movingFromTile.r;
@@ -286,16 +332,75 @@ function confirmMove() {
     const toR = selectedTile.r;
     const toC = selectedTile.c;
 
-    // ความปลอดภัย: ป้องกันการวางทับหากช่องเป้าหมายไม่ว่าง
     if (grid[toR][toC] !== null) return; 
 
-    // ทำการสลับข้อมูล
     grid[toR][toC] = grid[fromR][fromC];
     grid[fromR][fromC] = null;
     
     movingFromTile = null;
     updateActionPanel();
     updateBuildUI();
+}
+
+// 💰 คำนวณเงินคืนครึ่งราคา (Refund 50%)
+function getRefund(type, level) {
+    let totalWood = 0, totalGold = 0, totalFood = 0;
+    
+    // ต้นทุนฐาน เลเวล 1
+    if (type === 'house') totalWood += 20;
+    if (type === 'lumber') totalGold += 30;
+    if (type === 'farm') totalWood += 15;
+
+    // บวกต้นทุนอัพเกรดสะสม
+    for (let i = 1; i < level; i++) {
+        let cost = BUILDINGS[type].upgrades[i].cost;
+        if (cost) {
+            if (cost.wood) totalWood += cost.wood;
+            if (cost.gold) totalGold += cost.gold;
+            if (cost.food) totalFood += cost.food;
+        }
+    }
+
+    // หาร 2 ปัดเศษลง
+    return {
+        wood: Math.floor(totalWood / 2),
+        gold: Math.floor(totalGold / 2),
+        food: Math.floor(totalFood / 2)
+    };
+}
+
+// 💰 ฟังก์ชันขายสิ่งปลูกสร้าง
+function sellBuilding(r, c) {
+    const item = grid[r][c];
+    if (!item || item.isBuilding || item.type === 'wonder') return;
+
+    // ⚠️ ลอจิกเช็คแรงงานติดลบ กรณีขายบ้าน
+    if (item.type === 'house') {
+        const wStats = getWorkerStats();
+        const lostWorkers = BUILDINGS.house.upgrades[item.level - 1].workers;
+        if (wStats.total - lostWorkers < wStats.used) {
+            alert("❌ ไม่สามารถขายบ้านได้! ต้องเรียกคนงานกลับมาจากโรงไม้/ฟาร์มก่อน (แรงงานจะไม่พอ)");
+            return;
+        }
+    }
+
+    const refund = getRefund(item.type, item.level);
+    let refundMsg = [];
+    if (refund.wood > 0) refundMsg.push(`🪵${refund.wood}`);
+    if (refund.gold > 0) refundMsg.push(`🪙${refund.gold}`);
+    if (refund.food > 0) refundMsg.push(`🌾${refund.food}`);
+
+    if (confirm(`คุณต้องการขาย ${BUILDINGS[item.type].name} Lv.${item.level} ใช่หรือไม่?\nคุณจะได้ทรัพยากรคืน: ${refundMsg.join(' ')}`)) {
+        resources.wood += refund.wood;
+        resources.gold += refund.gold;
+        resources.food += refund.food;
+        
+        grid[r][c] = null;
+        selectedTile = null;
+        
+        updateBuildUI();
+        updateActionPanel();
+    }
 }
 
 function buildStructure(r, c, type) {
@@ -548,22 +653,16 @@ function triggerVictory() {
     isBuildGameOver = true;
     if (buildIntervalId) clearInterval(buildIntervalId);
 
-    // 1. รับดาวสะสม ⭐ +3 ดวง
     if (typeof totalStars !== 'undefined') totalStars += 3;
     if (typeof saveUserStars === 'function') saveUserStars();
 
-    // 2. รับ EXP +200
     if (typeof addEXPToUser === 'function') addEXPToUser(200);
-
-    // 3. บันทึกสถิติรอบเล่นประจำวัน
     if (typeof incrementTodayRounds === 'function') incrementTodayRounds();
 
-    // 4. มอบแต้มทักษะความร่ำรวย 🪙 +10
     if (typeof addSkillPointsToUser === 'function' && typeof currentUser !== 'undefined') {
         addSkillPointsToUser(currentUser, 'wealth', 10);
     }
 
-    // 5. ส่งการแจ้งเตือน
     if (typeof sendInAppNotification === 'function') {
         sendInAppNotification('COMPLETED_BUILD', { timeSec: gameTime });
     }
@@ -573,7 +672,6 @@ function triggerVictory() {
     if (vicText) vicText.innerText = `ชนะในเวลา ${formatTime(gameTime)}! รับ ⭐+3, +200 EXP ✨ และ 🪙+10`;
     if (vicModal) vicModal.style.display = 'flex';
 
-    // 6. บันทึกสถิติลง Firebase Leaderboard และดึงตารางอันดับมาแสดง
     saveAndFetchBuildLeaderboard(gameTime);
 }
 
@@ -590,7 +688,6 @@ function saveAndFetchBuildLeaderboard(timeSec) {
     const playerName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : "นักสร้างเมือง";
     const leaderRef = ref(db, 'leaderboards/build');
 
-    // บันทึกสถิติรอบนี้
     const newRunRef = push(leaderRef);
     set(newRunRef, {
         name: playerName,
@@ -610,7 +707,6 @@ function fetchBuildLeaderboard(leaderRef, getFn) {
             const data = snapshot.val();
             Object.values(data).forEach(item => list.push(item));
         }
-        // เรียงลำดับเวลาจากน้อยไปมาก (สร้างเสร็จเร็วที่สุด)
         list.sort((a, b) => a.timeSec - b.timeSec);
         renderLeaderboardUI(list.slice(0, 5));
     }).catch(() => {
@@ -684,10 +780,8 @@ function updateActionPanel() {
     const panel = document.getElementById('panel-content');
     if (!panel) return;
 
-    // ✨ ตรวจสอบว่าอยู่ในโหมดกำลังย้ายหรือไม่
     if (movingFromTile) {
         if (!selectedTile) return;
-
         const { r, c } = selectedTile;
         if (r === movingFromTile.r && c === movingFromTile.c) {
             panel.innerHTML = `
@@ -758,22 +852,36 @@ function updateActionPanel() {
         html += `<div class="text-[11px] text-slate-200 font-bold">ให้แรงงาน: +${bInfo.upgrades[item.level - 1].workers} คน</div>`;
     }
 
+    // 🌟 จัดกลุ่มปุ่มคำสั่งต่างๆ
+    html += `<div class="flex flex-wrap gap-1.5 mt-2">`;
+
     if (item.level < 3 && item.type !== 'wonder') {
         const nextUpgrade = bInfo.upgrades[item.level];
         let costStr = [];
         if (nextUpgrade.cost.gold) costStr.push(`🪙${nextUpgrade.cost.gold}`);
         if (nextUpgrade.cost.wood) costStr.push(`🪵${nextUpgrade.cost.wood}`);
 
-        html += `<div class="text-[11px] text-slate-300 mb-1.5 font-bold">ถัดไป: ${nextUpgrade.prod} (${BUILD_TIME[item.type][item.level]}s)</div>`;
-        html += `<button class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs active:scale-95 transition" onclick="upgradeBuilding(${r}, ${c})">⬆️ อัพเกรด Lv.${item.level + 1} (${costStr.join(' ')})</button>`;
+        html += `<div class="w-full text-[11px] text-slate-300 mb-1 font-bold">ถัดไป: ${nextUpgrade.prod} (${BUILD_TIME[item.type][item.level]}s)</div>`;
+        html += `<button class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs active:scale-95 transition" onclick="upgradeBuilding(${r}, ${c})">⬆️ อัพเกรด (${costStr.join(' ')})</button>`;
     } else {
-        html += `<div class="text-[11px] text-emerald-400 font-bold mb-1.5">ระดับสูงสุด</div>`;
-        
-        // ✨ เพิ่มปุ่มให้สำหรับ Level 3 ขึ้นไป
-        if (item.level === 3) {
+        html += `<div class="w-full text-[11px] text-emerald-400 font-bold mb-1">ระดับสูงสุด</div>`;
+        if (item.level === 3 && item.type !== 'wonder') {
             html += `<button class="bg-sky-500 hover:bg-sky-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs active:scale-95 transition" onclick="startMovingBuilding(${r}, ${c})">🔀 ย้ายตำแหน่ง</button>`;
         }
     }
+
+    // 💰 เพิ่มปุ่มขาย (Sell) สำหรับสิ่งก่อสร้างที่สร้างเสร็จแล้ว (ไม่ใช่ Wonder)
+    if (item.type !== 'wonder') {
+        const refund = getRefund(item.type, item.level);
+        let refundMsg = [];
+        if (refund.wood > 0) refundMsg.push(`🪵${refund.wood}`);
+        if (refund.gold > 0) refundMsg.push(`🪙${refund.gold}`);
+        if (refund.food > 0) refundMsg.push(`🌾${refund.food}`);
+        
+        html += `<button class="bg-rose-500 hover:bg-rose-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs active:scale-95 transition" onclick="sellBuilding(${r}, ${c})">💰 ขายคืน (${refundMsg.join(' ')})</button>`;
+    }
+
+    html += `</div>`; // ปิด flex
 
     panel.innerHTML = html;
 }
@@ -789,9 +897,7 @@ function drawBuildCanvas() {
             buildCtx.lineWidth = 1;
             buildCtx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
-            // ✨ วาดไฮไลท์แสดงผลตอนที่กำลังเลือก หรือ ตอนอยู่ในโหมดย้าย
             if (movingFromTile && movingFromTile.r === r && movingFromTile.c === c) {
-                // สีฟ้าสำหรับไฮไลท์ต้นทาง
                 buildCtx.fillStyle = 'rgba(33, 150, 243, 0.4)';
                 buildCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 buildCtx.strokeStyle = '#2196f3';
@@ -801,16 +907,14 @@ function drawBuildCanvas() {
 
             if (selectedTile && selectedTile.r === r && selectedTile.c === c) {
                 if (movingFromTile && !(r === movingFromTile.r && c === movingFromTile.c)) {
-                    // Preview สำหรับการย้าย (เป้าหมายปลายทาง)
                     if (grid[r][c] === null) {
-                        buildCtx.fillStyle = 'rgba(76, 175, 80, 0.4)'; // วางได้ (สีเขียว)
+                        buildCtx.fillStyle = 'rgba(76, 175, 80, 0.4)'; 
                         buildCtx.strokeStyle = '#4caf50';
                     } else {
-                        buildCtx.fillStyle = 'rgba(244, 67, 54, 0.4)'; // วางไม่ได้ (สีแดง)
+                        buildCtx.fillStyle = 'rgba(244, 67, 54, 0.4)'; 
                         buildCtx.strokeStyle = '#f44336';
                     }
                 } else {
-                    // ไฮไลท์การเลือกปกติ (สีเหลือง)
                     buildCtx.fillStyle = 'rgba(255, 235, 59, 0.3)';
                     buildCtx.strokeStyle = '#ffd54f';
                 }
@@ -837,7 +941,6 @@ function drawBuildCanvas() {
                         buildCtx.fillText(`🔨${item.clearTimer}s`, c * TILE_SIZE + TILE_SIZE / 2, r * TILE_SIZE + TILE_SIZE / 2);
                     }
                 } else {
-                    // ตรวจสอบรูปภาพ PNG ของสิ่งปลูกสร้าง
                     const typeImgs = buildingImages[item.type];
                     const imgObj = (typeImgs && typeImgs[item.level - 1]) ? typeImgs[item.level - 1] : null;
 

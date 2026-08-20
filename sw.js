@@ -1,7 +1,7 @@
 // ==========================================
 // --- PWA SERVICE WORKER (UPDATED CACHE) ---
 // ==========================================
-const CACHE_NAME = 'kids-vocab-v4'; // ✨ ขยับเป็น v4 
+const CACHE_NAME = 'kids-vocab-v5'; // ✨ ขยับเป็น v5 เพื่ออัปเดตไฟล์เสียง
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -16,6 +16,10 @@ const ASSETS_TO_CACHE = [
     './game-td.js',
     './game-number-dungeon.js',
     './game-build.js',
+    
+    // 🎵 ไฟล์เสียงดนตรีประกอบ (อัปเดตใหม่)
+    './bgm.mp3',
+
     // รูปภาพสิ่งปลูกสร้าง
     './house_lvl1.png', './house_lvl2.png', './house_lvl3.png',
     './farm_lvl1.png', './farm_lvl2.png', './farm_lvl3.png',
@@ -25,7 +29,7 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (event) => {
-    self.skipWaiting(); // 🚀 สำคัญมาก! บังคับให้ SW ตัวใหม่ทำงานทันที ไม่ต้องรอปิดแท็บ
+    self.skipWaiting(); // บังคับให้ SW ตัวใหม่ทำงานทันที
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
     );
@@ -39,7 +43,7 @@ self.addEventListener('activate', (event) => {
             );
         })
     );
-    self.clients.claim(); // 🚀 สำคัญมาก! บังคับให้เบราว์เซอร์เตะ Cache เก่าทิ้งแล้วใช้ของใหม่เดี๋ยวนี้
+    self.clients.claim(); // บังคับเตะ Cache เก่าทิ้ง
 });
 
 self.addEventListener('fetch', (event) => {
