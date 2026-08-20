@@ -1,7 +1,7 @@
 // ==========================================
 // --- PWA SERVICE WORKER (UPDATED CACHE) ---
 // ==========================================
-const CACHE_NAME = 'kids-vocab-v3'; // ✨ อัปเดตตรงนี้เป็น v3 เพื่อบังคับล้าง Cache เก่าที่พัง
+const CACHE_NAME = 'kids-vocab-v4'; // ✨ ขยับเป็น v4 
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -25,6 +25,7 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (event) => {
+    self.skipWaiting(); // 🚀 สำคัญมาก! บังคับให้ SW ตัวใหม่ทำงานทันที ไม่ต้องรอปิดแท็บ
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
     );
@@ -38,6 +39,7 @@ self.addEventListener('activate', (event) => {
             );
         })
     );
+    self.clients.claim(); // 🚀 สำคัญมาก! บังคับให้เบราว์เซอร์เตะ Cache เก่าทิ้งแล้วใช้ของใหม่เดี๋ยวนี้
 });
 
 self.addEventListener('fetch', (event) => {
