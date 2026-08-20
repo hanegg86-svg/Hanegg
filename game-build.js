@@ -15,6 +15,7 @@ let currentTool = 'select';
 let selectedTile = null;
 let gameTime = 0;
 let isBuildGameOver = false;
+let isImmersiveMode = false;
 
 let currentEvent = 'normal';
 let eventTimer = 30;
@@ -139,6 +140,52 @@ function resizeBuildCanvas() {
     TILE_SIZE = containerWidth / GRID_SIZE;
     buildCanvas.width = containerWidth;
     buildCanvas.height = containerWidth;
+}
+
+// 🌟 ระบบสลับโหมดซ่อน/แสดง UI แบบบังคับ Style Direct 🌟
+function toggleImmersiveMode() {
+    isImmersiveMode = !isImmersiveMode;
+
+    const mainHeader = document.getElementById("main-header");
+    const expBar = document.getElementById("exp-bar-container");
+    const miniGameTabBar = document.getElementById("minigames-tab-bar");
+    const bottomNav = document.getElementById("main-bottom-nav");
+    const floatBtn = document.getElementById("btn-add-vocab");
+    const buildContainer = document.getElementById("game-build-container");
+    const toggleBtn = document.getElementById("btn-toggle-ui");
+    const floatRestoreBtn = document.getElementById("float-restore-ui-btn");
+
+    if (isImmersiveMode) {
+        // บังคับซ่อนทุกแถบ
+        if (mainHeader) mainHeader.style.setProperty('display', 'none', 'important');
+        if (expBar) expBar.style.setProperty('display', 'none', 'important');
+        if (miniGameTabBar) miniGameTabBar.style.setProperty('display', 'none', 'important');
+        if (bottomNav) bottomNav.style.setProperty('display', 'none', 'important');
+        if (floatBtn) floatBtn.style.setProperty('display', 'none', 'important');
+
+        if (buildContainer) {
+            buildContainer.classList.remove("max-h-[calc(100vh-160px)]", "pb-12");
+            buildContainer.classList.add("max-h-screen", "pb-4");
+        }
+        if (toggleBtn) toggleBtn.innerHTML = "👁️ แสดงแถบ";
+        if (floatRestoreBtn) floatRestoreBtn.style.setProperty('display', 'flex', 'important');
+    } else {
+        // คืนค่ากลับมาแสดงตามปกติ
+        if (mainHeader) mainHeader.style.removeProperty('display');
+        if (expBar) expBar.style.removeProperty('display');
+        if (miniGameTabBar) miniGameTabBar.style.removeProperty('display');
+        if (bottomNav) bottomNav.style.removeProperty('display');
+        if (floatBtn) floatBtn.style.removeProperty('display');
+
+        if (buildContainer) {
+            buildContainer.classList.add("max-h-[calc(100vh-160px)]", "pb-12");
+            buildContainer.classList.remove("max-h-screen", "pb-4");
+        }
+        if (toggleBtn) toggleBtn.innerHTML = "👁️ ซ่อนแถบ";
+        if (floatRestoreBtn) floatRestoreBtn.style.setProperty('display', 'none', 'important');
+    }
+
+    setTimeout(resizeBuildCanvas, 100);
 }
 
 function initObstacles() {
