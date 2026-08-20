@@ -127,6 +127,11 @@
 </head>
 <body class="bg-slate-50 text-slate-700 min-h-screen flex flex-col justify-between select-none touch-btn relative pb-20">
 
+    <!-- Floating Restore UI Button (สำหรับเรียกคืนแถบที่ซ่อน) -->
+    <button id="float-restore-ui-btn" onclick="toggleImmersiveMode()" class="fixed top-3 right-3 bg-slate-900/90 border-2 border-amber-400 text-amber-300 font-extrabold px-3 py-1.5 rounded-full text-xs z-50 shadow-lg hidden active:scale-95 transition backdrop-blur-xs flex items-center gap-1 font-kids">
+        👁️ แสดงแถบ UI
+    </button>
+
     <!-- iOS Splash Screen Overlay -->
     <div id="ios-splash-screen">
         <div id="splash-icon-container" class="w-44 h-44 rounded-3xl shadow-2xl mb-4 bg-white/20 backdrop-blur-md border-2 border-white/30 flex items-center justify-center animate-pulse overflow-hidden">
@@ -137,8 +142,8 @@
         <div class="text-pink-100 text-xs mt-1 font-bold">กำลังโหลดความสนุก...</div>
     </div>
 
-    <!-- Header -->
-    <header class="bg-gradient-to-b from-pink-400 to-pink-500 p-3.5 text-white shadow-[0_4px_0_0_#be185d] border-b-4 border-pink-700 max-w-xl w-full mx-auto sticky top-0 z-30 rounded-b-3xl flex justify-between items-center transition-all">
+    <!-- Header (Main App Header) -->
+    <header id="main-header" class="bg-gradient-to-b from-pink-400 to-pink-500 p-3.5 text-white shadow-[0_4px_0_0_#be185d] border-b-4 border-pink-700 max-w-xl w-full mx-auto sticky top-0 z-30 rounded-b-3xl flex justify-between items-center transition-all">
         <div class="flex items-center gap-2">
             <button onclick="openProfileModal()" class="bg-white hover:bg-slate-50 px-3 py-1.5 rounded-2xl text-xs font-black text-pink-700 shadow-[0_3px_0_0_#cbd5e1] border-2 border-slate-200 flex items-center gap-2 min-h-[42px] transition active:translate-y-1 active:shadow-none">
                 <div class="w-8 h-8 rounded-full overflow-hidden bg-amber-100 flex items-center justify-center border-2 border-amber-400 shadow-inner">
@@ -287,7 +292,9 @@
 
         <!-- TAB 2: MINI GAMES HUB TAB -->
         <div id="main-game-tab" class="w-full hidden flex-col items-center space-y-4">
-            <div class="w-full bg-sky-100 p-2.5 rounded-3xl border-4 border-sky-300 shadow-[0_4px_0_0_#7dd3fc] flex gap-2 overflow-x-auto">
+            
+            <!-- Mini Games Navigation Bar -->
+            <div id="minigames-tab-bar" class="w-full bg-sky-100 p-2.5 rounded-3xl border-4 border-sky-300 shadow-[0_4px_0_0_#7dd3fc] flex gap-2 overflow-x-auto transition-all">
                 <button id="game-subtab-vocab" onclick="switchMiniGame('vocab')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-pink-500 text-white shadow-[0_4px_0_0_#be185d] border-2 border-pink-700 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🎴 คำศัพท์</button>
                 <button id="game-subtab-math" onclick="switchMiniGame('math')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🔢 คิดเลข</button>
                 <button id="game-subtab-story" onclick="switchMiniGame('story')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">📖 นิทาน AI</button>
@@ -738,13 +745,19 @@
                 </div>
             </div>
 
-            <!-- 🌟 Mini Town Builder: Hard Edition (เพิ่ม Scroll และปรับ Layout จอมือถือ) 🌟 -->
-            <div id="game-build-container" class="w-full max-w-sm hidden flex-col items-center max-h-[calc(100vh-160px)] overflow-y-auto pr-1 pb-12">
+            <!-- 🌟 Mini Town Builder: Hard Edition (เพิ่มปุ่มซ่อนแถบ UI บน-ล่าง) 🌟 -->
+            <div id="game-build-container" class="w-full max-w-sm hidden flex-col items-center max-h-[calc(100vh-160px)] overflow-y-auto pr-1 pb-12 transition-all">
                 <div class="w-full bg-slate-900 border-4 border-amber-500 p-3 rounded-3xl text-white shadow-2xl flex flex-col items-center">
                     
-                    <h2 class="font-kids text-sm font-extrabold text-amber-400 mb-2">🏰 Mini Town Builder: Hard Mode</h2>
+                    <!-- Title Bar & Toggle UI Button -->
+                    <div class="w-full flex justify-between items-center mb-2 px-1">
+                        <h2 class="font-kids text-sm font-extrabold text-amber-400">🏰 Mini Town Builder: Hard Mode</h2>
+                        <button onclick="toggleImmersiveMode()" id="btn-toggle-ui" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/50 px-2.5 py-1 rounded-xl text-[10px] font-extrabold flex items-center gap-1 transition active:scale-95 font-kids shadow-2xs">
+                            👁️ ซ่อนแถบ
+                        </button>
+                    </div>
 
-                    <!-- Resource Stats Bar (แถบทรัพยากร) -->
+                    <!-- Resource Stats Bar (แถบททรัพยากร) -->
                     <div id="stats" class="w-full bg-slate-800/90 border border-slate-700 p-2 rounded-2xl flex justify-around text-[11px] font-extrabold mb-2 text-slate-200">
                         <div class="stat-item flex items-center gap-1">🪵 <span id="wood">25</span></div>
                         <div class="stat-item flex items-center gap-1">🪙 <span id="gold">50</span></div>
@@ -853,7 +866,7 @@
     </main>
 
     <!-- Bottom Navigation Bar -->
-    <nav class="fixed bottom-0 left-0 right-0 max-w-xl mx-auto bg-white border-t-4 border-slate-200 p-2 pb-5 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] flex items-center justify-around z-40 rounded-t-3xl font-bold text-[11px] font-kids">
+    <nav id="main-bottom-nav" class="fixed bottom-0 left-0 right-0 max-w-xl mx-auto bg-white border-t-4 border-slate-200 p-2 pb-5 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] flex items-center justify-around z-40 rounded-t-3xl font-bold text-[11px] font-kids transition-all">
         <button onclick="switchMainTab('quest')" id="nav-btn-quest" class="flex flex-col items-center gap-1 text-pink-600 flex-1 py-1 transition hover:scale-105 active:scale-95">
             <span class="text-2xl drop-shadow-sm">🏠</span><span>เควส</span>
         </button>
@@ -1085,7 +1098,7 @@
                 </div>
 
                 <div class="flex bg-slate-100 p-1 rounded-2xl border border-slate-200">
-                    <button id="lvl-btn-poon" onclick="switchLevelConfigChild('พูน')" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs">?? น้องพูน</button>
+                    <button id="lvl-btn-poon" onclick="switchLevelConfigChild('พูน')" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs">👦 น้องพูน</button>
                     <button id="lvl-btn-ploern" onclick="switchLevelConfigChild('เพลิน')" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600">👧 น้องเพลิน</button>
                 </div>
 
