@@ -1,7 +1,7 @@
 // ==========================================
 // --- PWA SERVICE WORKER (UPDATED CACHE) ---
 // ==========================================
-const CACHE_NAME = 'kids-vocab-v9'; // ✨ เปลี่ยนจาก v8 เป็น v9 ตรงนี้ครับ
+const CACHE_NAME = 'kids-vocab-v10'; // ✨ เปลี่ยนเป็น v10 ตรงนี้ครับ
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

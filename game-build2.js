@@ -1062,17 +1062,17 @@ function drawBuildCanvas() {
                     }
 
                     if (imgObj && imgObj.complete && imgObj.naturalWidth !== 0) {
-                        const pad = 2;
-                        const maxBoxSize = drawSize - (pad * 2);
+                        // ปรับให้รูปภาพใหญ่ขึ้น (ล้นขอบนิดๆ แบบ Isometric)
+                        const scaleMultiplier = 1.25; 
                         
-                        // 1. คำนวณ Scale เพื่อรักษาสัดส่วนเดิมของรูปภาพ (ไม่ให้แบน)
-                        const scale = Math.min(maxBoxSize / imgObj.naturalWidth, maxBoxSize / imgObj.naturalHeight);
+                        // คำนวณสเกลจากขนาดช่อง (drawSize)
+                        const scale = Math.min(drawSize / imgObj.naturalWidth, drawSize / imgObj.naturalHeight) * scaleMultiplier;
                         const finalW = imgObj.naturalWidth * scale;
                         const finalH = imgObj.naturalHeight * scale;
                         
-                        // 2. จัดตำแหน่งให้อยู่กึ่งกลางของช่องพอดี (ในที่นี้ให้ชิดพื้นล่าง)
+                        // จัดให้อยู่กึ่งกลาง และวางชิดล่าง (ให้ฐานพอดีขอบช่อง)
                         const offsetX = (drawSize - finalW) / 2;
-                        const offsetY = drawSize - finalH - pad; 
+                        const offsetY = drawSize - finalH + 5; 
 
                         buildCtx.drawImage(imgObj, (c * TILE_SIZE) + offsetX, (r * TILE_SIZE) + offsetY, finalW, finalH);
                     } else {
@@ -1094,12 +1094,26 @@ function drawBuildCanvas() {
                         buildCtx.fillStyle = 'rgba(0,0,0,0.6)';
                         buildCtx.fillRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, drawSize - 4, drawSize - 4);
                         buildCtx.font = `bold ${TILE_SIZE * 0.3}px sans-serif`;
+                        buildCtx.textAlign = 'center';
+                        buildCtx.textBaseline = 'middle';
                         buildCtx.fillStyle = '#ffd54f';
                         buildCtx.fillText(`🔨${item.buildTimer}s`, c * TILE_SIZE + drawSize / 2, r * TILE_SIZE + drawSize / 2);
                     } else if (item.type !== 'wonder') {
-                        buildCtx.font = `bold ${Math.max(9, TILE_SIZE * 0.22)}px sans-serif`;
+                        // ปรับขนาดตัวหนังสือให้เล็กลง
+                        buildCtx.font = `bold ${Math.max(9, TILE_SIZE * 0.14)}px sans-serif`;
+                        buildCtx.textAlign = 'right';
+                        buildCtx.textBaseline = 'bottom';
+                        
+                        const textX = c * TILE_SIZE + drawSize - 4;
+                        const textY = r * TILE_SIZE + drawSize - 2;
+
+                        // วาดเส้นขอบสีดำให้ตัวหนังสือชัดเจน
+                        buildCtx.lineWidth = 2;
+                        buildCtx.strokeStyle = 'rgba(0,0,0,0.7)';
+                        buildCtx.strokeText(`v${item.level}`, textX, textY);
+                        
                         buildCtx.fillStyle = '#ffffff';
-                        buildCtx.fillText(`v${item.level}`, c * TILE_SIZE + drawSize - 8, r * TILE_SIZE + drawSize - 6);
+                        buildCtx.fillText(`v${item.level}`, textX, textY);
                     }
                 }
             }
