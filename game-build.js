@@ -2,7 +2,7 @@
 // --- MINI TOWN BUILDER: HARD MODE ENGINE ---
 // ==========================================
 
-// ✨ Preload รูปภาพสิ่งปลูกสร้างตามเลเวล (.png) - เติม ./ นำหน้าเพื่อให้ Path ชัวร์ที่สุด
+// Preload รูปภาพสิ่งปลูกสร้างตามเลเวล (.png)
 const buildingImages = {
     house: ['./house_lvl1.png', './house_lvl2.png', './house_lvl3.png'].map(src => { const img = new Image(); img.src = src; return img; }),
     farm: ['./farm_lvl1.png', './farm_lvl2.png', './farm_lvl3.png'].map(src => { const img = new Image(); img.src = src; return img; }),
@@ -20,6 +20,7 @@ let TILE_SIZE = 80;
 let resources = { wood: 25, gold: 50, food: 15 };
 let currentTool = 'select';
 let selectedTile = null;
+let movingFromTile = null; // ✨ ตัวแปรใหม่สำหรับเก็บพิกัดตึกที่กำลังจะย้าย
 let gameTime = 0;
 let isBuildGameOver = false;
 let isImmersiveMode = false;
@@ -117,6 +118,7 @@ function initTownBuilderGame() {
     resources = { wood: 25, gold: 50, food: 15 };
     currentTool = 'select';
     selectedTile = null;
+    movingFromTile = null; // ✨ เคลียร์ค่าเวลาย้อนกลับหรือเริ่มเกมใหม่
     gameTime = 0;
     isBuildGameOver = false;
     currentEvent = 'normal';
@@ -232,6 +234,7 @@ function getWorkerStats() {
 }
 
 function selectTool(tool) {
+    if (movingFromTile) cancelMove(); // ✨ ยกเลิกการย้ายหากเปลี่ยนเครื่องมือ
     currentTool = tool;
     document.querySelectorAll('#controls button').forEach(btn => btn.classList.remove('active'));
     const targetBtn = document.getElementById(`btn-${tool}`);
@@ -247,12 +250,52 @@ function handleBuildCanvasClick(e) {
 
     if (r >= GRID_SIZE || c >= GRID_SIZE) return;
 
+    // ✨ ตรวจสอบโหมดกำลังย้าย (Move Mode)
+    if (movingFromTile) {
+        selectedTile = { r, c };
+        updateActionPanel();
+        return;
+    }
+
     if (currentTool === 'select') {
         selectedTile = { r, c };
         updateActionPanel();
     } else {
         buildStructure(r, c, currentTool);
     }
+}
+
+// ✨ ฟังก์ชันเริ่มโหมดย้าย
+function startMovingBuilding(r, c) {
+    movingFromTile = { r, c };
+    selectedTile = { r, c };
+    updateActionPanel();
+}
+
+// ✨ ฟังก์ชันยกเลิกโหมดย้าย
+function cancelMove() {
+    movingFromTile = null;
+    updateActionPanel();
+}
+
+// ✨ ฟังก์ชันยืนยันการย้าย
+function confirmMove() {
+    if (!movingFromTile || !selectedTile) return;
+    const fromR = movingFromTile.r;
+    const fromC = movingFromTile.c;
+    const toR = selectedTile.r;
+    const toC = selectedTile.c;
+
+    // ความปลอดภัย: ป้องกันการวางทับหากช่องเป้าหมายไม่ว่าง
+    if (grid[toR][toC] !== null) return; 
+
+    // ทำการสลับข้อมูล
+    grid[toR][toC] = grid[fromR][fromC];
+    grid[fromR][fromC] = null;
+    
+    movingFromTile = null;
+    updateActionPanel();
+    updateBuildUI();
 }
 
 function buildStructure(r, c, type) {
@@ -641,6 +684,33 @@ function updateActionPanel() {
     const panel = document.getElementById('panel-content');
     if (!panel) return;
 
+    // ✨ ตรวจสอบว่าอยู่ในโหมดกำลังย้ายหรือไม่
+    if (movingFromTile) {
+        if (!selectedTile) return;
+
+        const { r, c } = selectedTile;
+        if (r === movingFromTile.r && c === movingFromTile.c) {
+            panel.innerHTML = `
+                <span class="text-sky-400 text-xs font-bold">แตะพื้นที่เป้าหมาย(สีเขียว) เพื่อย้ายไปที่นั่น</span><br>
+                <button class="mt-2 bg-slate-500 hover:bg-slate-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs active:scale-95 transition" onclick="cancelMove()">❌ ยกเลิก</button>
+            `;
+        } else if (grid[r][c] === null) {
+            panel.innerHTML = `
+                <span class="text-emerald-400 text-xs font-bold">🟢 พื้นที่ว่าง สามารถวางได้!</span><br>
+                <div class="mt-2 flex justify-center gap-2">
+                    <button class="bg-slate-500 hover:bg-slate-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs active:scale-95 transition" onclick="cancelMove()">❌ ยกเลิก</button>
+                    <button class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs active:scale-95 transition" onclick="confirmMove()">✅ ยืนยันการวาง</button>
+                </div>
+            `;
+        } else {
+            panel.innerHTML = `
+                <span class="text-rose-400 text-xs font-bold">🔴 พื้นที่นี้มีสิ่งกีดขวาง วางไม่ได้</span><br>
+                <button class="mt-2 bg-slate-500 hover:bg-slate-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs active:scale-95 transition" onclick="cancelMove()">❌ ยกเลิก</button>
+            `;
+        }
+        return;
+    }
+
     if (!selectedTile) {
         panel.innerHTML = `<span class="text-slate-400 text-xs font-bold">คลิกเลือกช่องบนตารางเพื่อสั่งการ</span>`;
         return;
@@ -697,7 +767,12 @@ function updateActionPanel() {
         html += `<div class="text-[11px] text-slate-300 mb-1.5 font-bold">ถัดไป: ${nextUpgrade.prod} (${BUILD_TIME[item.type][item.level]}s)</div>`;
         html += `<button class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs active:scale-95 transition" onclick="upgradeBuilding(${r}, ${c})">⬆️ อัพเกรด Lv.${item.level + 1} (${costStr.join(' ')})</button>`;
     } else {
-        html += `<div class="text-[11px] text-emerald-400 font-bold">ระดับสูงสุด</div>`;
+        html += `<div class="text-[11px] text-emerald-400 font-bold mb-1.5">ระดับสูงสุด</div>`;
+        
+        // ✨ เพิ่มปุ่มให้สำหรับ Level 3 ขึ้นไป
+        if (item.level === 3) {
+            html += `<button class="bg-sky-500 hover:bg-sky-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs active:scale-95 transition" onclick="startMovingBuilding(${r}, ${c})">🔀 ย้ายตำแหน่ง</button>`;
+        }
     }
 
     panel.innerHTML = html;
@@ -714,10 +789,32 @@ function drawBuildCanvas() {
             buildCtx.lineWidth = 1;
             buildCtx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
-            if (selectedTile && selectedTile.r === r && selectedTile.c === c) {
-                buildCtx.fillStyle = 'rgba(255, 235, 59, 0.3)';
+            // ✨ วาดไฮไลท์แสดงผลตอนที่กำลังเลือก หรือ ตอนอยู่ในโหมดย้าย
+            if (movingFromTile && movingFromTile.r === r && movingFromTile.c === c) {
+                // สีฟ้าสำหรับไฮไลท์ต้นทาง
+                buildCtx.fillStyle = 'rgba(33, 150, 243, 0.4)';
                 buildCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                buildCtx.strokeStyle = '#ffd54f';
+                buildCtx.strokeStyle = '#2196f3';
+                buildCtx.lineWidth = 2;
+                buildCtx.strokeRect(c * TILE_SIZE + 1, r * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+            }
+
+            if (selectedTile && selectedTile.r === r && selectedTile.c === c) {
+                if (movingFromTile && !(r === movingFromTile.r && c === movingFromTile.c)) {
+                    // Preview สำหรับการย้าย (เป้าหมายปลายทาง)
+                    if (grid[r][c] === null) {
+                        buildCtx.fillStyle = 'rgba(76, 175, 80, 0.4)'; // วางได้ (สีเขียว)
+                        buildCtx.strokeStyle = '#4caf50';
+                    } else {
+                        buildCtx.fillStyle = 'rgba(244, 67, 54, 0.4)'; // วางไม่ได้ (สีแดง)
+                        buildCtx.strokeStyle = '#f44336';
+                    }
+                } else {
+                    // ไฮไลท์การเลือกปกติ (สีเหลือง)
+                    buildCtx.fillStyle = 'rgba(255, 235, 59, 0.3)';
+                    buildCtx.strokeStyle = '#ffd54f';
+                }
+                buildCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 buildCtx.lineWidth = 2;
                 buildCtx.strokeRect(c * TILE_SIZE + 1, r * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2);
             }
