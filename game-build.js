@@ -142,7 +142,6 @@ function resizeBuildCanvas() {
     buildCanvas.height = containerWidth;
 }
 
-// 🌟 ระบบสลับโหมดซ่อน/แสดง UI แบบบังคับ Style Direct 🌟
 function toggleImmersiveMode() {
     isImmersiveMode = !isImmersiveMode;
 
@@ -156,7 +155,6 @@ function toggleImmersiveMode() {
     const floatRestoreBtn = document.getElementById("float-restore-ui-btn");
 
     if (isImmersiveMode) {
-        // บังคับซ่อนทุกแถบ
         if (mainHeader) mainHeader.style.setProperty('display', 'none', 'important');
         if (expBar) expBar.style.setProperty('display', 'none', 'important');
         if (miniGameTabBar) miniGameTabBar.style.setProperty('display', 'none', 'important');
@@ -170,7 +168,6 @@ function toggleImmersiveMode() {
         if (toggleBtn) toggleBtn.innerHTML = "👁️ แสดงแถบ";
         if (floatRestoreBtn) floatRestoreBtn.style.setProperty('display', 'flex', 'important');
     } else {
-        // คืนค่ากลับมาแสดงตามปกติ
         if (mainHeader) mainHeader.style.removeProperty('display');
         if (expBar) expBar.style.removeProperty('display');
         if (miniGameTabBar) miniGameTabBar.style.removeProperty('display');
@@ -491,34 +488,112 @@ function expandGrid(newSize) {
     resizeBuildCanvas();
 }
 
+// 🌟 ระบบบันทึกและแสดงสถิติ Leaderboard ลง Firebase 🌟
 function triggerVictory() {
     isBuildGameOver = true;
     if (buildIntervalId) clearInterval(buildIntervalId);
 
-    // 1. รับดาวสะสม ⭐ +3 ดวง บันทึกลง Firebase (user_stars)
+    // 1. รับดาวสะสม ⭐ +3 ดวง
     if (typeof totalStars !== 'undefined') totalStars += 3;
     if (typeof saveUserStars === 'function') saveUserStars();
 
-    // 2. รับ EXP +200 บันทึกลง Firebase (user_exp)
+    // 2. รับ EXP +200
     if (typeof addEXPToUser === 'function') addEXPToUser(200);
 
-    // 3. บันทึกสถิติรอบเล่นประจำวันลง Firebase (user_daily_rounds)
+    // 3. บันทึกสถิติรอบเล่นประจำวัน
     if (typeof incrementTodayRounds === 'function') incrementTodayRounds();
 
-    // 4. มอบแต้มทักษะ "ความร่ำรวย 🪙" +10 แต้ม บันทึกลง Firebase (user_skills)
+    // 4. มอบแต้มทักษะความร่ำรวย 🪙 +10
     if (typeof addSkillPointsToUser === 'function' && typeof currentUser !== 'undefined') {
         addSkillPointsToUser(currentUser, 'wealth', 10);
     }
 
-    // 5. ส่งการแจ้งเตือนบันทึกลง Firebase (kids_notifications)
+    // 5. ส่งการแจ้งเตือน
     if (typeof sendInAppNotification === 'function') {
         sendInAppNotification('COMPLETED_BUILD', { timeSec: gameTime });
     }
 
     const vicText = document.getElementById('victory-text');
     const vicModal = document.getElementById('victory-modal');
-    if (vicText) vicText.innerText = `ชนะในเวลา ${formatTime(gameTime)}! รับ ⭐+3 ดวง, +200 EXP ✨ และแต้มทักษะความร่ำรวย 🪙+10`;
+    if (vicText) vicText.innerText = `ชนะในเวลา ${formatTime(gameTime)}! รับ ⭐+3, +200 EXP ✨ และ 🪙+10`;
     if (vicModal) vicModal.style.display = 'flex';
+
+    // 6. บันทึกสถิติลง Firebase Leaderboard และดึงตารางอันดับมาแสดง
+    saveAndFetchBuildLeaderboard(gameTime);
+}
+
+function saveAndFetchBuildLeaderboard(timeSec) {
+    const leaderContainer = document.getElementById('leaderboard-container');
+    if (leaderContainer) {
+        leaderContainer.innerHTML = `<div class="text-xs text-amber-300 font-bold py-2"><span class="spinner"></span> กำลังบันทึกและโหลดสถิติ...</div>`;
+    }
+
+    if (!window.firebaseModules) return;
+    const { getDatabase, ref, push, set, get } = window.firebaseModules;
+    const db = getDatabase();
+
+    const playerName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : "นักสร้างเมือง";
+    const leaderRef = ref(db, 'leaderboards/build');
+
+    // บันทึกสถิติรอบนี้
+    const newRunRef = push(leaderRef);
+    set(newRunRef, {
+        name: playerName,
+        timeSec: timeSec,
+        timestamp: Date.now()
+    }).then(() => {
+        fetchBuildLeaderboard(leaderRef, get);
+    }).catch(() => {
+        fetchBuildLeaderboard(leaderRef, get);
+    });
+}
+
+function fetchBuildLeaderboard(leaderRef, getFn) {
+    getFn(leaderRef).then((snapshot) => {
+        let list = [];
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            Object.values(data).forEach(item => list.push(item));
+        }
+        // เรียงลำดับเวลาจากน้อยไปมาก (สร้างเสร็จเร็วที่สุด)
+        list.sort((a, b) => a.timeSec - b.timeSec);
+        renderLeaderboardUI(list.slice(0, 5));
+    }).catch(() => {
+        renderLeaderboardUI([]);
+    });
+}
+
+function renderLeaderboardUI(topList) {
+    const leaderContainer = document.getElementById('leaderboard-container');
+    if (!leaderContainer) return;
+
+    let html = `
+        <div class="w-full bg-slate-800/90 p-2.5 rounded-2xl border border-amber-500/40 text-left">
+            <div class="text-xs font-bold text-amber-400 mb-1.5 flex items-center justify-between font-kids">
+                <span>🏆 อันดับสร้างเมืองเร็วที่สุด (Top 5)</span>
+            </div>
+            <div class="space-y-1">
+    `;
+
+    if (topList.length === 0) {
+        html += `<div class="text-[11px] text-slate-400 text-center py-2">ยังไม่มีข้อมูลสถิติ</div>`;
+    } else {
+        topList.forEach((item, idx) => {
+            const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `#${idx + 1}`));
+            html += `
+                <div class="flex justify-between items-center bg-slate-900/80 px-2.5 py-1 rounded-xl text-[11px] font-bold text-slate-200 border border-slate-700/50">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs">${medal}</span>
+                        <span class="text-amber-200 font-kids truncate max-w-[110px]">${item.name}</span>
+                    </div>
+                    <span class="text-emerald-400 font-mono font-extrabold">${formatTime(item.timeSec)}</span>
+                </div>
+            `;
+        });
+    }
+
+    html += `</div></div>`;
+    leaderContainer.innerHTML = html;
 }
 
 function restartBuildGame() {
