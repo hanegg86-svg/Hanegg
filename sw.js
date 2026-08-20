@@ -1,7 +1,7 @@
 // ==========================================
 // --- PWA SERVICE WORKER (UPDATED CACHE) ---
 // ==========================================
-const CACHE_NAME = 'kids-vocab-v7'; // ✨ ขยับเป็น v7
+const CACHE_NAME = 'kids-vocab-v8'; // ✨ เปลี่ยนจาก v7 เป็น v8 ตรงนี้ครับ
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -15,7 +15,7 @@ const ASSETS_TO_CACHE = [
     './game-story.js',
     './game-td.js',
     './game-number-dungeon.js',
-    './game-build2.js', // ✨ เปลี่ยนมาจำไฟล์ชื่อใหม่
+    './game-build2.js', 
     
     // 🎵 ไฟล์เสียงดนตรีประกอบ
     './bgm.mp3',
