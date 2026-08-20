@@ -1,7 +1,7 @@
 // ==========================================
 // --- PWA SERVICE WORKER (UPDATED CACHE) ---
 // ==========================================
-const CACHE_NAME = 'kids-vocab-v6'; // ✨ ขยับเป็น v6 เพื่ออัปเดต UI หน้าสร้างเมือง
+const CACHE_NAME = 'kids-vocab-v6'; // ✨ ขยับเป็น v6 เพื่ออัปเดตโค้ดเกมสร้างเมือง 2x2
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -17,7 +17,7 @@ const ASSETS_TO_CACHE = [
     './game-number-dungeon.js',
     './game-build.js',
     
-    // 🎵 ไฟล์เสียงดนตรีประกอบ (อัปเดตใหม่)
+    // 🎵 ไฟล์เสียงดนตรีประกอบ
     './bgm.mp3',
 
     // รูปภาพสิ่งปลูกสร้าง

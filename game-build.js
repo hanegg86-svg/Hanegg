@@ -155,13 +155,11 @@ function initTownBuilderGame() {
 function initBGMUI() {
     let bgmBtn = document.getElementById('btn-toggle-bgm');
     if (!bgmBtn) {
-        const controlsDiv = document.getElementById('bgm-btn-container'); // เปลี่ยนมาเล็งที่กล่องใหม่
+        const controlsDiv = document.getElementById('controls');
         if (controlsDiv) {
             bgmBtn = document.createElement('button');
             bgmBtn.id = 'btn-toggle-bgm';
             bgmBtn.onclick = toggleBGM;
-            // บังคับให้ปุ่มกว้างเต็มกล่องที่เตรียมไว้
-            bgmBtn.className = 'w-full h-full text-[11px] font-extrabold rounded-xl shadow-xs transition';
             controlsDiv.appendChild(bgmBtn);
         }
     }
@@ -182,11 +180,10 @@ function toggleBGM() {
 function updateBGMButton() {
     const btn = document.getElementById('btn-toggle-bgm');
     if (btn) {
-        btn.innerHTML = isBgmMuted ? '🔇 ปิดเสียง' : '🔊 เปิดเสียง';
-        // อัปเดตสีตามสถานะ โดยรักษาขนาด w-full h-full ไว้
+        btn.innerHTML = isBgmMuted ? '🔇 เสียงปิดอยู่' : '🔊 เสียงเปิดอยู่';
         btn.className = isBgmMuted 
-            ? 'w-full h-full bg-slate-600 hover:bg-slate-700 text-white font-extrabold rounded-xl text-[11px] shadow-xs transition'
-            : 'w-full h-full bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold rounded-xl text-[11px] shadow-xs transition';
+            ? 'bg-slate-500 hover:bg-slate-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs transition'
+            : 'bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs transition';
     }
 }
 
@@ -218,7 +215,7 @@ function toggleImmersiveMode() {
         if (floatBtn) floatBtn.style.setProperty('display', 'none', 'important');
 
         if (buildContainer) {
-            buildContainer.classList.remove("max-h-[calc(100vh-160px)]", "pb-12", "pb-24");
+            buildContainer.classList.remove("max-h-[calc(100vh-160px)]", "pb-12");
             buildContainer.classList.add("max-h-screen", "pb-4");
         }
         if (toggleBtn) toggleBtn.innerHTML = "👁️ แสดงแถบ";
@@ -231,7 +228,7 @@ function toggleImmersiveMode() {
         if (floatBtn) floatBtn.style.removeProperty('display');
 
         if (buildContainer) {
-            buildContainer.classList.add("max-h-[calc(100vh-160px)]", "pb-24");
+            buildContainer.classList.add("max-h-[calc(100vh-160px)]", "pb-12");
             buildContainer.classList.remove("max-h-screen", "pb-4");
         }
         if (toggleBtn) toggleBtn.innerHTML = "👁️ ซ่อนแถบ";
@@ -262,7 +259,7 @@ function getWorkerStats() {
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
             const item = grid[r][c];
-            if (!item) continue;
+            if (!item || item.type === 'child') continue;
 
             if (item.type === 'house' && !item.isBuilding) {
                 totalWorkers += BUILDINGS.house.upgrades[item.level - 1].workers;
@@ -290,7 +287,6 @@ function selectTool(tool) {
 }
 
 function handleBuildCanvasClick(e) {
-    // 🎵 ลอจิกเริ่มเล่นเพลงตอนกดจอครั้งแรก
     if (!hasBgmStarted && !isBgmMuted) {
         bgmAudio.play().catch(err => console.log(err));
         hasBgmStarted = true;
@@ -298,10 +294,18 @@ function handleBuildCanvasClick(e) {
 
     if (isBuildGameOver) return;
     const rect = buildCanvas.getBoundingClientRect();
-    const c = Math.floor((e.clientX - rect.left) / TILE_SIZE);
-    const r = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+    let c = Math.floor((e.clientX - rect.left) / TILE_SIZE);
+    let r = Math.floor((e.clientY - rect.top) / TILE_SIZE);
 
     if (r >= GRID_SIZE || c >= GRID_SIZE) return;
+
+    // ถ้ากดโดนพื้นที่ลูก (ขยายร่าง) ให้ชี้เป้ากลับไปที่ช่องหลัก (เว้นแต่กำลังโหมดย้ายของอยู่แล้ว)
+    if (grid[r][c] && grid[r][c].type === 'child' && !movingFromTile) {
+        const pr = grid[r][c].parentR;
+        const pc = grid[r][c].parentC;
+        r = pr;
+        c = pc;
+    }
 
     if (movingFromTile) {
         selectedTile = { r, c };
@@ -334,11 +338,49 @@ function confirmMove() {
     const fromC = movingFromTile.c;
     const toR = selectedTile.r;
     const toC = selectedTile.c;
+    const item = grid[fromR][fromC];
 
-    if (grid[toR][toC] !== null) return; 
+    // เฉพาะ Level 3 ที่อนุญาตให้ย้าย และกินพื้นที่ 2x2
+    if (item && item.level === 3) {
+        // เช็คว่าล้นขอบจอหรือไม่
+        if (toR + 1 >= GRID_SIZE || toC + 1 >= GRID_SIZE) {
+            alert("พื้นที่ไม่พอวาง!"); return;
+        }
+        
+        // เช็คว่าทับของอื่นหรือไม่
+        const checkTiles = [[toR, toC], [toR, toC+1], [toR+1, toC], [toR+1, toC+1]];
+        for (let [cr, cc] of checkTiles) {
+            const destItem = grid[cr][cc];
+            if (destItem !== null) {
+                // ยอมให้ทับพื้นที่เดิมของตัวเองได้
+                if (destItem.type === 'child' && destItem.parentR === fromR && destItem.parentC === fromC) {
+                    continue; 
+                } else if (cr === fromR && cc === fromC) {
+                    continue;
+                } else {
+                    alert("พื้นที่ไม่ว่างสำหรับขนาด 2x2!"); return;
+                }
+            }
+        }
 
-    grid[toR][toC] = grid[fromR][fromC];
-    grid[fromR][fromC] = null;
+        // ล้างพื้นที่เดิม
+        grid[fromR][fromC] = null;
+        if(grid[fromR][fromC+1] && grid[fromR][fromC+1].type === 'child' && grid[fromR][fromC+1].parentR === fromR) grid[fromR][fromC+1] = null;
+        if(grid[fromR+1][fromC] && grid[fromR+1][fromC].type === 'child' && grid[fromR+1][fromC].parentR === fromR) grid[fromR+1][fromC] = null;
+        if(grid[fromR+1][fromC+1] && grid[fromR+1][fromC+1].type === 'child' && grid[fromR+1][fromC+1].parentR === fromR) grid[fromR+1][fromC+1] = null;
+
+        // วางลงพื้นที่ใหม่ (2x2)
+        grid[toR][toC] = item;
+        grid[toR][toC+1] = { type: 'child', parentR: toR, parentC: toC };
+        grid[toR+1][toC] = { type: 'child', parentR: toR, parentC: toC };
+        grid[toR+1][toC+1] = { type: 'child', parentR: toR, parentC: toC };
+
+    } else {
+        // สำหรับของขนาด 1x1 ทั่วไป
+        if (grid[toR][toC] !== null) return; 
+        grid[toR][toC] = grid[fromR][fromC];
+        grid[fromR][fromC] = null;
+    }
     
     movingFromTile = null;
     updateActionPanel();
@@ -375,9 +417,8 @@ function getRefund(type, level) {
 // 💰 ฟังก์ชันขายสิ่งปลูกสร้าง
 function sellBuilding(r, c) {
     const item = grid[r][c];
-    if (!item || item.isBuilding || item.type === 'wonder') return;
+    if (!item || item.isBuilding || item.type === 'wonder' || item.type === 'child') return;
 
-    // ⚠️ ลอจิกเช็คแรงงานติดลบ กรณีขายบ้าน
     if (item.type === 'house') {
         const wStats = getWorkerStats();
         const lostWorkers = BUILDINGS.house.upgrades[item.level - 1].workers;
@@ -398,6 +439,12 @@ function sellBuilding(r, c) {
         resources.gold += refund.gold;
         resources.food += refund.food;
         
+        // ถ้าเป็น Level 3 ต้องคืนพื้นที่ลูกๆ ให้กลับมาว่างด้วย
+        if (item.level === 3) {
+            if(grid[r][c+1] && grid[r][c+1].type === 'child' && grid[r][c+1].parentR === r) grid[r][c+1] = null;
+            if(grid[r+1][c] && grid[r+1][c].type === 'child' && grid[r+1][c].parentR === r) grid[r+1][c] = null;
+            if(grid[r+1][c+1] && grid[r+1][c+1].type === 'child' && grid[r+1][c+1].parentR === r) grid[r+1][c+1] = null;
+        }
         grid[r][c] = null;
         selectedTile = null;
         
@@ -473,7 +520,19 @@ function clearObstacle(r, c) {
 
 function upgradeBuilding(r, c) {
     const item = grid[r][c];
-    if (!item || item.level >= 3 || item.type === 'wonder' || item.isBuilding) return;
+    if (!item || item.level >= 3 || item.type === 'wonder' || item.isBuilding || item.type === 'child') return;
+
+    // เช็คพื้นที่ 2x2 สำหรับการเป็น Level 3
+    if (item.level === 2) {
+        if (r + 1 >= GRID_SIZE || c + 1 >= GRID_SIZE) {
+            alert("พื้นที่ไม่พอขยายร่างเป็น Level 3! ต้องมีที่ว่างด้านขวาและด้านล่าง");
+            return;
+        }
+        if (grid[r][c+1] !== null || grid[r+1][c] !== null || grid[r+1][c+1] !== null) {
+            alert("พื้นที่ไม่พอขยายร่างเป็น Level 3! ต้องเคลียร์สิ่งกีดขวางหรืออาคารที่ติดกันก่อน");
+            return;
+        }
+    }
 
     const nextUpgrade = BUILDINGS[item.type].upgrades[item.level];
     if (canAfford(nextUpgrade.cost)) {
@@ -481,6 +540,14 @@ function upgradeBuilding(r, c) {
         item.isBuilding = true;
         item.targetLevel = item.level + 1;
         item.buildTimer = BUILD_TIME[item.type][item.level];
+        
+        // จองพื้นที่ไว้ทันทีเพื่อกันผู้เล่นไปสร้างอย่างอื่นทับระหว่างก่อสร้าง
+        if (item.level === 2) {
+            grid[r][c+1] = { type: 'child', parentR: r, parentC: c };
+            grid[r+1][c] = { type: 'child', parentR: r, parentC: c };
+            grid[r+1][c+1] = { type: 'child', parentR: r, parentC: c };
+        }
+        
         updateBuildUI();
         updateActionPanel();
     } else {
@@ -517,7 +584,7 @@ function buildGameTick() {
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
             const item = grid[r][c];
-            if (!item) continue;
+            if (!item || item.type === 'child') continue; // ข้ามช่องลูกๆ
 
             if (item.isClearing) {
                 item.clearTimer--;
@@ -576,15 +643,15 @@ function triggerDisasterEvent() {
 
     if (roll < 0.35) {
         currentEvent = 'drought';
-        banner.className = 'w-full px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-orange-600 text-white shadow-xs text-center';
+        banner.className = 'w-full max-w-sm px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-orange-600 text-white shadow-xs';
         banner.innerText = '⚠️ เกิดภัยแล้ง! ฟาร์มผลิตอาหารลดลง 50% (30 วินาที)';
     } else if (roll < 0.70) {
         currentEvent = 'fire';
-        banner.className = 'w-full px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-rose-600 text-white shadow-xs animate-pulse text-center';
+        banner.className = 'w-full max-w-sm px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-rose-600 text-white shadow-xs animate-pulse';
         banner.innerText = '🔥 เกิดไฟไหม้! โรงไม้ผลิตไม้ลดลง 50% (30 วินาที)';
     } else {
         currentEvent = 'normal';
-        banner.className = 'w-full px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-emerald-600 text-white shadow-xs text-center';
+        banner.className = 'w-full max-w-sm px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-emerald-600 text-white shadow-xs';
         banner.innerText = '☀️ สภาพอากาศปกติ';
     }
 }
@@ -622,7 +689,7 @@ function countBuildings(type) {
     let count = 0;
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
-            if (grid[r][c] && grid[r][c].type === type && !grid[r][c].isBuilding) count++;
+            if (grid[r][c] && grid[r][c].type === type && grid[r][c].type !== 'child' && !grid[r][c].isBuilding) count++;
         }
     }
     return count;
@@ -631,7 +698,7 @@ function countBuildings(type) {
 function hasLevel3Building() {
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
-            if (grid[r][c] && grid[r][c].level === 3 && !grid[r][c].isBuilding) return true;
+            if (grid[r][c] && grid[r][c].level === 3 && grid[r][c].type !== 'child' && !grid[r][c].isBuilding) return true;
         }
     }
     return false;
@@ -640,7 +707,7 @@ function hasLevel3Building() {
 function hasWonder() {
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
-            if (grid[r][c] && grid[r][c].type === 'wonder' && !grid[r][c].isBuilding) return true;
+            if (grid[r][c] && grid[r][c].type === 'wonder' && grid[r][c].type !== 'child' && !grid[r][c].isBuilding) return true;
         }
     }
     return false;
@@ -786,12 +853,43 @@ function updateActionPanel() {
     if (movingFromTile) {
         if (!selectedTile) return;
         const { r, c } = selectedTile;
-        if (r === movingFromTile.r && c === movingFromTile.c) {
+        
+        let isSameTile = false;
+        let isValid = true;
+        const mItem = grid[movingFromTile.r][movingFromTile.c];
+        
+        if (mItem && mItem.level === 3) {
+            if (r === movingFromTile.r && c === movingFromTile.c) {
+                isSameTile = true;
+            } else if (r + 1 >= GRID_SIZE || c + 1 >= GRID_SIZE) {
+                isValid = false;
+            } else {
+                const checkTiles = [[r, c], [r, c+1], [r+1, c], [r+1, c+1]];
+                for(let [cr, cc] of checkTiles) {
+                    const destItem = grid[cr][cc];
+                    if (destItem !== null) {
+                        // ถ้าทับช่องของตัวเองถือว่าวางได้
+                        if (destItem.type === 'child' && destItem.parentR === movingFromTile.r && destItem.parentC === movingFromTile.c) {
+                            continue;
+                        } else if (cr === movingFromTile.r && cc === movingFromTile.c) {
+                            continue;
+                        } else {
+                            isValid = false; break;
+                        }
+                    }
+                }
+            }
+        } else {
+            if (r === movingFromTile.r && c === movingFromTile.c) isSameTile = true;
+            else if (grid[r][c] !== null) isValid = false;
+        }
+
+        if (isSameTile) {
             panel.innerHTML = `
                 <span class="text-sky-400 text-xs font-bold">แตะพื้นที่เป้าหมาย(สีเขียว) เพื่อย้ายไปที่นั่น</span><br>
                 <button class="mt-2 bg-slate-500 hover:bg-slate-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs active:scale-95 transition" onclick="cancelMove()">❌ ยกเลิก</button>
             `;
-        } else if (grid[r][c] === null) {
+        } else if (isValid) {
             panel.innerHTML = `
                 <span class="text-emerald-400 text-xs font-bold">🟢 พื้นที่ว่าง สามารถวางได้!</span><br>
                 <div class="mt-2 flex justify-center gap-2">
@@ -801,7 +899,7 @@ function updateActionPanel() {
             `;
         } else {
             panel.innerHTML = `
-                <span class="text-rose-400 text-xs font-bold">🔴 พื้นที่นี้มีสิ่งกีดขวาง วางไม่ได้</span><br>
+                <span class="text-rose-400 text-xs font-bold">🔴 พื้นที่นี้มีสิ่งกีดขวาง หรือไม่พอวาง 2x2</span><br>
                 <button class="mt-2 bg-slate-500 hover:bg-slate-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs active:scale-95 transition" onclick="cancelMove()">❌ ยกเลิก</button>
             `;
         }
@@ -816,7 +914,7 @@ function updateActionPanel() {
     const { r, c } = selectedTile;
     const item = grid[r][c];
 
-    if (!item) {
+    if (!item || item.type === 'child') {
         panel.innerHTML = `<span class="text-slate-400 text-xs font-bold">พื้นที่ว่าง - เลือกสิ่งก่อสร้างด้านบนเพื่อสร้าง</span>`;
         return;
     }
@@ -873,7 +971,7 @@ function updateActionPanel() {
         }
     }
 
-    // 💰 เพิ่มปุ่มขาย (Sell) สำหรับสิ่งก่อสร้างที่สร้างเสร็จแล้ว (ไม่ใช่ Wonder)
+    // 💰 เพิ่มปุ่มขาย (Sell)
     if (item.type !== 'wonder') {
         const refund = getRefund(item.type, item.level);
         let refundMsg = [];
@@ -896,21 +994,59 @@ function drawBuildCanvas() {
 
     for (let r = 0; r < GRID_SIZE; r++) {
         for (let c = 0; c < GRID_SIZE; c++) {
+            // วาดตารางพื้นฐาน
             buildCtx.strokeStyle = '#4a7a35';
             buildCtx.lineWidth = 1;
             buildCtx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
+            // Highlight ช่องที่ถูกเลือกเตรียมย้าย
             if (movingFromTile && movingFromTile.r === r && movingFromTile.c === c) {
+                let mWidth = TILE_SIZE; let mHeight = TILE_SIZE;
+                if (grid[r][c] && grid[r][c].level === 3) {
+                    mWidth = TILE_SIZE * 2; mHeight = TILE_SIZE * 2;
+                }
                 buildCtx.fillStyle = 'rgba(33, 150, 243, 0.4)';
-                buildCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                buildCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, mWidth, mHeight);
                 buildCtx.strokeStyle = '#2196f3';
                 buildCtx.lineWidth = 2;
-                buildCtx.strokeRect(c * TILE_SIZE + 1, r * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+                buildCtx.strokeRect(c * TILE_SIZE + 1, r * TILE_SIZE + 1, mWidth - 2, mHeight - 2);
             }
 
+            // Highlight ช่องเป้าหมาย (Selected)
             if (selectedTile && selectedTile.r === r && selectedTile.c === c) {
-                if (movingFromTile && !(r === movingFromTile.r && c === movingFromTile.c)) {
-                    if (grid[r][c] === null) {
+                let isMoving = movingFromTile && !(r === movingFromTile.r && c === movingFromTile.c);
+                let sWidth = TILE_SIZE; let sHeight = TILE_SIZE;
+                
+                if (grid[r][c] && grid[r][c].level === 3) {
+                    sWidth = TILE_SIZE * 2; sHeight = TILE_SIZE * 2;
+                }
+                if (movingFromTile) {
+                    const mItem = grid[movingFromTile.r][movingFromTile.c];
+                    if (mItem && mItem.level === 3) {
+                        sWidth = TILE_SIZE * 2; sHeight = TILE_SIZE * 2;
+                    }
+                }
+
+                if (isMoving) {
+                    let isValid = true;
+                    if (movingFromTile) {
+                       const mItem = grid[movingFromTile.r][movingFromTile.c];
+                       if (mItem && mItem.level === 3) {
+                           if (r + 1 >= GRID_SIZE || c + 1 >= GRID_SIZE) isValid = false;
+                           else {
+                               const checkTiles = [[r, c], [r, c+1], [r+1, c], [r+1, c+1]];
+                               for(let [cr, cc] of checkTiles) {
+                                   const destItem = grid[cr][cc];
+                                   if (destItem !== null && !(destItem.type === 'child' && destItem.parentR === movingFromTile.r && destItem.parentC === movingFromTile.c) && !(cr === movingFromTile.r && cc === movingFromTile.c)) {
+                                       isValid = false; break;
+                                   }
+                               }
+                           }
+                       } else {
+                           if (grid[r][c] !== null) isValid = false;
+                       }
+                    }
+                    if (isValid) {
                         buildCtx.fillStyle = 'rgba(76, 175, 80, 0.4)'; 
                         buildCtx.strokeStyle = '#4caf50';
                     } else {
@@ -921,13 +1057,16 @@ function drawBuildCanvas() {
                     buildCtx.fillStyle = 'rgba(255, 235, 59, 0.3)';
                     buildCtx.strokeStyle = '#ffd54f';
                 }
-                buildCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                buildCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, sWidth, sHeight);
                 buildCtx.lineWidth = 2;
-                buildCtx.strokeRect(c * TILE_SIZE + 1, r * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+                buildCtx.strokeRect(c * TILE_SIZE + 1, r * TILE_SIZE + 1, sWidth - 2, sHeight - 2);
             }
 
             const item = grid[r][c];
             if (item) {
+                // ข้ามการวาดรูปสำหรับช่องลูก เพราะเราจะวาดรูป 2x2 เต็มๆ จากช่องหลักไปแล้ว
+                if (item.type === 'child') continue;
+
                 if (item.type === 'obstacle') {
                     buildCtx.fillStyle = '#3a532c';
                     buildCtx.fillRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
@@ -946,10 +1085,15 @@ function drawBuildCanvas() {
                 } else {
                     const typeImgs = buildingImages[item.type];
                     const imgObj = (typeImgs && typeImgs[item.level - 1]) ? typeImgs[item.level - 1] : null;
+                    
+                    let drawSize = TILE_SIZE;
+                    if (item.level === 3 && item.type !== 'wonder') {
+                        drawSize = TILE_SIZE * 2;
+                    }
 
                     if (imgObj && imgObj.complete && imgObj.naturalWidth !== 0) {
                         const pad = 2;
-                        buildCtx.drawImage(imgObj, c * TILE_SIZE + pad, r * TILE_SIZE + pad, TILE_SIZE - (pad * 2), TILE_SIZE - (pad * 2));
+                        buildCtx.drawImage(imgObj, c * TILE_SIZE + pad, r * TILE_SIZE + pad, drawSize - (pad * 2), drawSize - (pad * 2));
                     } else {
                         buildCtx.fillStyle = '#43a047';
                         if (item.type === 'house') buildCtx.fillStyle = '#e91e63';
@@ -957,24 +1101,24 @@ function drawBuildCanvas() {
                         if (item.type === 'farm') buildCtx.fillStyle = '#fbc02d';
                         if (item.type === 'wonder') buildCtx.fillStyle = '#8e24aa';
 
-                        buildCtx.fillRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                        buildCtx.fillRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, drawSize - 4, drawSize - 4);
 
-                        buildCtx.font = `${TILE_SIZE * 0.45}px sans-serif`;
+                        buildCtx.font = `${TILE_SIZE * 0.45 * (drawSize/TILE_SIZE)}px sans-serif`;
                         buildCtx.textAlign = 'center';
                         buildCtx.textBaseline = 'middle';
-                        buildCtx.fillText(BUILDINGS[item.type].emoji, c * TILE_SIZE + TILE_SIZE / 2, r * TILE_SIZE + TILE_SIZE / 2);
+                        buildCtx.fillText(BUILDINGS[item.type].emoji, c * TILE_SIZE + drawSize / 2, r * TILE_SIZE + drawSize / 2);
                     }
 
                     if (item.isBuilding) {
                         buildCtx.fillStyle = 'rgba(0,0,0,0.6)';
-                        buildCtx.fillRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                        buildCtx.fillRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, drawSize - 4, drawSize - 4);
                         buildCtx.font = `bold ${TILE_SIZE * 0.3}px sans-serif`;
                         buildCtx.fillStyle = '#ffd54f';
-                        buildCtx.fillText(`🔨${item.buildTimer}s`, c * TILE_SIZE + TILE_SIZE / 2, r * TILE_SIZE + TILE_SIZE / 2);
+                        buildCtx.fillText(`🔨${item.buildTimer}s`, c * TILE_SIZE + drawSize / 2, r * TILE_SIZE + drawSize / 2);
                     } else if (item.type !== 'wonder') {
                         buildCtx.font = `bold ${Math.max(9, TILE_SIZE * 0.22)}px sans-serif`;
                         buildCtx.fillStyle = '#ffffff';
-                        buildCtx.fillText(`v${item.level}`, c * TILE_SIZE + TILE_SIZE - 8, r * TILE_SIZE + TILE_SIZE - 6);
+                        buildCtx.fillText(`v${item.level}`, c * TILE_SIZE + drawSize - 8, r * TILE_SIZE + drawSize - 6);
                     }
                 }
             }
