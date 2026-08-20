@@ -19,7 +19,7 @@ const ASSETS_TO_CACHE = [
     // รูปภาพสิ่งปลูกสร้าง
     './house_lvl1.png', './house_lvl2.png', './house_lvl3.png',
     './farm_lvl1.png', './farm_lvl2.png', './farm_lvl3.png',
-    './lumber_lvl1.png', './lumber_lvl2.png',
+    './lumber_lvl1.png', './lumber_lvl2.png', './lumber_lvl3.png',
     // รูปอวาตาร์ตัวละคร
     './luigi.png', './rosalina.png', './mario.png', './peach.png'
 ];

@@ -6,7 +6,7 @@
 const buildingImages = {
     house: ['house_lvl1.png', 'house_lvl2.png', 'house_lvl3.png'].map(src => { const img = new Image(); img.src = src; return img; }),
     farm: ['farm_lvl1.png', 'farm_lvl2.png', 'farm_lvl3.png'].map(src => { const img = new Image(); img.src = src; return img; }),
-    lumber: ['lumber_lvl1.png', 'lumber_lvl2.png', 'lumber_lvl2.png'].map(src => { const img = new Image(); img.src = src; return img; })
+    lumber: ['lumber_lvl1.png', 'lumber_lvl2.png', 'lumber_lvl3.png'].map(src => { const img = new Image(); img.src = src; return img; })
 };
 
 let buildCanvas, buildCtx;
