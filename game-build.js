@@ -23,6 +23,44 @@ let eventTimer = 30;
 let grid = Array(8).fill(null).map(() => Array(8).fill(null));
 let clearedCount = 0;
 
+// --- Preload Building Images ---
+const buildingImages = {
+    house: {},
+    lumber: {},
+    farm: {},
+    wonder: {}
+};
+
+function preloadBuildingImages() {
+    const imageSources = {
+        house: {
+            1: 'house_lvl1.png',
+            2: 'house_lvl2.png',
+            3: 'house_lvl3.png'
+        },
+        lumber: {
+            1: 'lumber_lvl1.png',
+            2: 'lumber_lvl2.png',
+            3: 'lumber_lvl3.png'
+        },
+        farm: {
+            1: 'farm_lvl1.png',
+            2: 'farm_lvl2.png',
+            3: 'farm_lvl3.png'
+        }
+    };
+
+    for (let type in imageSources) {
+        for (let lvl in imageSources[type]) {
+            const img = new Image();
+            img.src = imageSources[type][lvl];
+            buildingImages[type][lvl] = img;
+        }
+    }
+}
+
+preloadBuildingImages();
+
 const BUILD_TIME = {
     house: [4, 8, 14],
     lumber: [5, 10, 15],
@@ -488,27 +526,19 @@ function expandGrid(newSize) {
     resizeBuildCanvas();
 }
 
-// 🌟 ระบบบันทึกและแสดงสถิติ Leaderboard ลง Firebase 🌟
 function triggerVictory() {
     isBuildGameOver = true;
     if (buildIntervalId) clearInterval(buildIntervalId);
 
-    // 1. รับดาวสะสม ⭐ +3 ดวง
     if (typeof totalStars !== 'undefined') totalStars += 3;
     if (typeof saveUserStars === 'function') saveUserStars();
-
-    // 2. รับ EXP +200
     if (typeof addEXPToUser === 'function') addEXPToUser(200);
-
-    // 3. บันทึกสถิติรอบเล่นประจำวัน
     if (typeof incrementTodayRounds === 'function') incrementTodayRounds();
 
-    // 4. มอบแต้มทักษะความร่ำรวย 🪙 +10
     if (typeof addSkillPointsToUser === 'function' && typeof currentUser !== 'undefined') {
         addSkillPointsToUser(currentUser, 'wealth', 10);
     }
 
-    // 5. ส่งการแจ้งเตือน
     if (typeof sendInAppNotification === 'function') {
         sendInAppNotification('COMPLETED_BUILD', { timeSec: gameTime });
     }
@@ -518,7 +548,6 @@ function triggerVictory() {
     if (vicText) vicText.innerText = `ชนะในเวลา ${formatTime(gameTime)}! รับ ⭐+3, +200 EXP ✨ และ 🪙+10`;
     if (vicModal) vicModal.style.display = 'flex';
 
-    // 6. บันทึกสถิติลง Firebase Leaderboard และดึงตารางอันดับมาแสดง
     saveAndFetchBuildLeaderboard(gameTime);
 }
 
@@ -535,7 +564,6 @@ function saveAndFetchBuildLeaderboard(timeSec) {
     const playerName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : "นักสร้างเมือง";
     const leaderRef = ref(db, 'leaderboards/build');
 
-    // บันทึกสถิติรอบนี้
     const newRunRef = push(leaderRef);
     set(newRunRef, {
         name: playerName,
@@ -555,7 +583,6 @@ function fetchBuildLeaderboard(leaderRef, getFn) {
             const data = snapshot.val();
             Object.values(data).forEach(item => list.push(item));
         }
-        // เรียงลำดับเวลาจากน้อยไปมาก (สร้างเสร็จเร็วที่สุด)
         list.sort((a, b) => a.timeSec - b.timeSec);
         renderLeaderboardUI(list.slice(0, 5));
     }).catch(() => {
@@ -729,28 +756,33 @@ function drawBuildCanvas() {
                     }
                 } else {
                     buildCtx.fillStyle = '#43a047';
-                    if (item.type === 'house') buildCtx.fillStyle = '#e91e63';
-                    if (item.type === 'lumber') buildCtx.fillStyle = '#795548';
-                    if (item.type === 'farm') buildCtx.fillStyle = '#fbc02d';
-                    if (item.type === 'wonder') buildCtx.fillStyle = '#8e24aa';
-
                     buildCtx.fillRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
 
-                    buildCtx.font = `${TILE_SIZE * 0.45}px sans-serif`;
-                    buildCtx.textAlign = 'center';
-                    buildCtx.textBaseline = 'middle';
-                    buildCtx.fillText(BUILDINGS[item.type].emoji, c * TILE_SIZE + TILE_SIZE / 2, r * TILE_SIZE + TILE_SIZE / 2);
+                    const img = buildingImages[item.type] ? buildingImages[item.type][item.level] : null;
+
+                    if (img && img.complete && img.naturalWidth !== 0) {
+                        buildCtx.drawImage(img, c * TILE_SIZE + 2, r * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                    } else {
+                        buildCtx.font = `${TILE_SIZE * 0.45}px sans-serif`;
+                        buildCtx.textAlign = 'center';
+                        buildCtx.textBaseline = 'middle';
+                        buildCtx.fillText(BUILDINGS[item.type].emoji, c * TILE_SIZE + TILE_SIZE / 2, r * TILE_SIZE + TILE_SIZE / 2);
+                    }
 
                     if (item.isBuilding) {
                         buildCtx.fillStyle = 'rgba(0,0,0,0.6)';
                         buildCtx.fillRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
                         buildCtx.font = `bold ${TILE_SIZE * 0.3}px sans-serif`;
                         buildCtx.fillStyle = '#ffd54f';
+                        buildCtx.textAlign = 'center';
+                        buildCtx.textBaseline = 'middle';
                         buildCtx.fillText(`🔨${item.buildTimer}s`, c * TILE_SIZE + TILE_SIZE / 2, r * TILE_SIZE + TILE_SIZE / 2);
                     } else if (item.type !== 'wonder') {
                         buildCtx.font = `bold ${Math.max(9, TILE_SIZE * 0.22)}px sans-serif`;
                         buildCtx.fillStyle = '#ffffff';
-                        buildCtx.fillText(`v${item.level}`, c * TILE_SIZE + TILE_SIZE - 8, r * TILE_SIZE + TILE_SIZE - 6);
+                        buildCtx.textAlign = 'right';
+                        buildCtx.textBaseline = 'bottom';
+                        buildCtx.fillText(`v${item.level}`, c * TILE_SIZE + TILE_SIZE - 4, r * TILE_SIZE + TILE_SIZE - 4);
                     }
                 }
             }
