@@ -1,3 +1,4 @@
+// Service Worker Registration
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
@@ -76,7 +77,6 @@ let currentChildLevel = 1;
 let levelAvatarsConfig = { 'พูน': {}, 'เพลิน': {} };
 let selectedLvlConfigChild = 'พูน';
 
-// 🌟 ข้อมูล SKILL ใหม่ของพูนและเพลิน 🌟
 let userSkillsList = {
     'พูน': { knowledge: 0, fitness: 0, wealth: 0 },
     'เพลิน': { knowledge: 0, fitness: 0, wealth: 0 }
@@ -98,7 +98,6 @@ function shuffleArray(array) {
     return array;
 }
 
-// 🌟 ฟังก์ชันคำนวณ Level ของ Skill (ทุกๆ 10 แต้ม = 1 Level, สูงสุด Lv.5) 🌟
 function calculateSkillLevel(points) {
     const pts = points || 0;
     const level = Math.min(5, Math.floor(pts / 10));
@@ -402,7 +401,6 @@ function setProfile(name, isParent) {
     if(typeof renderNotifications === 'function') renderNotifications();
 }
 
-// 🌟 ฟังก์ชันเพิ่มแต้ม Skill และอัปเดตลงฐานข้อมูล 🌟
 function addSkillPointsToUser(childName, skillType, points) {
     if (!childName || !skillType || points <= 0) return;
     
@@ -422,7 +420,6 @@ function addSkillPointsToUser(childName, skillType, points) {
     renderUserSkillsUI();
 }
 
-// 🌟 ฟังก์ชันแสดงผลหลอด Skill 3 ด้านหน้าโปรไฟล์เควส 🌟
 function renderUserSkillsUI() {
     const container = document.getElementById("user-stats-skills-container");
     if (!container) return;
@@ -642,6 +639,35 @@ function incrementTodayRounds() {
     checkDailyLimitStatus();
 }
 
+function sendInAppNotification(type, payload) {
+    if (!currentUser) return;
+    try {
+        let messageText = `👦 น้อง${currentUser} ทำกิจกรรมสำเร็จ!`;
+        if (type === 'COMPLETED_BUILD') {
+            messageText = `🏰 น้อง${currentUser} สร้าง Wonder สำเร็จในเกมสร้างเมือง (ใช้เวลา ${formatTime(payload.timeSec)}) 🏛️✨`;
+        }
+
+        const notifyData = {
+            user: currentUser,
+            type: type,
+            text: messageText,
+            timestamp: Date.now()
+        };
+
+        if (isFirebaseActive) {
+            const { ref, push } = window.firebaseModules;
+            const db = window.firebaseModules.getDatabase();
+            push(ref(db, 'kids_notifications'), notifyData);
+        } else {
+            notificationsList.unshift({ id: Date.now().toString(), ...notifyData });
+            localStorage.setItem('kids_notifications_local', JSON.stringify(notificationsList));
+            if (typeof renderNotifications === 'function') renderNotifications();
+        }
+    } catch(e) {
+        console.error("Error sending notification:", e);
+    }
+}
+
 function checkDailyLimitStatus() {
     const limitBanner = document.getElementById("daily-limit-banner");
     const checkBtn = document.getElementById("btn-check-answer");
@@ -649,6 +675,8 @@ function checkDailyLimitStatus() {
     const storyGenBtn = document.getElementById("btn-generate-story");
     const tdBtns = document.querySelectorAll('.td-choice-btn');
     const tdUltBtn = document.getElementById('td-ultimate-btn');
+    const buildCanvas = document.getElementById("townGameCanvas");
+    const buildBtns = document.querySelectorAll('#controls button');
     const quotaText = document.getElementById("daily-quota-text");
     const limitRoundsText = document.getElementById("limit-rounds-text");
 
@@ -666,6 +694,8 @@ function checkDailyLimitStatus() {
             if (storyGenBtn) { storyGenBtn.disabled = true; storyGenBtn.classList.add("opacity-50", "cursor-not-allowed"); }
             if (tdBtns) tdBtns.forEach(btn => { btn.disabled = true; btn.classList.add("opacity-50", "cursor-not-allowed"); });
             if (tdUltBtn) { tdUltBtn.disabled = true; tdUltBtn.classList.add("opacity-50", "cursor-not-allowed"); }
+            if (buildCanvas) { buildCanvas.style.pointerEvents = "none"; buildCanvas.classList.add("opacity-50"); }
+            if (buildBtns) buildBtns.forEach(btn => { btn.disabled = true; btn.classList.add("opacity-50", "cursor-not-allowed"); });
         } else {
             if (limitBanner) limitBanner.classList.add("hidden");
             if (checkBtn) { checkBtn.disabled = false; checkBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
@@ -673,6 +703,8 @@ function checkDailyLimitStatus() {
             if (storyGenBtn) { storyGenBtn.disabled = false; storyGenBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
             if (tdBtns) tdBtns.forEach(btn => { btn.disabled = false; btn.classList.remove("opacity-50", "cursor-not-allowed"); });
             if (tdUltBtn) { tdUltBtn.disabled = false; tdUltBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
+            if (buildCanvas) { buildCanvas.style.pointerEvents = "auto"; buildCanvas.classList.remove("opacity-50"); }
+            if (buildBtns) buildBtns.forEach(btn => { btn.disabled = false; btn.classList.remove("opacity-50", "cursor-not-allowed"); });
         }
     } else {
         if (limitBanner) limitBanner.classList.add("hidden");
@@ -682,6 +714,8 @@ function checkDailyLimitStatus() {
         if (storyGenBtn) { storyGenBtn.disabled = false; storyGenBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
         if (tdBtns) tdBtns.forEach(btn => { btn.disabled = false; btn.classList.remove("opacity-50", "cursor-not-allowed"); });
         if (tdUltBtn) { tdUltBtn.disabled = false; tdUltBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
+        if (buildCanvas) { buildCanvas.style.pointerEvents = "auto"; buildCanvas.classList.remove("opacity-50"); }
+        if (buildBtns) buildBtns.forEach(btn => { btn.disabled = false; btn.classList.remove("opacity-50", "cursor-not-allowed"); });
     }
 }
 

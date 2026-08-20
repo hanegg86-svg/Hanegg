@@ -9,12 +9,14 @@ function switchMiniGame(subGame) {
     const btnStory = document.getElementById("game-subtab-story");
     const btnTd = document.getElementById("game-subtab-td");
     const btnDungeon = document.getElementById("game-subtab-dungeon");
+    const btnBuild = document.getElementById("game-subtab-build");
 
     const vocabContainer = document.getElementById("game-vocab-container");
     const mathContainer = document.getElementById("game-math-container");
     const storyContainer = document.getElementById("game-story-container");
     const tdContainer = document.getElementById("game-td-container");
     const dungeonContainer = document.getElementById("game-dungeon-container");
+    const buildContainer = document.getElementById("game-build-container");
 
     const langSwitchBox = document.getElementById("lang-switch-box");
 
@@ -23,8 +25,8 @@ function switchMiniGame(subGame) {
     const inactiveClass = "flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap";
     // --------------------------------------------------
 
-    [btnVocab, btnMath, btnStory, btnTd, btnDungeon].forEach(b => { if (b) b.className = inactiveClass; });
-    [vocabContainer, mathContainer, storyContainer, tdContainer, dungeonContainer].forEach(c => {
+    [btnVocab, btnMath, btnStory, btnTd, btnDungeon, btnBuild].forEach(b => { if (b) b.className = inactiveClass; });
+    [vocabContainer, mathContainer, storyContainer, tdContainer, dungeonContainer, buildContainer].forEach(c => {
         if (c) { c.classList.add("hidden"); c.classList.remove("flex"); }
     });
 
@@ -50,6 +52,10 @@ function switchMiniGame(subGame) {
         if (btnDungeon) btnDungeon.className = activeClass;
         if (dungeonContainer) { dungeonContainer.classList.remove("hidden"); dungeonContainer.classList.add("flex"); }
         if (typeof initNumberDungeon === "function") initNumberDungeon();
+    } else if (subGame === 'build') {
+        if (btnBuild) btnBuild.className = activeClass;
+        if (buildContainer) { buildContainer.classList.remove("hidden"); buildContainer.classList.add("flex"); }
+        if (typeof initTownBuilderGame === "function") initTownBuilderGame();
     }
     if (typeof checkDailyLimitStatus === "function") checkDailyLimitStatus();
 }
@@ -71,6 +77,9 @@ function restartSession() {
     else if (currentMiniGame === 'dungeon') { 
         if (typeof initNumberDungeon === "function") initNumberDungeon(); 
     } 
+    else if (currentMiniGame === 'build') {
+        if (typeof initTownBuilderGame === "function") initTownBuilderGame();
+    }
     else { 
         if (typeof setCorrectAnswers !== "undefined") setCorrectAnswers = 0; 
         if (typeof filteredVocabList !== "undefined" && typeof shuffleArray === "function") shuffleArray(filteredVocabList); 

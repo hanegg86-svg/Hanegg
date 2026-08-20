@@ -206,7 +206,7 @@
                 </div>
             </div>
 
-            <!-- 🌟 คอนเทนเนอร์แสดงผล SKILL 3 ด้านของพูน/เพลิน 🌟 -->
+            <!-- คอนเทนเนอร์แสดงผล SKILL 3 ด้านของพูน/เพลิน -->
             <div id="user-stats-skills-container" class="w-full space-y-2 hidden">
             </div>
 
@@ -288,6 +288,7 @@
                 <button id="game-subtab-story" onclick="switchMiniGame('story')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">📖 นิทาน AI</button>
                 <button id="game-subtab-td" onclick="switchMiniGame('td')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">⚔️ Math TD</button>
                 <button id="game-subtab-dungeon" onclick="switchMiniGame('dungeon')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🏰 Dungeon</button>
+                <button id="game-subtab-build" onclick="switchMiniGame('build')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🏗️ สร้างเมือง</button>
             </div>
 
             <!-- Content Mini Games -->
@@ -729,6 +730,17 @@
                             🔴 ระดับยากพิเศษ (300)
                         </button>
                     </div>
+                </div>
+            </div>
+
+            <!-- Mini Town Builder Game -->
+            <div id="game-build-container" class="w-full max-w-sm hidden flex-col items-center space-y-3">
+                <div class="w-full bg-amber-50 border-4 border-amber-400 p-3 rounded-3xl text-slate-800 shadow-lg flex flex-col items-center">
+                    <div class="flex justify-between items-center w-full mb-2">
+                        <h3 class="font-kids text-sm font-bold text-amber-900">🏗️ Mini Town Builder</h3>
+                        <span id="build-timer" class="text-xs bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">⏱️ 00:00</span>
+                    </div>
+                    <canvas id="townGameCanvas" width="320" height="320" class="bg-emerald-100 rounded-2xl border-2 border-amber-300 shadow-inner mb-2 cursor-pointer"></canvas>
                 </div>
             </div>
         </div>
@@ -1211,6 +1223,7 @@
     <script src="./game-story.js"></script>
     <script src="./game-td.js"></script>
     <script src="./game-number-dungeon.js"></script>
+    <script src="./game-build.js"></script>
 
     <script>
         lucide.createIcons();
