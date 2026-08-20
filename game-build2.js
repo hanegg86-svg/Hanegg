@@ -1063,7 +1063,18 @@ function drawBuildCanvas() {
 
                     if (imgObj && imgObj.complete && imgObj.naturalWidth !== 0) {
                         const pad = 2;
-                        buildCtx.drawImage(imgObj, c * TILE_SIZE + pad, r * TILE_SIZE + pad, drawSize - (pad * 2), drawSize - (pad * 2));
+                        const maxBoxSize = drawSize - (pad * 2);
+                        
+                        // 1. คำนวณ Scale เพื่อรักษาสัดส่วนเดิมของรูปภาพ (ไม่ให้แบน)
+                        const scale = Math.min(maxBoxSize / imgObj.naturalWidth, maxBoxSize / imgObj.naturalHeight);
+                        const finalW = imgObj.naturalWidth * scale;
+                        const finalH = imgObj.naturalHeight * scale;
+                        
+                        // 2. จัดตำแหน่งให้อยู่กึ่งกลางของช่องพอดี (ในที่นี้ให้ชิดพื้นล่าง)
+                        const offsetX = (drawSize - finalW) / 2;
+                        const offsetY = drawSize - finalH - pad; 
+
+                        buildCtx.drawImage(imgObj, (c * TILE_SIZE) + offsetX, (r * TILE_SIZE) + offsetY, finalW, finalH);
                     } else {
                         buildCtx.fillStyle = '#43a047';
                         if (item.type === 'house') buildCtx.fillStyle = '#e91e63';
