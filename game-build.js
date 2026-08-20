@@ -146,45 +146,8 @@ function initTownBuilderGame() {
     if (buildAnimationId) cancelAnimationFrame(buildAnimationId);
     drawBuildCanvas();
 
-    initBGMUI(); // โหลด UI เสียง BGM
     updateBuildUI();
     updateActionPanel();
-}
-
-// 🎵 ฟังก์ชันจัดการ BGM
-function initBGMUI() {
-    let bgmBtn = document.getElementById('btn-toggle-bgm');
-    if (!bgmBtn) {
-        const controlsDiv = document.getElementById('controls');
-        if (controlsDiv) {
-            bgmBtn = document.createElement('button');
-            bgmBtn.id = 'btn-toggle-bgm';
-            bgmBtn.onclick = toggleBGM;
-            controlsDiv.appendChild(bgmBtn);
-        }
-    }
-    updateBGMButton();
-}
-
-function toggleBGM() {
-    isBgmMuted = !isBgmMuted;
-    bgmAudio.muted = isBgmMuted;
-    localStorage.setItem('kids_vocab_bgm_muted', isBgmMuted);
-    updateBGMButton();
-    if (!isBgmMuted && !hasBgmStarted) {
-        bgmAudio.play().catch(e => console.log("รอให้ผู้เล่นกดที่กระดานก่อนเล่นเสียง"));
-        hasBgmStarted = true;
-    }
-}
-
-function updateBGMButton() {
-    const btn = document.getElementById('btn-toggle-bgm');
-    if (btn) {
-        btn.innerHTML = isBgmMuted ? '🔇 เสียงปิดอยู่' : '🔊 เสียงเปิดอยู่';
-        btn.className = isBgmMuted 
-            ? 'bg-slate-500 hover:bg-slate-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs transition'
-            : 'bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-xs transition';
-    }
 }
 
 function resizeBuildCanvas() {
@@ -278,6 +241,12 @@ function getWorkerStats() {
 }
 
 function selectTool(tool) {
+    // 🎵 เล่น BGM เมื่อกดปุ่มเลือกเครื่องมือครั้งแรก
+    if (!hasBgmStarted && !isBgmMuted) {
+        bgmAudio.play().catch(err => console.log(err));
+        hasBgmStarted = true;
+    }
+
     if (movingFromTile) cancelMove(); 
     currentTool = tool;
     document.querySelectorAll('#controls button').forEach(btn => btn.classList.remove('active'));
@@ -287,6 +256,7 @@ function selectTool(tool) {
 }
 
 function handleBuildCanvasClick(e) {
+    // 🎵 เล่น BGM เมื่อกดที่กระดานครั้งแรก
     if (!hasBgmStarted && !isBgmMuted) {
         bgmAudio.play().catch(err => console.log(err));
         hasBgmStarted = true;
