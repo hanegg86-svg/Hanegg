@@ -128,7 +128,7 @@
 <body class="bg-slate-50 text-slate-700 min-h-screen flex flex-col justify-between select-none touch-btn relative pb-20">
 
     <!-- Floating Restore UI Button (สำหรับเรียกคืนแถบที่ซ่อน) -->
-    <button id="float-restore-ui-btn" onclick="toggleImmersiveMode()" class="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border-2 border-amber-400 text-amber-300 font-extrabold px-3 py-1.5 rounded-full text-xs z-50 shadow-lg hidden active:scale-95 transition backdrop-blur-xs flex items-center gap-1 font-kids">
+    <button id="float-restore-ui-btn" onclick="toggleImmersiveMode()" class="fixed top-3 right-3 bg-slate-900/90 border-2 border-amber-400 text-amber-300 font-extrabold px-3 py-1.5 rounded-full text-xs z-50 shadow-lg hidden active:scale-95 transition backdrop-blur-xs flex items-center gap-1 font-kids">
         👁️ แสดงแถบ UI
     </button>
 
@@ -746,28 +746,28 @@
             </div>
 
             <!-- 🌟 Mini Town Builder: Hard Edition (พร้อมปุ่มซ่อน UI) 🌟 -->
-            <div id="game-build-container" class="w-full max-w-sm hidden flex-col items-center max-h-[calc(100vh-160px)] overflow-y-auto pr-1 pb-24 transition-all">
+            <div id="game-build-container" class="w-full max-w-sm hidden flex-col items-center max-h-[calc(100vh-160px)] overflow-y-auto pr-1 pb-12 transition-all">
                 <div class="w-full bg-slate-900 border-4 border-amber-500 p-3 rounded-3xl text-white shadow-2xl flex flex-col items-center">
                     
                     <!-- Title Bar & Toggle UI Button -->
                     <div class="w-full flex justify-between items-center mb-2 px-1">
                         <h2 class="font-kids text-sm font-extrabold text-amber-400">🏰 Mini Town Builder: Hard Mode</h2>
-                        <button onclick="toggleImmersiveMode()" id="btn-toggle-ui" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/50 px-2 py-1 rounded-xl text-[10px] font-extrabold flex items-center gap-1 transition active:scale-95 font-kids shadow-2xs">
+                        <button onclick="toggleImmersiveMode()" id="btn-toggle-ui" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/50 px-2.5 py-1 rounded-xl text-[10px] font-extrabold flex items-center gap-1 transition active:scale-95 font-kids shadow-2xs">
                             👁️ ซ่อนแถบ
                         </button>
                     </div>
 
                     <!-- Resource Stats Bar (แถบทรัพยากร) -->
-                    <div id="stats" class="w-full bg-slate-800/90 border border-slate-700 p-2 rounded-2xl flex justify-between text-[10px] font-extrabold mb-2 text-slate-200">
-                        <div class="stat-item flex items-center gap-0.5">🪵 <span id="wood">25</span></div>
-                        <div class="stat-item flex items-center gap-0.5">🪙 <span id="gold">50</span></div>
-                        <div class="stat-item flex items-center gap-0.5">🌾 <span id="food">15</span></div>
-                        <div class="stat-item flex items-center gap-0.5">👷 <span id="workers">0/0</span></div>
-                        <div class="stat-item flex items-center gap-0.5">⏱️ <span id="timer">00:00</span></div>
+                    <div id="stats" class="w-full bg-slate-800/90 border border-slate-700 p-2 rounded-2xl flex justify-around text-[11px] font-extrabold mb-2 text-slate-200">
+                        <div class="stat-item flex items-center gap-1">🪵 <span id="wood">25</span></div>
+                        <div class="stat-item flex items-center gap-1">🪙 <span id="gold">50</span></div>
+                        <div class="stat-item flex items-center gap-1">🌾 <span id="food">15</span></div>
+                        <div class="stat-item flex items-center gap-1">👷 <span id="workers">0/0</span></div>
+                        <div class="stat-item flex items-center gap-1">⏱️ <span id="timer">00:00</span></div>
                     </div>
 
                     <!-- Weather / Disaster Banner -->
-                    <div id="event-banner" class="w-full px-3 py-1.5 rounded-xl text-xs font-bold mb-2 hidden text-center">☀️ สภาพอากาศปกติ</div>
+                    <div id="event-banner" class="w-full px-3 py-1.5 rounded-xl text-xs font-bold mb-2 hidden">☀️ สภาพอากาศปกติ</div>
 
                     <!-- Quest Box (ภารกิจ) -->
                     <div id="quest-box" class="w-full bg-slate-800 border-l-4 border-amber-500 p-2.5 rounded-2xl text-left text-xs mb-2">
@@ -779,30 +779,17 @@
                     </div>
 
                     <!-- Game Canvas (ตารางสร้างเมือง) -->
-                    <div id="canvas-container" class="relative my-1 w-full flex justify-center">
-                        <canvas id="townGameCanvas" class="bg-[#5c9442] block rounded-2xl border-4 border-[#3d632c] shadow-lg cursor-pointer max-w-full"></canvas>
+                    <div id="canvas-container" class="relative my-1">
+                        <canvas id="townGameCanvas" class="bg-[#5c9442] block rounded-2xl border-4 border-[#3d632c] shadow-lg cursor-pointer"></canvas>
                     </div>
 
                     <!-- Control Buttons (ปุ่มเลือกสร้างสิ่งปลูกสร้าง) -->
-                    <div id="controls" class="grid grid-cols-4 gap-1.5 w-full my-2">
-                        <button onclick="selectTool('house')" id="btn-house" class="py-1.5 px-1 rounded-xl bg-slate-800 text-white border border-slate-700 hover:bg-slate-700 transition active:scale-95 flex flex-col items-center justify-center leading-tight">
-                            <span class="text-[10px] font-extrabold">🏠 บ้าน</span><span class="text-[8px] text-amber-300">(🪵20)</span>
-                        </button>
-                        <button onclick="selectTool('lumber')" id="btn-lumber" class="py-1.5 px-1 rounded-xl bg-slate-800 text-white border border-slate-700 hover:bg-slate-700 transition active:scale-95 flex flex-col items-center justify-center leading-tight">
-                            <span class="text-[10px] font-extrabold">🪓 โรงไม้</span><span class="text-[8px] text-amber-300">(🪙30)</span>
-                        </button>
-                        <button onclick="selectTool('farm')" id="btn-farm" class="py-1.5 px-1 rounded-xl bg-slate-800 text-white border border-slate-700 hover:bg-slate-700 transition active:scale-95 flex flex-col items-center justify-center leading-tight">
-                            <span class="text-[10px] font-extrabold">🌾 ฟาร์ม</span><span class="text-[8px] text-amber-300">(🪵15)</span>
-                        </button>
-                        <button onclick="selectTool('wonder')" id="btn-wonder" class="py-1.5 px-1 rounded-xl bg-purple-700 text-white border border-purple-500 hover:bg-purple-600 transition active:scale-95 flex flex-col items-center justify-center leading-tight">
-                            <span class="text-[10px] font-extrabold">🏛️ Wonder</span>
-                        </button>
-                        
-                        <button onclick="selectTool('select')" id="btn-select" class="active py-1.5 px-1 text-[11px] font-extrabold rounded-xl bg-amber-500 text-slate-950 border border-amber-400 transition active:scale-95 col-span-2">
-                            🔍 จัดการสิ่งปลูกสร้าง
-                        </button>
-                        <!-- กล่องสำหรับใส่ปุ่ม BGM ที่สร้างจาก JS -->
-                        <div id="bgm-btn-container" class="col-span-2"></div>
+                    <div id="controls" class="grid grid-cols-3 gap-1.5 w-full my-2">
+                        <button onclick="selectTool('house')" id="btn-house" class="py-2 px-1 text-[11px] font-extrabold rounded-xl bg-slate-800 text-white border border-slate-700 hover:bg-slate-700 transition active:scale-95">🏠 บ้าน (🪵20)</button>
+                        <button onclick="selectTool('lumber')" id="btn-lumber" class="py-2 px-1 text-[11px] font-extrabold rounded-xl bg-slate-800 text-white border border-slate-700 hover:bg-slate-700 transition active:scale-95">🪓 โรงไม้ (🪙30 👷1)</button>
+                        <button onclick="selectTool('farm')" id="btn-farm" class="py-2 px-1 text-[11px] font-extrabold rounded-xl bg-slate-800 text-white border border-slate-700 hover:bg-slate-700 transition active:scale-95">🌾 ฟาร์ม (🪵15 👷1)</button>
+                        <button onclick="selectTool('wonder')" id="btn-wonder" class="py-2 px-1 text-[11px] font-extrabold rounded-xl bg-purple-700 text-white border border-purple-500 hover:bg-purple-600 transition active:scale-95">🏛️ Wonder</button>
+                        <button onclick="selectTool('select')" id="btn-select" class="active py-2 px-1 text-[11px] font-extrabold rounded-xl bg-amber-500 text-slate-950 border border-amber-400 transition active:scale-95 col-span-2">🔍 จัดการสิ่งปลูกสร้าง</button>
                     </div>
 
                     <!-- Action Panel (แผงกดสั่งการ) -->
@@ -1301,16 +1288,16 @@
     </div>
 
     <!-- External Script Files -->
-    <script src="./core.js"></script>
-    <script src="./quest-shop.js"></script>
-    <script src="./minigames-main.js"></script>
-    <script src="./game-vocab.js"></script>
-    <script src="./game-math.js"></script>
-    <script src="./game-rpg.js"></script>
-    <script src="./game-story.js"></script>
-    <script src="./game-td.js"></script>
-    <script src="./game-number-dungeon.js"></script>
-    <script src="./game-build.js"></script>
+    <script src="./core.js?v=2"></script>
+    <script src="./quest-shop.js?v=2"></script>
+    <script src="./minigames-main.js?v=2"></script>
+    <script src="./game-vocab.js?v=2"></script>
+    <script src="./game-math.js?v=2"></script>
+    <script src="./game-rpg.js?v=2"></script>
+    <script src="./game-story.js?v=2"></script>
+    <script src="./game-td.js?v=2"></script>
+    <script src="./game-number-dungeon.js?v=2"></script>
+    <script src="./game-build.js?v=2"></script>
 
     <script>
         lucide.createIcons();
