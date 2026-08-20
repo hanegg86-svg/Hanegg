@@ -135,7 +135,7 @@ function initTownBuilderGame() {
 
 function resizeBuildCanvas() {
     if (!buildCanvas) return;
-    const containerWidth = Math.min(window.innerWidth - 40, 340);
+    const containerWidth = Math.min(window.innerWidth - 40, 320);
     TILE_SIZE = containerWidth / GRID_SIZE;
     buildCanvas.width = containerWidth;
     buildCanvas.height = containerWidth;

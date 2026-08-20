@@ -116,6 +116,13 @@
             pointer-events: none;
             transition: opacity 0.4s ease, visibility 0.4s ease;
         }
+
+        #controls button.active {
+            background-color: #f59e0b !important;
+            color: #000 !important;
+            border-color: #d97706 !important;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-700 min-h-screen flex flex-col justify-between select-none touch-btn relative pb-20">
@@ -206,7 +213,7 @@
                 </div>
             </div>
 
-            <!-- คอนเทนเนอร์แสดงผล SKILL 3 ด้านของพูน/เพลิน -->
+            <!-- SKILL CONTAINER -->
             <div id="user-stats-skills-container" class="w-full space-y-2 hidden">
             </div>
 
@@ -245,7 +252,6 @@
                     </span>
                 </div>
 
-                <!-- กล่องสร้างภารกิจเพิ่มส่วนเลือกประเภท SKILL และแต้ม -->
                 <div id="parent-create-quest-box" class="bg-indigo-50/50 p-3 rounded-2xl border border-indigo-100 mb-3 hidden">
                     <div class="font-bold text-xs text-indigo-900 mb-2">➕ สร้างภารกิจใหม่ (สำหรับ พ่อนะ / แม่พัด)</div>
                     <div class="space-y-2">
@@ -258,7 +264,6 @@
                             </div>
                         </div>
 
-                        <!-- ตัวเลือก Skill และ แต้มที่ได้รับ -->
                         <div class="flex gap-2 items-center bg-white p-2 rounded-xl border border-indigo-100">
                             <select id="new-quest-skill-type" class="flex-1 border border-slate-200 rounded-lg p-1.5 text-xs font-bold text-slate-700 focus:outline-none">
                                 <option value="none">-- ไม่ได้รับ Skill --</option>
@@ -288,7 +293,7 @@
                 <button id="game-subtab-story" onclick="switchMiniGame('story')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">📖 นิทาน AI</button>
                 <button id="game-subtab-td" onclick="switchMiniGame('td')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">⚔️ Math TD</button>
                 <button id="game-subtab-dungeon" onclick="switchMiniGame('dungeon')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🏰 Dungeon</button>
-                <button id="game-subtab-build" onclick="switchMiniGame('build')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🏗️ สร้างเมือง</button>
+                <button id="game-subtab-build" onclick="switchMiniGame('build')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🏰 สร้างเมือง</button>
             </div>
 
             <!-- Content Mini Games -->
@@ -733,14 +738,54 @@
                 </div>
             </div>
 
-            <!-- Mini Town Builder Game -->
-            <div id="game-build-container" class="w-full max-w-sm hidden flex-col items-center space-y-3">
-                <div class="w-full bg-amber-50 border-4 border-amber-400 p-3 rounded-3xl text-slate-800 shadow-lg flex flex-col items-center">
-                    <div class="flex justify-between items-center w-full mb-2">
-                        <h3 class="font-kids text-sm font-bold text-amber-900">🏗️ Mini Town Builder</h3>
-                        <span id="build-timer" class="text-xs bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">⏱️ 00:00</span>
+            <!-- 🌟 Mini Town Builder: Hard Edition (เพิ่ม Scroll และปรับ Layout จอมือถือ) 🌟 -->
+            <div id="game-build-container" class="w-full max-w-sm hidden flex-col items-center max-h-[calc(100vh-160px)] overflow-y-auto pr-1 pb-12">
+                <div class="w-full bg-slate-900 border-4 border-amber-500 p-3 rounded-3xl text-white shadow-2xl flex flex-col items-center">
+                    
+                    <h2 class="font-kids text-sm font-extrabold text-amber-400 mb-2">🏰 Mini Town Builder: Hard Mode</h2>
+
+                    <!-- Resource Stats Bar (แถบทรัพยากร) -->
+                    <div id="stats" class="w-full bg-slate-800/90 border border-slate-700 p-2 rounded-2xl flex justify-around text-[11px] font-extrabold mb-2 text-slate-200">
+                        <div class="stat-item flex items-center gap-1">🪵 <span id="wood">25</span></div>
+                        <div class="stat-item flex items-center gap-1">🪙 <span id="gold">50</span></div>
+                        <div class="stat-item flex items-center gap-1">🌾 <span id="food">15</span></div>
+                        <div class="stat-item flex items-center gap-1">👷 <span id="workers">0/0</span></div>
+                        <div class="stat-item flex items-center gap-1">⏱️ <span id="timer">00:00</span></div>
                     </div>
-                    <canvas id="townGameCanvas" width="320" height="320" class="bg-emerald-100 rounded-2xl border-2 border-amber-300 shadow-inner mb-2 cursor-pointer"></canvas>
+
+                    <!-- Weather / Disaster Banner -->
+                    <div id="event-banner" class="w-full px-3 py-1.5 rounded-xl text-xs font-bold mb-2 hidden">☀️ สภาพอากาศปกติ</div>
+
+                    <!-- Quest Box (ภารกิจ) -->
+                    <div id="quest-box" class="w-full bg-slate-800 border-l-4 border-amber-500 p-2.5 rounded-2xl text-left text-xs mb-2">
+                        <h3 class="font-bold text-amber-400 flex justify-between items-center text-xs mb-1">
+                            <span id="quest-title">🎯 เป้าหมายหลัก</span> 
+                            <span id="quest-step" class="bg-slate-700 px-2 py-0.5 rounded-full text-[10px]">1/4</span>
+                        </h3>
+                        <div id="quest-desc" class="text-slate-300 font-bold text-[11px]">กำลังโหลดภารกิจ...</div>
+                    </div>
+
+                    <!-- Game Canvas (ตารางสร้างเมือง) -->
+                    <div id="canvas-container" class="relative my-1">
+                        <canvas id="townGameCanvas" class="bg-[#5c9442] block rounded-2xl border-4 border-[#3d632c] shadow-lg cursor-pointer"></canvas>
+                    </div>
+
+                    <!-- Control Buttons (ปุ่มเลือกสร้างสิ่งปลูกสร้าง) -->
+                    <div id="controls" class="grid grid-cols-3 gap-1.5 w-full my-2">
+                        <button onclick="selectTool('house')" id="btn-house" class="py-2 px-1 text-[11px] font-extrabold rounded-xl bg-slate-800 text-white border border-slate-700 hover:bg-slate-700 transition active:scale-95">🏠 บ้าน (🪵20)</button>
+                        <button onclick="selectTool('lumber')" id="btn-lumber" class="py-2 px-1 text-[11px] font-extrabold rounded-xl bg-slate-800 text-white border border-slate-700 hover:bg-slate-700 transition active:scale-95">🪓 โรงไม้ (🪙30 👷1)</button>
+                        <button onclick="selectTool('farm')" id="btn-farm" class="py-2 px-1 text-[11px] font-extrabold rounded-xl bg-slate-800 text-white border border-slate-700 hover:bg-slate-700 transition active:scale-95">🌾 ฟาร์ม (🪵15 👷1)</button>
+                        <button onclick="selectTool('wonder')" id="btn-wonder" class="py-2 px-1 text-[11px] font-extrabold rounded-xl bg-purple-700 text-white border border-purple-500 hover:bg-purple-600 transition active:scale-95">🏛️ Wonder</button>
+                        <button onclick="selectTool('select')" id="btn-select" class="active py-2 px-1 text-[11px] font-extrabold rounded-xl bg-amber-500 text-slate-950 border border-amber-400 transition active:scale-95 col-span-2">🔍 จัดการสิ่งปลูกสร้าง</button>
+                    </div>
+
+                    <!-- Action Panel (แผงกดสั่งการ) -->
+                    <div id="action-panel" class="w-full bg-slate-800/90 p-3 rounded-2xl border border-slate-700 min-h-[70px] flex flex-col justify-center items-center text-center">
+                        <div id="panel-content">
+                            <span class="text-slate-400 text-xs font-bold">คลิกเลือกช่องบนตารางเพื่อสั่งการ</span>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -786,6 +831,18 @@
                     <div id="inventory-list-container" class="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Victory Modal -->
+        <div id="victory-modal" class="fixed inset-0 bg-slate-950/85 z-50 justify-center items-center p-4 hidden flex-col">
+            <div class="bg-slate-900 border-4 border-amber-400 p-6 rounded-3xl text-center max-w-xs w-full shadow-2xl">
+                <div class="text-5xl mb-2 animate-bounce">🏆</div>
+                <h2 class="text-xl font-black text-amber-400 mb-2 font-kids">ชัยชนะสูงสุด!</h2>
+                <p id="victory-text" class="text-xs text-slate-200 font-bold mb-4">คุณฝ่าฟันความยากและสร้าง Wonder สำเร็จ!</p>
+                <button onclick="restartBuildGame()" class="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 text-sm font-black py-3 rounded-2xl shadow-lg active:scale-95 transition">
+                    เล่นใหม่อีกครั้ง 🔄
+                </button>
             </div>
         </div>
 
@@ -1028,7 +1085,7 @@
                 </div>
 
                 <div class="flex bg-slate-100 p-1 rounded-2xl border border-slate-200">
-                    <button id="lvl-btn-poon" onclick="switchLevelConfigChild('พูน')" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs">👦 น้องพูน</button>
+                    <button id="lvl-btn-poon" onclick="switchLevelConfigChild('พูน')" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs">?? น้องพูน</button>
                     <button id="lvl-btn-ploern" onclick="switchLevelConfigChild('เพลิน')" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600">👧 น้องเพลิน</button>
                 </div>
 
