@@ -43,7 +43,8 @@ let isImmersiveMode = false;
 let currentEvent = 'normal';
 let eventTimer = 30;
 
-let grid = Array(8).fill(null).map(() => Array(8).fill(null));
+// ปรับให้ตารางสูงสุดเป็น 6x6
+let grid = Array(6).fill(null).map(() => Array(6).fill(null));
 let clearedCount = 0;
 
 const BUILD_TIME = {
@@ -112,8 +113,7 @@ const quests = [
         desc: "อัพเกรดสิ่งก่อสร้างระดับ Lv.3 อย่างน้อย 1 แห่ง",
         check: () => hasLevel3Building(),
         reward: () => {
-            expandGrid(8);
-            alert("🎉 สำเร็จ! ขยายตารางเมืองเป็น 8x8 และปลดล็อก Wonder!");
+            alert("🎉 สำเร็จ! ปลดล็อก Wonder!");
         }
     },
     {
@@ -149,7 +149,7 @@ function initTownBuilderGame() {
     clearedCount = 0;
     currentQuestIndex = 0;
 
-    grid = Array(8).fill(null).map(() => Array(8).fill(null));
+    grid = Array(6).fill(null).map(() => Array(6).fill(null));
     initObstacles();
 
     resizeBuildCanvas();
@@ -217,8 +217,8 @@ function toggleImmersiveMode() {
 }
 
 function initObstacles() {
-    for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
+    for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 6; c++) {
             if (r === 0 && c === 0) continue; 
             const rand = Math.random();
             if (rand < 0.20) grid[r][c] = { type: 'obstacle', obsType: 'tree' };
@@ -234,8 +234,8 @@ function getWorkerStats() {
     let totalWorkers = 0;
     let usedWorkers = 0;
 
-    for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
+    for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 6; c++) {
             const item = grid[r][c];
             if (!item || item.type === 'child') continue;
 
@@ -593,8 +593,8 @@ function triggerDisasterEvent() {
     } else if (roll < 0.45) {
         // 🔥 ไฟไหม้: สุ่มโรงไม้หยุดทำงาน
         let lumbers = [];
-        for (let r=0; r<8; r++) {
-            for (let c=0; c<8; c++) {
+        for (let r=0; r<6; r++) {
+            for (let c=0; c<6; c++) {
                 let item = grid[r][c];
                 if (item && item.type === 'lumber' && !item.isBuilding && !item.isBurned && !item.isDestroyed) {
                     lumbers.push({r, c});
@@ -615,8 +615,8 @@ function triggerDisasterEvent() {
     } else if (roll < 0.65) {
         // 💥 แผ่นดินไหว: สุ่มอาคารพังทลาย
         let buildings = [];
-        for (let r=0; r<8; r++) {
-            for (let c=0; c<8; c++) {
+        for (let r=0; r<6; r++) {
+            for (let c=0; c<6; c++) {
                 let item = grid[r][c];
                 if (item && item.type !== 'child' && item.type !== 'obstacle' && !item.isBuilding && !item.isDestroyed) {
                     if (item.type !== 'wonder') buildings.push({r, c}); // ไม่พัง Wonder 
@@ -657,8 +657,8 @@ function buildGameTick() {
 
     const knowLvl = getPlayerSkillLvl('knowledge');
 
-    for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
+    for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 6; c++) {
             const item = grid[r][c];
             if (!item || item.type === 'child') continue;
 
@@ -749,8 +749,8 @@ function updateQuestUI() {
 
 function countBuildings(type) {
     let count = 0;
-    for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
+    for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 6; c++) {
             if (grid[r][c] && grid[r][c].type === type && grid[r][c].type !== 'child' && !grid[r][c].isBuilding && !grid[r][c].isDestroyed) count++;
         }
     }
@@ -758,8 +758,8 @@ function countBuildings(type) {
 }
 
 function hasLevel3Building() {
-    for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
+    for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 6; c++) {
             if (grid[r][c] && grid[r][c].level === 3 && grid[r][c].type !== 'child' && !grid[r][c].isBuilding && !grid[r][c].isDestroyed) return true;
         }
     }
@@ -767,8 +767,8 @@ function hasLevel3Building() {
 }
 
 function hasWonder() {
-    for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
+    for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 6; c++) {
             if (grid[r][c] && grid[r][c].type === 'wonder' && grid[r][c].type !== 'child' && !grid[r][c].isBuilding) return true;
         }
     }
