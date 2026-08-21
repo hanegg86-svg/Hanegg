@@ -2,6 +2,11 @@
 // --- MINI GAMES SWITCHER ---
 // ==========================================
 function switchMiniGame(subGame) {
+    // หยุด Loop และ BGM ของเกมสร้างเมืองเมื่อสลับไปเล่นเกมอื่น
+    if (subGame !== 'build' && typeof stopTownBuilderGame === 'function') {
+        stopTownBuilderGame();
+    }
+
     currentMiniGame = subGame;
 
     const btnVocab = document.getElementById("game-subtab-vocab");

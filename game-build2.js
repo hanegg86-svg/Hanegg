@@ -165,6 +165,21 @@ function initTownBuilderGame() {
     updateActionPanel();
 }
 
+function stopTownBuilderGame() {
+    if (buildAnimationId) {
+        cancelAnimationFrame(buildAnimationId);
+        buildAnimationId = null;
+    }
+    if (buildIntervalId) {
+        clearInterval(buildIntervalId);
+        buildIntervalId = null;
+    }
+    if (bgmAudio) {
+        bgmAudio.pause();
+        hasBgmStarted = false;
+    }
+}
+
 function resizeBuildCanvas() {
     if (!buildCanvas) return;
     const containerWidth = Math.min(window.innerWidth - 40, 320);
@@ -217,14 +232,31 @@ function toggleImmersiveMode() {
 }
 
 function initObstacles() {
+    let startZoneObstacles = 0;
+
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
             if (r === 0 && c === 0) continue; 
             const rand = Math.random();
-            if (rand < 0.20) grid[r][c] = { type: 'obstacle', obsType: 'tree' };
-            else if (rand < 0.32) grid[r][c] = { type: 'obstacle', obsType: 'rock' };
-            else if (rand < 0.44) grid[r][c] = { type: 'obstacle', obsType: 'banana' };
+            const isStartZone = (r < 4 && c < 4);
+
+            if (rand < 0.20) {
+                grid[r][c] = { type: 'obstacle', obsType: 'tree' };
+                if (isStartZone) startZoneObstacles++;
+            } else if (rand < 0.32) {
+                grid[r][c] = { type: 'obstacle', obsType: 'rock' };
+                if (isStartZone) startZoneObstacles++;
+            } else if (rand < 0.44) {
+                grid[r][c] = { type: 'obstacle', obsType: 'banana' };
+                if (isStartZone) startZoneObstacles++;
+            }
         }
+    }
+
+    // การันตีสิ่งกีดขวางในตาราง 4x4 อย่างน้อย 2 ช่อง เพื่อให้ทำเควสที่ 2 ได้แน่นอน
+    if (startZoneObstacles < 2) {
+        grid[0][1] = { type: 'obstacle', obsType: 'tree' };
+        grid[1][0] = { type: 'obstacle', obsType: 'banana' };
     }
 }
 
@@ -342,9 +374,9 @@ function confirmMove() {
         }
 
         grid[fromR][fromC] = null;
-        if(grid[fromR][fromC+1] && grid[fromR][fromC+1].type === 'child' && grid[fromR][fromC+1].parentR === fromR) grid[fromR][fromC+1] = null;
-        if(grid[fromR+1][fromC] && grid[fromR+1][fromC].type === 'child' && grid[fromR+1][fromC].parentR === fromR) grid[fromR+1][fromC] = null;
-        if(grid[fromR+1][fromC+1] && grid[fromR+1][fromC+1].type === 'child' && grid[fromR+1][fromC+1].parentR === fromR) grid[fromR+1][fromC+1] = null;
+        if(grid[fromR][fromC+1] && grid[fromR][fromC+1].type === 'child' && grid[fromR][fromC+1].parentR === fromR && grid[fromR][fromC+1].parentC === fromC) grid[fromR][fromC+1] = null;
+        if(grid[fromR+1][fromC] && grid[fromR+1][fromC].type === 'child' && grid[fromR+1][fromC].parentR === fromR && grid[fromR+1][fromC].parentC === fromC) grid[fromR+1][fromC] = null;
+        if(grid[fromR+1][fromC+1] && grid[fromR+1][fromC+1].type === 'child' && grid[fromR+1][fromC+1].parentR === fromR && grid[fromR+1][fromC+1].parentC === fromC) grid[fromR+1][fromC+1] = null;
 
         grid[toR][toC] = item;
         grid[toR][toC+1] = { type: 'child', parentR: toR, parentC: toC };
@@ -421,9 +453,9 @@ function sellBuilding(r, c) {
         resources.food += refund.food;
         
         if (item.level === 3) {
-            if(grid[r][c+1] && grid[r][c+1].type === 'child' && grid[r][c+1].parentR === r) grid[r][c+1] = null;
-            if(grid[r+1][c] && grid[r+1][c].type === 'child' && grid[r+1][c].parentR === r) grid[r+1][c] = null;
-            if(grid[r+1][c+1] && grid[r+1][c+1].type === 'child' && grid[r+1][c+1].parentR === r) grid[r+1][c+1] = null;
+            if(grid[r][c+1] && grid[r][c+1].type === 'child' && grid[r][c+1].parentR === r && grid[r][c+1].parentC === c) grid[r][c+1] = null;
+            if(grid[r+1][c] && grid[r+1][c].type === 'child' && grid[r+1][c].parentR === r && grid[r+1][c].parentC === c) grid[r+1][c] = null;
+            if(grid[r+1][c+1] && grid[r+1][c+1].type === 'child' && grid[r+1][c+1].parentR === r && grid[r+1][c+1].parentC === c) grid[r+1][c+1] = null;
         }
         grid[r][c] = null;
         selectedTile = null;
