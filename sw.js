@@ -2,7 +2,7 @@
 // --- SERVICE WORKER (FULL PWA CACHE MANAGER) ---
 // ==========================================
 
-const CACHE_NAME = 'kids-vocab-v2';
+const CACHE_NAME = 'kids-vocab-v3'; // อัปเดตเป็น v3 เพื่อล้างแคชเก่าที่สั่งล็อกแนวตั้ง[span_1](start_span)[span_1](end_span)
 
 // รายการไฟล์ทั้งหมดในแอปเพื่อรองรับการใช้งานแบบ Offline 100%
 const ASSETS_TO_CACHE = [
