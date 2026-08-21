@@ -47,7 +47,6 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            // ใช้ Promise.allSettled หรือ catch เพื่อป้องกันการ Install ล้มเหลวหากมีรูปบางรูปไม่มีในโฟลเดอร์จริง
             return Promise.allSettled(
                 ASSETS_TO_CACHE.map(url => cache.add(url).catch(err => console.warn(`Cache failed for: ${url}`, err)))
             );
@@ -72,6 +71,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+    // รองรับเฉพาะ HTTP GET Request สำหรับ Cache Storage API เพื่อป้องกัน TypeError บน POST/PUT
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
     // ข้ามการ Cache API หรือ Firebase Requests
     if (event.request.url.includes('firebase') || event.request.url.includes('googleapis')) {
         return;

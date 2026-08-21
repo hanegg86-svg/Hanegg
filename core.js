@@ -85,6 +85,72 @@ let userSkillsList = {
 let dbRefVocabEN, dbRefVocabTH, dbRefNotify, dbRefRewards, dbRefParentQuests, dbRefDailyConfig, dbRefLevelConfig, dbRefUserSkills;
 let isFirebaseActive = false;
 
+// --- Firebase Listener Unsubscribe References (Fixes Memory & Listener Leaks) ---
+let unsubUserStars = null;
+let unsubUserExp = null;
+let unsubUserDailyRounds = null;
+let unsubUserInventory = null;
+let unsubVocab = null;
+
+function cleanupUserListeners() {
+    if (unsubUserStars) { unsubUserStars(); unsubUserStars = null; }
+    if (unsubUserExp) { unsubUserExp(); unsubUserExp = null; }
+    if (unsubUserDailyRounds) { unsubUserDailyRounds(); unsubUserDailyRounds = null; }
+    if (unsubUserInventory) { unsubUserInventory(); unsubUserInventory = null; }
+}
+
+function attachVocabListener() {
+    if (!isFirebaseActive) return;
+    if (unsubVocab) { unsubVocab(); unsubVocab = null; }
+
+    const { ref, onValue, set } = window.firebaseModules;
+    const db = window.firebaseModules.getDatabase();
+    dbRefVocabEN = ref(db, 'kids_vocab_en_shared');
+    dbRefVocabTH = ref(db, 'kids_vocab_th_shared');
+
+    const currentDbRef = subjectMode === 'EN' ? dbRefVocabEN : dbRefVocabTH;
+
+    unsubVocab = onValue(currentDbRef, (snapshot) => {
+        const data = snapshot.val();
+        let parsedData = [];
+        if (data) { parsedData = Array.isArray(data) ? data : Object.values(data); }
+        if (parsedData.length > 0) {
+            rawVocabList = parsedData;
+        } else {
+            rawVocabList = subjectMode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH];
+            set(currentDbRef, rawVocabList);
+        }
+        if(typeof filterVocabForUser === 'function') filterVocabForUser();
+        if(typeof updateCard === 'function') updateCard();
+    });
+}
+
+function switchSubjectMode(mode) {
+    if (subjectMode === mode) return;
+    subjectMode = mode;
+    
+    const btnEN = document.getElementById("mode-en-btn");
+    const btnTH = document.getElementById("mode-th-btn");
+    if (btnEN && btnTH) {
+        if (mode === 'EN') {
+            btnEN.className = "px-2.5 py-1 rounded-xl text-xs font-black bg-white text-pink-700 shadow-sm transition";
+            btnTH.className = "px-2.5 py-1 rounded-xl text-xs font-black text-white hover:bg-white/20 transition";
+        } else {
+            btnTH.className = "px-2.5 py-1 rounded-xl text-xs font-black bg-white text-pink-700 shadow-sm transition";
+            btnEN.className = "px-2.5 py-1 rounded-xl text-xs font-black text-white hover:bg-white/20 transition";
+        }
+    }
+
+    if (isFirebaseActive) {
+        attachVocabListener();
+    } else {
+        const localData = localStorage.getItem(`kids_vocab_${subjectMode.toLowerCase()}_data`);
+        rawVocabList = localData ? JSON.parse(localData) : (subjectMode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH]);
+        if(typeof filterVocabForUser === 'function') filterVocabForUser();
+        if(typeof updateCard === 'function') updateCard();
+    }
+}
+
 function getTodayDateString() {
     const today = new Date();
     return `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
@@ -253,22 +319,8 @@ function initFirebase() {
             }
         });
 
-        const currentDbRef = subjectMode === 'EN' ? dbRefVocabEN : dbRefVocabTH;
-
-        onValue(currentDbRef, (snapshot) => {
-            const data = snapshot.val();
-            let parsedData = [];
-            if (data) { parsedData = Array.isArray(data) ? data : Object.values(data); }
-            if (parsedData.length > 0) {
-                rawVocabList = parsedData;
-            } else {
-                rawVocabList = subjectMode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH];
-                set(currentDbRef, rawVocabList);
-            }
-            isFirebaseActive = true;
-            if(typeof filterVocabForUser === 'function') filterVocabForUser();
-            if(typeof updateCard === 'function') updateCard();
-        });
+        isFirebaseActive = true;
+        attachVocabListener();
 
         onValue(dbRefRewards, (snapshot) => {
             const data = snapshot.val();
@@ -472,31 +524,32 @@ function calculateLevelFromEXP(exp) {
 }
 
 function loadUserStars() {
+    cleanupUserListeners();
     if (isFirebaseActive && currentUser) {
         const { ref, onValue } = window.firebaseModules;
         const db = window.firebaseModules.getDatabase();
         
-        onValue(ref(db, `user_stars/${currentUser}`), (snapshot) => {
+        unsubUserStars = onValue(ref(db, `user_stars/${currentUser}`), (snapshot) => {
             const val = snapshot.val();
             totalStars = val !== null ? val : 0;
             document.getElementById("score").innerText = totalStars;
         });
 
-        onValue(ref(db, `user_exp/${currentUser}`), (snapshot) => {
+        unsubUserExp = onValue(ref(db, `user_exp/${currentUser}`), (snapshot) => {
             const val = snapshot.val();
             currentChildEXP = val !== null ? val : 0;
             updateUserLevelAndAvatarDisplay();
         });
 
         const todayStr = getTodayDateString();
-        onValue(ref(db, `user_daily_rounds/${currentUser}/${todayStr}`), (snapshot) => {
+        unsubUserDailyRounds = onValue(ref(db, `user_daily_rounds/${currentUser}/${todayStr}`), (snapshot) => {
             const val = snapshot.val();
             todayPlayedRounds = val !== null ? val : 0;
             checkDailyLimitStatus();
         });
 
         if (isParentUser) {
-            onValue(ref(db, `user_inventory`), (snapshot) => {
+            unsubUserInventory = onValue(ref(db, `user_inventory`), (snapshot) => {
                 const val = snapshot.val();
                 userInventoryList = [];
                 if (val) {
@@ -509,7 +562,7 @@ function loadUserStars() {
                 if(typeof renderUserInventory === 'function') renderUserInventory();
             });
         } else {
-            onValue(ref(db, `user_inventory/${currentUser}`), (snapshot) => {
+            unsubUserInventory = onValue(ref(db, `user_inventory/${currentUser}`), (snapshot) => {
                 const val = snapshot.val();
                 userInventoryList = [];
                 if (val) {
