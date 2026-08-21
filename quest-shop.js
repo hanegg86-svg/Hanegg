@@ -66,12 +66,14 @@ function deleteParentQuest(id) {
             const db = window.firebaseModules.getDatabase();
             notificationsList.forEach(n => {
                 if (n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title) {
-                    remove(ref(db, `kids_notifications/${n.id || n.timestamp}`));
+                    const notifyKey = n.id;
+                    if (notifyKey) {
+                        remove(ref(db, `kids_notifications/${notifyKey}`));
+                    }
                 }
             });
-        } else {
-            notificationsList = notificationsList.filter(n => !(n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title));
         }
+        notificationsList = notificationsList.filter(n => !(n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title));
         saveParentQuestsToStorage();
     }
 }
@@ -110,12 +112,14 @@ function saveQuestAssignment() {
         const db = window.firebaseModules.getDatabase();
         notificationsList.forEach(n => {
             if (n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title) {
-                remove(ref(db, `kids_notifications/${n.id || n.timestamp}`));
+                const notifyKey = n.id;
+                if (notifyKey) {
+                    remove(ref(db, `kids_notifications/${notifyKey}`));
+                }
             }
         });
-    } else {
-        notificationsList = notificationsList.filter(n => !(n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title));
     }
+    notificationsList = notificationsList.filter(n => !(n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title));
     saveParentQuestsToStorage();
     closeAssignModal();
     alert(`แจกภารกิจ "${quest.title}" ให้เด็กๆ เรียบร้อยแล้ว! ✨`);
@@ -380,12 +384,15 @@ function sendInAppNotification(type, details) {
 
 function deleteNotification(notifyId) {
     if (confirm("ต้องการลบการแจ้งเตือนนี้ใช่หรือไม่?")) {
+        const notifyItem = notificationsList.find(n => n.id === notifyId || (n.timestamp && n.timestamp.toString() === notifyId.toString()));
+        const firebaseKey = notifyItem && notifyItem.id ? notifyItem.id : notifyId;
+
         notificationsList = notificationsList.filter(n => (n.id || n.timestamp.toString()) !== notifyId.toString());
         renderNotifications();
-        if (isFirebaseActive && dbRefNotify) {
+        if (isFirebaseActive && dbRefNotify && firebaseKey) {
             const { ref, remove } = window.firebaseModules;
             const db = window.firebaseModules.getDatabase();
-            remove(ref(db, `kids_notifications/${notifyId}`));
+            remove(ref(db, `kids_notifications/${firebaseKey}`));
         }
     }
 }
@@ -408,8 +415,8 @@ function autoCleanupOldNotifications() {
     const oldItems = notificationsList.filter(n => (now - (n.timestamp || 0)) > TWO_DAYS_MS);
     if (oldItems.length > 0) {
         oldItems.forEach(item => {
-            const itemKey = item.id || item.timestamp;
-            if (isFirebaseActive) {
+            const itemKey = item.id;
+            if (isFirebaseActive && itemKey) {
                 const { ref, remove } = window.firebaseModules;
                 const db = window.firebaseModules.getDatabase();
                 remove(ref(db, `kids_notifications/${itemKey}`));
@@ -497,14 +504,25 @@ function renderNotifications() {
 }
 
 function approveParentQuest(notifyId, userName, starsReward, skillType, skillPoints, isApproved) {
+    const notifyItem = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
+    const firebaseKey = notifyItem && notifyItem.id ? notifyItem.id : notifyId;
+
     if (isApproved) {
         if (isFirebaseActive) {
-            const { ref, get, set } = window.firebaseModules;
+            const { ref, runTransaction } = window.firebaseModules;
             const db = window.firebaseModules.getDatabase();
+            
+            // อัปเดตดาวแบบ Transaction
             const userStarRef = ref(db, `user_stars/${userName}`);
-            get(userStarRef).then(snapshot => { set(userStarRef, (snapshot.val() || 0) + starsReward); });
+            runTransaction(userStarRef, (currentStars) => {
+                return (currentStars || 0) + starsReward;
+            });
+
+            // อัปเดต EXP แบบ Transaction
             const userExpRef = ref(db, `user_exp/${userName}`);
-            get(userExpRef).then(snapshot => { set(userExpRef, (snapshot.val() || 0) + (starsReward * 100)); });
+            runTransaction(userExpRef, (currentExp) => {
+                return (currentExp || 0) + (starsReward * 100);
+            });
         } else {
             const localStarKey = `total_stars_${userName}`;
             localStorage.setItem(localStarKey, (parseInt(localStorage.getItem(localStarKey) || "0", 10) + starsReward).toString());
@@ -524,7 +542,6 @@ function approveParentQuest(notifyId, userName, starsReward, skillType, skillPoi
         }
 
         // บันทึกเวลาทำเสร็จ
-        const notifyItem = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
         if (notifyItem && notifyItem.details && notifyItem.details.questTitle) {
             const quest = parentQuestsList.find(q => q.title === notifyItem.details.questTitle);
             if (quest) {
@@ -535,32 +552,38 @@ function approveParentQuest(notifyId, userName, starsReward, skillType, skillPoi
         }
 
         alert(`ตรวจผ่านแล้ว! เพิ่ม ⭐ ${starsReward} ดาว และ +${starsReward * 100} EXP ให้น้อง ${userName} เรียบร้อยครับ`);
-    } else { alert(`ปฏิเสธภารกิจเรียบร้อยแล้ว`); }
+    } else { 
+        alert(`ปฏิเสธภารกิจเรียบร้อยแล้ว`); 
+    }
 
-    if (isFirebaseActive && dbRefNotify) {
+    if (isFirebaseActive && dbRefNotify && firebaseKey) {
         const { ref, update } = window.firebaseModules;
         const db = window.firebaseModules.getDatabase();
-        update(ref(db, `kids_notifications/${notifyId}`), { status: isApproved ? 'approved' : 'rejected' });
+        update(ref(db, `kids_notifications/${firebaseKey}`), { status: isApproved ? 'approved' : 'rejected' });
     } else {
-        const item = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
-        if (item) item.status = isApproved ? 'approved' : 'rejected';
-        renderNotifications(); renderParentQuestsList();
+        if (notifyItem) notifyItem.status = isApproved ? 'approved' : 'rejected';
+        renderNotifications(); 
+        renderParentQuestsList();
     }
 }
 
 function approveReward(notifyId, userName, rewardName, starsUsed, isApproved) {
+    const notifyItem = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
+    const firebaseKey = notifyItem && notifyItem.id ? notifyItem.id : notifyId;
+
     if (isApproved) {
         addRewardToUserInventory(userName, rewardName);
         alert(`อนุมัติรางวัล "${rewardName}" ให้น้อง ${userName} เรียบร้อยแล้ว! (ย้ายเข้ากระเป๋าของน้องแล้ว)`);
-    } else { alert(`ปฏิเสธคำขอเรียบร้อยแล้ว`); }
+    } else { 
+        alert(`ปฏิเสธคำขอเรียบร้อยแล้ว`); 
+    }
 
-    if (isFirebaseActive && dbRefNotify) {
+    if (isFirebaseActive && dbRefNotify && firebaseKey) {
         const { ref, update } = window.firebaseModules;
         const db = window.firebaseModules.getDatabase();
-        update(ref(db, `kids_notifications/${notifyId}`), { status: isApproved ? 'approved' : 'rejected' });
+        update(ref(db, `kids_notifications/${firebaseKey}`), { status: isApproved ? 'approved' : 'rejected' });
     } else {
-        const item = notificationsList.find(x => x.id === notifyId || x.timestamp.toString() === notifyId.toString());
-        if (item) item.status = isApproved ? 'approved' : 'rejected';
+        if (notifyItem) notifyItem.status = isApproved ? 'approved' : 'rejected';
         renderNotifications();
     }
 }
@@ -574,14 +597,24 @@ function adjustChildStars(isAdding) {
     const changeAmount = isAdding ? starCount : -starCount;
 
     if (isFirebaseActive) {
-        const { ref, get, set } = window.firebaseModules;
+        const { ref, runTransaction } = window.firebaseModules;
         const db = window.firebaseModules.getDatabase();
         const starRef = ref(db, `user_stars/${targetChild}`);
-        get(starRef).then(snapshot => {
-            const newStars = Math.max(0, (snapshot.val() || 0) + changeAmount);
-            set(starRef, newStars);
-            sendInAppNotification('MANUAL_STAR_ADJUST', { childName: targetChild, change: changeAmount, reason: reason });
-            alert(`${isAdding ? 'เพิ่ม' : 'ลด'}ดาวให้น้อง ${targetChild} จำนวน ${starCount} ดวง เรียบร้อยแล้ว! (ดาวคงเหลือ: ${newStars})`);
+        
+        runTransaction(starRef, (currentStars) => {
+            return Math.max(0, (currentStars || 0) + changeAmount);
+        }).then((result) => {
+            if (result.committed) {
+                const newStars = result.snapshot.val();
+                if (targetChild === currentUser) { 
+                    totalStars = newStars; 
+                    document.getElementById("score").innerText = totalStars; 
+                }
+                sendInAppNotification('MANUAL_STAR_ADJUST', { childName: targetChild, change: changeAmount, reason: reason });
+                alert(`${isAdding ? 'เพิ่ม' : 'ลด'}ดาวให้น้อง ${targetChild} จำนวน ${starCount} ดวง เรียบร้อยแล้ว! (ดาวคงเหลือ: ${newStars})`);
+            }
+        }).catch((error) => {
+            console.error("Star adjustment transaction failed:", error);
         });
     } else {
         const localKey = `total_stars_${targetChild}`;
