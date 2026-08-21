@@ -180,13 +180,36 @@ function stopTownBuilderGame() {
     }
 }
 
+// 🌟 ปรับปรุงการคำนวณขนาด Canvas ให้ยืดหยุ่นตามแนวนอน/แนวตั้งและหน้าจอ iPad/Tablet 🌟
 function resizeBuildCanvas() {
     if (!buildCanvas) return;
-    const containerWidth = Math.min(window.innerWidth - 40, 320);
-    TILE_SIZE = containerWidth / GRID_SIZE;
-    buildCanvas.width = containerWidth;
-    buildCanvas.height = containerWidth;
+    
+    const isLandscape = window.innerWidth > window.innerHeight;
+    let targetSize;
+
+    if (isLandscape) {
+        // แนวนอน (iPad / Mobile Landscape): ยึดความสูงหน้าจอเป็นหลัก ไม่ให้ Canvas ล้นลงล่าง
+        const availableHeight = window.innerHeight - 100; 
+        const availableWidth = (window.innerWidth * 0.5) - 32; 
+        targetSize = Math.min(availableWidth, availableHeight);
+    } else {
+        // แนวตั้ง: ขยายตามความกว้างจอ (รองรับสูงสุด 550px)
+        targetSize = Math.min(window.innerWidth - 32, 550);
+    }
+
+    // กำหนดขนาดขั้นต่ำและสูงสุดเพื่อความเหมาะสม
+    targetSize = Math.max(280, Math.min(targetSize, 700));
+
+    TILE_SIZE = targetSize / GRID_SIZE;
+    buildCanvas.width = targetSize;
+    buildCanvas.height = targetSize;
 }
+
+// เพิ่ม Event Listener เพื่อคำนวณขนาดใหม่ทันทีเมื่อปรับขนาดหน้าจอหรือหมุนจอ iPad/Mobile
+window.addEventListener('resize', resizeBuildCanvas);
+window.addEventListener('orientationchange', () => {
+    setTimeout(resizeBuildCanvas, 200);
+});
 
 function toggleImmersiveMode() {
     isImmersiveMode = !isImmersiveMode;
