@@ -1,80 +1,98 @@
 // ==========================================
-// --- MINI GAMES SWITCHER ---
+// --- SERVICE WORKER (FULL PWA CACHE MANAGER) ---
 // ==========================================
-function switchMiniGame(subGame) {
-    currentMiniGame = subGame;
 
-    const btnVocab = document.getElementById("game-subtab-vocab");
-    const btnMath = document.getElementById("game-subtab-math");
-    const btnStory = document.getElementById("game-subtab-story");
-    const btnTd = document.getElementById("game-subtab-td");
-    const btnDungeon = document.getElementById("game-subtab-dungeon");
+const CACHE_NAME = 'kids-vocab-v2';
 
-    const vocabContainer = document.getElementById("game-vocab-container");
-    const mathContainer = document.getElementById("game-math-container");
-    const storyContainer = document.getElementById("game-story-container");
-    const tdContainer = document.getElementById("game-td-container");
-    const dungeonContainer = document.getElementById("game-dungeon-container");
+// รายการไฟล์ทั้งหมดในแอปเพื่อรองรับการใช้งานแบบ Offline 100%
+const ASSETS_TO_CACHE = [
+    './',
+    './index.html',
+    './manifest.json',
+    './Icon.png',
+    
+    // Core & System Scripts
+    './core.js',
+    './quest-shop.js',
+    './minigames-main.js',
+    
+    // Mini-Game Scripts
+    './game-vocab.js',
+    './game-math.js',
+    './game-rpg.js',
+    './game-story.js',
+    './game-td.js',
+    './game-number-dungeon.js',
+    './game-build2.js',
 
-    const langSwitchBox = document.getElementById("lang-switch-box");
+    // Character Avatars
+    './mario.png',
+    './peach.png',
+    './luigi.png',
+    './rosalina.png',
 
-    // --- อัปเดตคลาส CSS เป็นธีม 3D มาริโอ้/พีช ---
-    const activeClass = "flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-pink-500 text-white shadow-[0_4px_0_0_#be185d] border-2 border-pink-700 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap";
-    const inactiveClass = "flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap";
-    // --------------------------------------------------
+    // Town Builder Assets & Sound
+    './bgm.mp3',
+    './house_lvl1.png',
+    './house_lvl2.png',
+    './house_lvl3.png',
+    './farm_lvl1.png',
+    './farm_lvl2.png',
+    './farm_lvl3.png',
+    './lumber_lvl1.png',
+    './lumber_lvl2.png',
+    './lumber_lvl3.png'
+];
 
-    [btnVocab, btnMath, btnStory, btnTd, btnDungeon].forEach(b => { if (b) b.className = inactiveClass; });
-    [vocabContainer, mathContainer, storyContainer, tdContainer, dungeonContainer].forEach(c => {
-        if (c) { c.classList.add("hidden"); c.classList.remove("flex"); }
-    });
+self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            // ใช้ Promise.allSettled หรือ catch เพื่อป้องกันการ Install ล้มเหลวหากมีรูปบางรูปไม่มีในโฟลเดอร์จริง
+            return Promise.allSettled(
+                ASSETS_TO_CACHE.map(url => cache.add(url).catch(err => console.warn(`Cache failed for: ${url}`, err)))
+            );
+        })
+    );
+    self.skipWaiting();
+});
 
-    if (langSwitchBox) langSwitchBox.classList.add("hidden");
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((keys) => {
+            return Promise.all(
+                keys.map((key) => {
+                    if (key !== CACHE_NAME) {
+                        return caches.delete(key);
+                    }
+                })
+            );
+        })
+    );
+    self.clients.claim();
+});
 
-    if (subGame === 'vocab') {
-        if (btnVocab) btnVocab.className = activeClass;
-        if (vocabContainer) { vocabContainer.classList.remove("hidden"); vocabContainer.classList.add("flex"); }
-        if (langSwitchBox) langSwitchBox.classList.remove("hidden");
-    } else if (subGame === 'math') {
-        if (btnMath) btnMath.className = activeClass;
-        if (mathContainer) { mathContainer.classList.remove("hidden"); mathContainer.classList.add("flex"); }
-        if (typeof generateMathPuzzle === "function") generateMathPuzzle();
-    } else if (subGame === 'story') {
-        if (btnStory) btnStory.className = activeClass;
-        if (storyContainer) { storyContainer.classList.remove("hidden"); storyContainer.classList.add("flex"); }
-        if (typeof initStoryTabState === "function") initStoryTabState();
-    } else if (subGame === 'td') {
-        if (btnTd) btnTd.className = activeClass;
-        if (tdContainer) { tdContainer.classList.remove("hidden"); tdContainer.classList.add("flex"); }
-        if (typeof initMathTDGame === "function") initMathTDGame();
-    } else if (subGame === 'dungeon') {
-        if (btnDungeon) btnDungeon.className = activeClass;
-        if (dungeonContainer) { dungeonContainer.classList.remove("hidden"); dungeonContainer.classList.add("flex"); }
-        if (typeof initNumberDungeon === "function") initNumberDungeon();
+self.addEventListener('fetch', (event) => {
+    // ข้ามการ Cache API หรือ Firebase Requests
+    if (event.request.url.includes('firebase') || event.request.url.includes('googleapis')) {
+        return;
     }
-    if (typeof checkDailyLimitStatus === "function") checkDailyLimitStatus();
-}
 
-function restartSession() {
-    const modal = document.getElementById("completion-modal");
-    if (modal) modal.classList.add("hidden");
-
-    if (currentMiniGame === 'math') { 
-        if (typeof mathQuestionIndex !== "undefined") mathQuestionIndex = 1; 
-        if (typeof generateMathPuzzle === "function") generateMathPuzzle(); 
-    } 
-    else if (currentMiniGame === 'story') { 
-        if (typeof openStoryCreator === "function") openStoryCreator(); 
-    } 
-    else if (currentMiniGame === 'td') { 
-        if (typeof initMathTDGame === "function") initMathTDGame(); 
-    } 
-    else if (currentMiniGame === 'dungeon') { 
-        if (typeof initNumberDungeon === "function") initNumberDungeon(); 
-    } 
-    else { 
-        if (typeof setCorrectAnswers !== "undefined") setCorrectAnswers = 0; 
-        if (typeof filteredVocabList !== "undefined" && typeof shuffleArray === "function") shuffleArray(filteredVocabList); 
-        if (typeof currentIndex !== "undefined") currentIndex = 0; 
-        if (typeof updateCard === "function") updateCard(); 
-    }
-}
+    event.respondWith(
+        caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+            return fetch(event.request).then((response) => {
+                // บันทึกไฟล์ใหม่ๆ เข้า Cache อัตโนมัติเมื่อมีการโหลดครั้งแรก
+                if (!response || response.status !== 200 || response.type !== 'basic') {
+                    return response;
+                }
+                const responseToCache = response.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, responseToCache);
+                });
+                return response;
+            });
+        }).catch(() => fetch(event.request))
+    );
+});

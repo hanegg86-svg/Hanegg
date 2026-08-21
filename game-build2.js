@@ -43,8 +43,7 @@ let isImmersiveMode = false;
 let currentEvent = 'normal';
 let eventTimer = 30;
 
-// ปรับให้ตารางสูงสุดเป็น 6x6
-let grid = Array(6).fill(null).map(() => Array(6).fill(null));
+let grid = Array(8).fill(null).map(() => Array(8).fill(null));
 let clearedCount = 0;
 
 const BUILD_TIME = {
@@ -113,7 +112,8 @@ const quests = [
         desc: "อัพเกรดสิ่งก่อสร้างระดับ Lv.3 อย่างน้อย 1 แห่ง",
         check: () => hasLevel3Building(),
         reward: () => {
-            alert("🎉 สำเร็จ! ปลดล็อก Wonder!");
+            expandGrid(8);
+            alert("🎉 สำเร็จ! ขยายตารางเมืองเป็น 8x8 และปลดล็อก Wonder!");
         }
     },
     {
@@ -149,7 +149,7 @@ function initTownBuilderGame() {
     clearedCount = 0;
     currentQuestIndex = 0;
 
-    grid = Array(6).fill(null).map(() => Array(6).fill(null));
+    grid = Array(8).fill(null).map(() => Array(8).fill(null));
     initObstacles();
 
     resizeBuildCanvas();
@@ -186,39 +186,39 @@ function toggleImmersiveMode() {
     const floatRestoreBtn = document.getElementById("float-restore-ui-btn");
 
     if (isImmersiveMode) {
-        if (mainHeader) mainHeader.style.setProperty('display', 'none', 'important');
-        if (expBar) expBar.style.setProperty('display', 'none', 'important');
-        if (miniGameTabBar) miniGameTabBar.style.setProperty('display', 'none', 'important');
-        if (bottomNav) bottomNav.style.setProperty('display', 'none', 'important');
-        if (floatBtn) floatBtn.style.setProperty('display', 'none', 'important');
+        mainHeader?.style.setProperty('display', 'none', 'important');
+        expBar?.style.setProperty('display', 'none', 'important');
+        miniGameTabBar?.style.setProperty('display', 'none', 'important');
+        bottomNav?.style.setProperty('display', 'none', 'important');
+        floatBtn?.style.setProperty('display', 'none', 'important');
 
         if (buildContainer) {
             buildContainer.classList.remove("max-h-[calc(100vh-160px)]", "pb-12");
             buildContainer.classList.add("max-h-screen", "pb-4");
         }
         if (toggleBtn) toggleBtn.innerHTML = "👁️ แสดงแถบ";
-        if (floatRestoreBtn) floatRestoreBtn.style.setProperty('display', 'flex', 'important');
+        floatRestoreBtn?.style.setProperty('display', 'flex', 'important');
     } else {
-        if (mainHeader) mainHeader.style.removeProperty('display');
-        if (expBar) expBar.style.removeProperty('display');
-        if (miniGameTabBar) miniGameTabBar.style.removeProperty('display');
-        if (bottomNav) bottomNav.style.removeProperty('display');
-        if (floatBtn) floatBtn.style.removeProperty('display');
+        mainHeader?.style.removeProperty('display');
+        expBar?.style.removeProperty('display');
+        miniGameTabBar?.style.removeProperty('display');
+        bottomNav?.style.removeProperty('display');
+        floatBtn?.style.removeProperty('display');
 
         if (buildContainer) {
             buildContainer.classList.add("max-h-[calc(100vh-160px)]", "pb-12");
             buildContainer.classList.remove("max-h-screen", "pb-4");
         }
         if (toggleBtn) toggleBtn.innerHTML = "👁️ ซ่อนแถบ";
-        if (floatRestoreBtn) floatRestoreBtn.style.setProperty('display', 'none', 'important');
+        floatRestoreBtn?.style.setProperty('display', 'none', 'important');
     }
 
     setTimeout(resizeBuildCanvas, 100);
 }
 
 function initObstacles() {
-    for (let r = 0; r < 6; r++) {
-        for (let c = 0; c < 6; c++) {
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
             if (r === 0 && c === 0) continue; 
             const rand = Math.random();
             if (rand < 0.20) grid[r][c] = { type: 'obstacle', obsType: 'tree' };
@@ -234,12 +234,11 @@ function getWorkerStats() {
     let totalWorkers = 0;
     let usedWorkers = 0;
 
-    for (let r = 0; r < 6; r++) {
-        for (let c = 0; c < 6; c++) {
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
             const item = grid[r][c];
             if (!item || item.type === 'child') continue;
 
-            // ⚠️ อาคารที่ถูกพังทลายจากแผ่นดินไหวจะไม่ถูกนับแรงงาน
             if (item.type === 'house' && !item.isBuilding && !item.isDestroyed) {
                 totalWorkers += BUILDINGS.house.upgrades[item.level - 1].workers;
             } else if ((item.type === 'lumber' || item.type === 'farm') && !item.isDestroyed) {
@@ -264,7 +263,7 @@ function selectTool(tool) {
 
     if (movingFromTile) cancelMove(); 
     currentTool = tool;
-    document.querySelectorAll('#controls button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('#controls button').forEach(btn => btn?.classList.remove('active'));
     const targetBtn = document.getElementById(`btn-${tool}`);
     if (targetBtn) targetBtn.classList.add('active');
     updateActionPanel();
@@ -363,7 +362,6 @@ function confirmMove() {
     updateBuildUI();
 }
 
-// 💰 คำนวณเงินคืนครึ่งราคา (Refund 50%)
 function getRefund(type, level) {
     let totalWood = 0, totalGold = 0, totalFood = 0;
     
@@ -387,12 +385,10 @@ function getRefund(type, level) {
     };
 }
 
-// 💰 ฟังก์ชันขายสิ่งปลูกสร้าง / เคลียร์ซาก
 function sellBuilding(r, c) {
     const item = grid[r][c];
     if (!item || item.isBuilding || item.type === 'wonder' || item.type === 'child') return;
 
-    // ⚠️ ถ้าเป็นบ้านที่ยังไม่ถูกทำลาย ต้องเช็คแรงงานก่อนขาย
     if (item.type === 'house' && !item.isDestroyed) {
         const wStats = getWorkerStats();
         const lostWorkers = BUILDINGS.house.upgrades[item.level - 1].workers;
@@ -404,7 +400,6 @@ function sellBuilding(r, c) {
 
     const refund = getRefund(item.type, item.level);
     
-    // ⚠️ ถ้าเป็นซากปรักหักพัง ได้ของคืนแค่ 25% ของราคาสร้าง
     if (item.isDestroyed) {
         refund.wood = Math.floor(refund.wood / 2);
         refund.gold = Math.floor(refund.gold / 2);
@@ -438,14 +433,13 @@ function sellBuilding(r, c) {
     }
 }
 
-// 🔧 ซ่อมแซมอาคารที่ถูกไฟไหม้
 function repairBuilding(r, c) {
     const item = grid[r][c];
     if (!item || !item.isBurned) return;
     const cost = { gold: 20, wood: 10 };
     if (canAfford(cost)) {
         deductCost(cost);
-        item.isBurned = false; // กลับมาทำงานได้ปกติ
+        item.isBurned = false;
         updateBuildUI();
         updateActionPanel();
     } else {
@@ -466,8 +460,7 @@ function buildStructure(r, c, type) {
         alert(`แรงงานไม่พอ! ต้องการ 👷${b.reqWorkers} คน`);
         return;
     }
-    
-    // สกิล Fitness ลดระยะเวลาสร้าง
+
     const fitLvl = getPlayerSkillLvl('fitness');
     const timeMultiplier = 1 - (fitLvl * 0.10);
 
@@ -578,7 +571,6 @@ function deductCost(cost) {
     if (cost.food) resources.food -= cost.food;
 }
 
-// 🌩️ ระบบภัยพิบัติแบบใหม่
 function triggerDisasterEvent() {
     const roll = Math.random();
     const banner = document.getElementById('event-banner');
@@ -586,15 +578,13 @@ function triggerDisasterEvent() {
     banner.style.display = 'block';
 
     if (roll < 0.20) {
-        // 🌾 ภัยแล้ง: ฟาร์มผลิตอาหารลดลง
         currentEvent = 'drought';
         banner.className = 'w-full max-w-sm px-3 py-1.5 rounded-xl text-xs font-bold mb-2 bg-orange-600 text-white shadow-xs';
         banner.innerText = '⚠️ เกิดภัยแล้ง! ฟาร์มผลิตอาหารลดลง 50% (30 วินาที)';
     } else if (roll < 0.45) {
-        // 🔥 ไฟไหม้: สุ่มโรงไม้หยุดทำงาน
         let lumbers = [];
-        for (let r=0; r<6; r++) {
-            for (let c=0; c<6; c++) {
+        for (let r=0; r<8; r++) {
+            for (let c=0; c<8; c++) {
                 let item = grid[r][c];
                 if (item && item.type === 'lumber' && !item.isBuilding && !item.isBurned && !item.isDestroyed) {
                     lumbers.push({r, c});
@@ -613,13 +603,12 @@ function triggerDisasterEvent() {
             banner.innerText = '☀️ สภาพอากาศปกติ (รอดจากไฟไหม้เพราะไม่มีโรงไม้)';
         }
     } else if (roll < 0.65) {
-        // 💥 แผ่นดินไหว: สุ่มอาคารพังทลาย
         let buildings = [];
-        for (let r=0; r<6; r++) {
-            for (let c=0; c<6; c++) {
+        for (let r=0; r<8; r++) {
+            for (let c=0; c<8; c++) {
                 let item = grid[r][c];
                 if (item && item.type !== 'child' && item.type !== 'obstacle' && !item.isBuilding && !item.isDestroyed) {
-                    if (item.type !== 'wonder') buildings.push({r, c}); // ไม่พัง Wonder 
+                    if (item.type !== 'wonder') buildings.push({r, c});
                 }
             }
         }
@@ -652,13 +641,13 @@ function buildGameTick() {
 
     if (eventTimer <= 0) {
         triggerDisasterEvent();
-        eventTimer = 30; // ภัยพิบัติแต่ละรอบโชว์ Banner 30 วิ (ยกเว้นภัยแล้งที่ผลออกตามนี้จริง)
+        eventTimer = 30;
     }
 
     const knowLvl = getPlayerSkillLvl('knowledge');
 
-    for (let r = 0; r < 6; r++) {
-        for (let c = 0; c < 6; c++) {
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
             const item = grid[r][c];
             if (!item || item.type === 'child') continue;
 
@@ -692,7 +681,6 @@ function buildGameTick() {
                 continue;
             }
 
-            // ⚠️ อาคารที่พัง หรือไฟไหม้ จะไม่ผลิตอะไรเลย
             if (item.isDestroyed || item.isBurned) continue;
 
             if (item.type === 'house') {
@@ -707,7 +695,7 @@ function buildGameTick() {
                 resources.wood += (woodGain + knowLvl);
             } else if (item.type === 'farm') {
                 let farmGain = item.level === 1 ? 2 : (item.level === 2 ? 5 : 12);
-                if (currentEvent === 'drought') farmGain = Math.floor(farmGain / 2); // ภัยแล้ง
+                if (currentEvent === 'drought') farmGain = Math.floor(farmGain / 2);
                 resources.food += (farmGain + knowLvl);
             }
         }
@@ -749,8 +737,8 @@ function updateQuestUI() {
 
 function countBuildings(type) {
     let count = 0;
-    for (let r = 0; r < 6; r++) {
-        for (let c = 0; c < 6; c++) {
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
             if (grid[r][c] && grid[r][c].type === type && grid[r][c].type !== 'child' && !grid[r][c].isBuilding && !grid[r][c].isDestroyed) count++;
         }
     }
@@ -758,8 +746,8 @@ function countBuildings(type) {
 }
 
 function hasLevel3Building() {
-    for (let r = 0; r < 6; r++) {
-        for (let c = 0; c < 6; c++) {
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
             if (grid[r][c] && grid[r][c].level === 3 && grid[r][c].type !== 'child' && !grid[r][c].isBuilding && !grid[r][c].isDestroyed) return true;
         }
     }
@@ -767,8 +755,8 @@ function hasLevel3Building() {
 }
 
 function hasWonder() {
-    for (let r = 0; r < 6; r++) {
-        for (let c = 0; c < 6; c++) {
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
             if (grid[r][c] && grid[r][c].type === 'wonder' && grid[r][c].type !== 'child' && !grid[r][c].isBuilding) return true;
         }
     }
@@ -780,7 +768,6 @@ function expandGrid(newSize) {
     resizeBuildCanvas();
 }
 
-// 🌟 ระบบบันทึกและแสดงสถิติ Leaderboard
 function triggerVictory() {
     isBuildGameOver = true;
     if (buildIntervalId) clearInterval(buildIntervalId);
@@ -1007,7 +994,6 @@ function updateActionPanel() {
         return;
     }
 
-    // 💥 อัปเดต UI เมื่ออาคารพังทลาย
     if (item.isDestroyed) {
         panel.innerHTML = `
             <div class="font-bold text-rose-500 text-xs mb-1">🏚️ ซากปรักหักพัง (${BUILDINGS[item.type].name})</div>
@@ -1017,7 +1003,6 @@ function updateActionPanel() {
         return;
     }
 
-    // 🔥 อัปเดต UI เมื่อโรงไม้ถูกไฟไหม้
     if (item.isBurned) {
         panel.innerHTML = `
             <div class="font-bold text-rose-400 text-xs mb-1">🔥 ${BUILDINGS[item.type].emoji} ${BUILDINGS[item.type].name} (ไฟไหม้!)</div>
@@ -1207,7 +1192,6 @@ function drawBuildCanvas() {
                         buildCtx.fillStyle = '#ffd54f';
                         buildCtx.fillText(`🔨${item.buildTimer}s`, c * TILE_SIZE + drawSize / 2, r * TILE_SIZE + drawSize / 2);
                     } else if (item.isDestroyed) {
-                        // ซากปรักหักพัง: แสดง Overlay สีดำจางๆ
                         buildCtx.fillStyle = 'rgba(0,0,0,0.5)';
                         buildCtx.fillRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, drawSize - 4, drawSize - 4);
                         buildCtx.font = `bold ${TILE_SIZE * 0.4}px sans-serif`;
@@ -1215,7 +1199,6 @@ function drawBuildCanvas() {
                         buildCtx.textBaseline = 'middle';
                         buildCtx.fillText(`💥`, c * TILE_SIZE + drawSize / 2, r * TILE_SIZE + drawSize / 2);
                     } else if (item.isBurned) {
-                        // ไฟไหม้: แสดง Overlay สีแดงและสัญลักษณ์ไฟ
                         buildCtx.fillStyle = 'rgba(244, 67, 54, 0.4)';
                         buildCtx.fillRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, drawSize - 4, drawSize - 4);
                         buildCtx.font = `bold ${TILE_SIZE * 0.4}px sans-serif`;
