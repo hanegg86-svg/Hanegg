@@ -377,12 +377,15 @@
                         </div>
                     </div>
 
-                    <div class="flex gap-3 mt-6 landscape:mt-3 w-full max-w-sm landscape:max-w-xl justify-center">
-                        <button onclick="speakCurrentWord()" class="flex-1 bg-sky-500 active:bg-sky-600 text-white font-bold py-3 px-4 rounded-2xl shadow-sm flex items-center justify-center gap-2 text-base min-h-[50px] landscape:min-h-[42px] transition active:scale-95">
-                            <i data-lucide="volume-2"></i> ฟังเสียงอ่าน
+                    <div class="flex gap-2 mt-6 landscape:mt-3 w-full max-w-sm landscape:max-w-xl justify-center">
+                        <button onclick="prevCard()" class="bg-indigo-500 active:bg-indigo-600 text-white font-bold py-3 px-3 rounded-2xl shadow-sm flex items-center justify-center gap-1.5 text-xs sm:text-sm min-h-[50px] landscape:min-h-[42px] transition active:scale-95 whitespace-nowrap">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i> คำก่อนหน้า
                         </button>
-                        <button onclick="addStar()" class="bg-emerald-500 active:bg-emerald-600 text-white font-bold py-3 px-5 rounded-2xl shadow-sm flex items-center justify-center gap-2 text-base min-h-[50px] landscape:min-h-[42px] transition active:scale-95">
-                            <i data-lucide="check-circle"></i> จำได้แล้ว!
+                        <button onclick="speakCurrentWord()" class="flex-1 bg-sky-500 active:bg-sky-600 text-white font-bold py-3 px-3 rounded-2xl shadow-sm flex items-center justify-center gap-1.5 text-xs sm:text-sm min-h-[50px] landscape:min-h-[42px] transition active:scale-95 whitespace-nowrap">
+                            <i data-lucide="volume-2" class="w-4 h-4"></i> ฟังเสียง
+                        </button>
+                        <button onclick="addStar()" class="flex-1 bg-emerald-500 active:bg-emerald-600 text-white font-bold py-3 px-3 rounded-2xl shadow-sm flex items-center justify-center gap-1.5 text-xs sm:text-sm min-h-[50px] landscape:min-h-[42px] transition active:scale-95 whitespace-nowrap">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> จำได้แล้ว!
                         </button>
                     </div>
                 </div>
