@@ -424,8 +424,6 @@ function setProfile(name, isParent) {
 
     const addBtn = document.getElementById("btn-add-vocab");
     const btnKey = document.getElementById("btn-key");
-    const flashcardSec = document.getElementById("flashcard-section");
-    const spellingSec = document.getElementById("spelling-section");
     const parentControls = document.getElementById("parent-controls");
     const parentCreateQuestBox = document.getElementById("parent-create-quest-box");
     const parentManageStarsBox = document.getElementById("parent-manage-stars-box");
@@ -434,8 +432,6 @@ function setProfile(name, isParent) {
     if (isParent) {
         addBtn.classList.remove("hidden"); addBtn.classList.add("flex");
         btnKey.classList.remove("hidden"); btnKey.classList.add("flex");
-        flashcardSec.classList.remove("hidden");
-        spellingSec.classList.add("hidden");
         parentControls.classList.remove("hidden");
         if (parentCreateQuestBox) parentCreateQuestBox.classList.remove("hidden");
         if (parentManageStarsBox) parentManageStarsBox.classList.remove("hidden");
@@ -443,13 +439,14 @@ function setProfile(name, isParent) {
     } else {
         addBtn.classList.add("hidden"); addBtn.classList.remove("flex");
         btnKey.classList.add("hidden"); btnKey.classList.remove("flex");
-        flashcardSec.classList.add("hidden");
-        spellingSec.classList.remove("hidden"); spellingSec.classList.add("flex");
         parentControls.classList.add("hidden");
         if (parentCreateQuestBox) parentCreateQuestBox.classList.add("hidden");
         if (parentManageStarsBox) parentManageStarsBox.classList.add("hidden");
         if (parentFilterBox) parentFilterBox.classList.add("hidden");
     }
+
+    // รีเซ็ตโหมดการเล่นกลับมาที่ 'ท่องศัพท์ (cards)' เสมอเพื่อป้องกันหน้าจอค้างผิดโหมด
+    if (typeof switchVocabPlayMode === 'function') switchVocabPlayMode('cards');
 
     if(typeof filterVocabForUser === 'function') filterVocabForUser();
     currentIndex = 0;
