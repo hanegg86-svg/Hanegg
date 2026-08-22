@@ -2,7 +2,7 @@
 // --- SERVICE WORKER (FULL PWA CACHE MANAGER) ---
 // ==========================================
 
-const CACHE_NAME = 'kids-vocab-v4'; // อัปเดตเป็น v4 เพื่อบังคับล้างแคชรูปภาพเก่าในเครื่องทั้งหมด
+const CACHE_NAME = 'kids-vocab-v5'; // อัปเดตเป็น v5 เพื่อบังคับล้างแคชเก่าให้เบราว์เซอร์ดึงไฟล์ใหม่ล่าสุด
 
 // รายการไฟล์ทั้งหมดในแอปเพื่อรองรับการใช้งานแบบ Offline 100%
 const ASSETS_TO_CACHE = [
@@ -11,18 +11,18 @@ const ASSETS_TO_CACHE = [
     './manifest.json',
     './Icon.png?v=2',
     
-    // Core & System Scripts
-    './core.js',
-    './quest-shop.js',
-    './minigames-main.js',
+    // Core & System Scripts (ระบุ ?v=2 ให้ตรงกับ index.html)
+    './core.js?v=2',
+    './quest-shop.js?v=2',
+    './minigames-main.js?v=2',
     
     // Mini-Game Scripts
-    './game-vocab.js',
-    './game-math.js',
-    './game-rpg.js',
-    './game-story.js',
-    './game-td.js',
-    './game-number-dungeon.js',
+    './game-vocab.js?v=2',
+    './game-math.js?v=2',
+    './game-rpg.js?v=2',
+    './game-story.js?v=2',
+    './game-td.js?v=2',
+    './game-number-dungeon.js?v=2',
     './game-build2.js',
 
     // Character Avatars
@@ -81,22 +81,19 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // ปรับเป็น Network-First Strategy: ดึงไฟล์ใหม่ล่าสุดจากเซิร์ฟเวอร์ก่อนเสมอ
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                return cachedResponse;
-            }
-            return fetch(event.request).then((response) => {
-                // บันทึกไฟล์ใหม่ๆ เข้า Cache อัตโนมัติเมื่อมีการโหลดครั้งแรก
-                if (!response || response.status !== 200 || response.type !== 'basic') {
-                    return response;
-                }
+        fetch(event.request).then((response) => {
+            if (response && response.status === 200 && response.type === 'basic') {
                 const responseToCache = response.clone();
                 caches.open(CACHE_NAME).then((cache) => {
                     cache.put(event.request, responseToCache);
                 });
-                return response;
-            });
-        }).catch(() => fetch(event.request))
+            }
+            return response;
+        }).catch(() => {
+            // หากไม่มีอินเทอร์เน็ต ค่อยดึงไฟล์จาก Cache ในเครื่องมาใช้งานแทน
+            return caches.match(event.request);
+        })
     );
 });
