@@ -122,6 +122,7 @@ function attachVocabListener() {
         }
         if(typeof filterVocabForUser === 'function') filterVocabForUser();
         if(typeof updateCard === 'function') updateCard();
+        if(typeof vocabSubMode !== 'undefined' && vocabSubMode === 'match' && typeof startMatchingGame === 'function') startMatchingGame();
     });
 }
 
@@ -141,6 +142,9 @@ function switchSubjectMode(mode) {
         }
     }
 
+    currentIndex = 0; 
+    setCorrectAnswers = 0;
+
     if (isFirebaseActive) {
         attachVocabListener();
     } else {
@@ -148,6 +152,7 @@ function switchSubjectMode(mode) {
         rawVocabList = localData ? JSON.parse(localData) : (subjectMode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH]);
         if(typeof filterVocabForUser === 'function') filterVocabForUser();
         if(typeof updateCard === 'function') updateCard();
+        if(typeof vocabSubMode !== 'undefined' && vocabSubMode === 'match' && typeof startMatchingGame === 'function') startMatchingGame();
     }
 }
 
@@ -424,6 +429,7 @@ function setProfile(name, isParent) {
     const parentControls = document.getElementById("parent-controls");
     const parentCreateQuestBox = document.getElementById("parent-create-quest-box");
     const parentManageStarsBox = document.getElementById("parent-manage-stars-box");
+    const parentFilterBox = document.getElementById("parent-filter-box");
 
     if (isParent) {
         addBtn.classList.remove("hidden"); addBtn.classList.add("flex");
@@ -433,6 +439,7 @@ function setProfile(name, isParent) {
         parentControls.classList.remove("hidden");
         if (parentCreateQuestBox) parentCreateQuestBox.classList.remove("hidden");
         if (parentManageStarsBox) parentManageStarsBox.classList.remove("hidden");
+        if (parentFilterBox) parentFilterBox.classList.remove("hidden");
     } else {
         addBtn.classList.add("hidden"); addBtn.classList.remove("flex");
         btnKey.classList.add("hidden"); btnKey.classList.remove("flex");
@@ -441,6 +448,7 @@ function setProfile(name, isParent) {
         parentControls.classList.add("hidden");
         if (parentCreateQuestBox) parentCreateQuestBox.classList.add("hidden");
         if (parentManageStarsBox) parentManageStarsBox.classList.add("hidden");
+        if (parentFilterBox) parentFilterBox.classList.add("hidden");
     }
 
     if(typeof filterVocabForUser === 'function') filterVocabForUser();

@@ -309,10 +309,33 @@
 
             <!-- Content Mini Games -->
             <div id="game-vocab-container" class="w-full flex flex-col items-center">
-                <div class="w-full max-w-sm landscape:max-w-xl bg-indigo-50/80 p-1 rounded-2xl border border-indigo-100 flex gap-1 mb-3">
+                <div class="w-full max-w-sm landscape:max-w-xl bg-indigo-50/80 p-1 rounded-2xl border border-indigo-100 flex gap-1 mb-2">
                     <button id="vocab-mode-cards" onclick="switchVocabPlayMode('cards')" class="flex-1 py-1 rounded-xl text-xs font-bold bg-white text-indigo-900 shadow-2xs transition">🎴 ท่องศัพท์</button>
                     <button id="vocab-mode-spell" onclick="switchVocabPlayMode('spell')" class="flex-1 py-1 rounded-xl text-xs font-bold text-indigo-700 hover:bg-white/50 transition">✏️ สะกดคำ</button>
                     <button id="vocab-mode-match" onclick="switchVocabPlayMode('match')" class="flex-1 py-1 rounded-xl text-xs font-bold text-indigo-700 hover:bg-white/50 transition">🧩 จับคู่</button>
+                </div>
+
+                <!-- Vocab Filter & Sort Controls Bar -->
+                <div class="w-full max-w-sm landscape:max-w-xl flex items-center justify-between gap-2 mb-3 px-1">
+                    <!-- Parent Assignee Filter -->
+                    <div id="parent-filter-box" class="flex items-center gap-1 bg-white px-2.5 py-1 rounded-xl border border-slate-200 text-xs font-bold hidden shadow-2xs">
+                        <span class="text-slate-500">ดูของ:</span>
+                        <select id="select-parent-filter" onchange="changeParentViewFilter(this.value)" class="bg-transparent text-indigo-900 font-bold focus:outline-none cursor-pointer">
+                            <option value="all">🌐 ทั้งหมด</option>
+                            <option value="พูน">👦 พูน</option>
+                            <option value="เพลิน">👧 เพลิน</option>
+                        </select>
+                    </div>
+
+                    <!-- Sort Mode Selector -->
+                    <div class="flex items-center gap-1 bg-white px-2.5 py-1 rounded-xl border border-slate-200 text-xs font-bold ml-auto shadow-2xs">
+                        <span class="text-slate-500">เรียง:</span>
+                        <select id="select-vocab-sort" onchange="changeVocabSortMode(this.value)" class="bg-transparent text-indigo-900 font-bold focus:outline-none cursor-pointer">
+                            <option value="newest">🆕 ใหม่ → เก่า</option>
+                            <option value="oldest">⏳ เก่า → ใหม่</option>
+                            <option value="random">🔀 สุ่มลำดับ</option>
+                        </select>
+                    </div>
                 </div>
                 
                 <!-- Flashcard Section -->

@@ -10,6 +10,9 @@ let matchedPairsCount = 0;
 let tempOcrBase64 = null;
 let ocrExtractedList = [];
 
+let parentViewFilter = 'all'; // 'all' | 'พูน' | 'เพลิน'
+let vocabSortMode = 'newest'; // 'newest' | 'oldest' | 'random'
+
 function switchVocabPlayMode(mode) {
     vocabSubMode = mode;
     const cardsBtn = document.getElementById("vocab-mode-cards");
@@ -44,40 +47,50 @@ function switchVocabPlayMode(mode) {
     }
 }
 
-function switchSubjectMode(mode) {
-    subjectMode = mode;
-    const enBtn = document.getElementById("mode-en-btn");
-    const thBtn = document.getElementById("mode-th-btn");
+function changeParentViewFilter(val) {
+    parentViewFilter = val;
+    filterVocabForUser();
+    currentIndex = 0;
+    updateCard();
+    if (vocabSubMode === 'match') startMatchingGame();
+}
 
-    if (mode === 'EN') {
-        enBtn.className = "px-2.5 py-1 rounded-xl text-xs font-black bg-white text-indigo-900 shadow transition";
-        thBtn.className = "px-2.5 py-1 rounded-xl text-xs font-black text-white hover:bg-white/20 transition";
-    } else {
-        thBtn.className = "px-2.5 py-1 rounded-xl text-xs font-black bg-white text-indigo-900 shadow transition";
-        enBtn.className = "px-2.5 py-1 rounded-xl text-xs font-black text-white hover:bg-white/20 transition";
-    }
-
-    currentIndex = 0; setCorrectAnswers = 0;
-    if (isFirebaseActive) { initFirebase(); } 
-    else {
-        const localData = localStorage.getItem(`kids_vocab_${subjectMode.toLowerCase()}_data`);
-        rawVocabList = localData ? JSON.parse(localData) : (mode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH]);
-        filterVocabForUser(); 
-        updateCard();
-        if (vocabSubMode === 'match') startMatchingGame();
-    }
+function changeVocabSortMode(val) {
+    vocabSortMode = val;
+    filterVocabForUser();
+    currentIndex = 0;
+    updateCard();
+    if (vocabSubMode === 'match') startMatchingGame();
 }
 
 function filterVocabForUser() {
-    if (isParentUser || !currentUser) {
-        filteredVocabList = [...rawVocabList];
-    } else {
-        filteredVocabList = rawVocabList.filter(item => {
+    let baseList = [...rawVocabList];
+
+    // 1. กรองตามสิทธิ์ผู้เรียน / ตัวเลือกของผู้ปกครอง
+    if (isParentUser) {
+        if (parentViewFilter === 'พูน' || parentViewFilter === 'เพลิน') {
+            baseList = baseList.filter(item => {
+                if (!item.assignees || item.assignees.length === 0) return true;
+                return item.assignees.includes(parentViewFilter);
+            });
+        }
+    } else if (currentUser) {
+        baseList = baseList.filter(item => {
             if (!item.assignees || item.assignees.length === 0) return true;
             return item.assignees.includes(currentUser);
         });
     }
-    shuffleArray(filteredVocabList);
+
+    // 2. จัดเรียงลำดับคำศัพท์
+    if (vocabSortMode === 'newest') {
+        filteredVocabList = baseList.reverse();
+    } else if (vocabSortMode === 'oldest') {
+        filteredVocabList = baseList;
+    } else if (vocabSortMode === 'random') {
+        filteredVocabList = shuffleArray(baseList);
+    } else {
+        filteredVocabList = baseList.reverse();
+    }
 }
 
 function saveToStorage() { 
@@ -343,8 +356,16 @@ function addStar() { if (filteredVocabList.length === 0) return; nextCard(); }
 function speakCurrentWord() {
     if (filteredVocabList.length === 0) return;
     const item = filteredVocabList[currentIndex];
-    let rawText = isFlipped ? item.th : item.en;
-    let lang = isFlipped ? 'th-TH' : 'en-US';
+    let rawText, lang;
+
+    if (subjectMode === 'EN') {
+        rawText = isFlipped ? item.th : item.en;
+        lang = isFlipped ? 'th-TH' : 'en-US';
+    } else {
+        rawText = isFlipped ? item.en : item.th;
+        lang = isFlipped ? 'en-US' : 'th-TH';
+    }
+
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(rawText);
@@ -671,9 +692,9 @@ function saveSelectedOcrVocab() {
 
             if (!exists) {
                 rawVocabList.push({
-                    en: item.en || item.th,
-                    th: item.th || item.en,
-                    phonetic: item.phonetic || item.th,
+                    en: item.en ? item.en.trim() : "",
+                    th: item.th ? item.th.trim() : "",
+                    phonetic: item.phonetic || item.th || "",
                     emoji: item.emoji || "✨",
                     image: null,
                     assignees: assignees
