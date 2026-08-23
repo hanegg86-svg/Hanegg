@@ -180,7 +180,7 @@ function stopTownBuilderGame() {
     }
 }
 
-// 🌟 ปรับปรุงการคำนวณขนาด Canvas ให้ยืดหยุ่นตามแนวนอน/แนวตั้งและหน้าจอ iPad/Tablet 🌟
+// 🌟 ปรับปรุงการคำนวณขนาด Canvas ให้ย่อเล็กลงในแนวตั้ง เพื่อไม่ให้ดัน UI ด้านล่างตกขอบ 🌟
 function resizeBuildCanvas() {
     if (!buildCanvas) return;
     
@@ -193,14 +193,14 @@ function resizeBuildCanvas() {
         const availableWidth = (window.innerWidth * 0.5) - 32; 
         targetSize = Math.min(availableWidth, availableHeight);
     } else {
-        // แนวตั้ง (Mobile Portrait): คำนวณจำกัดความสูงไม่ให้เกิน 36% ของหน้าจอ เพื่อเหลือพื้นที่ให้ UI ด้านล่างไม่ล้นทับ Nav
+        // แนวตั้ง (Mobile Portrait): จำกัดความสูงไว้ที่ 28% ของความสูงหน้าจอ เพื่อดึงปุ่มควบคุมทั้งหมดขึ้นมาเหนือบาร์ล่าง
         const availableWidth = window.innerWidth - 24;
-        const availableHeight = window.innerHeight * 0.36;
+        const availableHeight = window.innerHeight * 0.28;
         targetSize = Math.min(availableWidth, availableHeight);
     }
 
     // กำหนดขนาดขั้นต่ำและสูงสุดเพื่อความเหมาะสม
-    targetSize = Math.max(220, Math.min(targetSize, 700));
+    targetSize = Math.max(180, Math.min(targetSize, 700));
 
     TILE_SIZE = targetSize / GRID_SIZE;
     buildCanvas.width = targetSize;
@@ -233,10 +233,10 @@ function toggleImmersiveMode() {
         floatBtn?.style.setProperty('display', 'none', 'important');
 
         if (buildContainer) {
-            buildContainer.classList.remove("max-h-[calc(100vh-160px)]", "pb-12");
+            buildContainer.classList.remove("max-h-[calc(100vh-160px)]", "pb-24");
             buildContainer.classList.add("max-h-screen", "pb-4");
         }
-        if (toggleBtn) toggleBtn.innerHTML = "👁️ แสดงแถบ";
+        if (toggleBtn) toggleBtn.innerHTML = "👁️ แสดงแถบเมนู";
         floatRestoreBtn?.style.setProperty('display', 'flex', 'important');
     } else {
         mainHeader?.style.removeProperty('display');
@@ -246,10 +246,10 @@ function toggleImmersiveMode() {
         floatBtn?.style.removeProperty('display');
 
         if (buildContainer) {
-            buildContainer.classList.add("max-h-[calc(100vh-160px)]", "pb-12");
+            buildContainer.classList.add("max-h-[calc(100vh-160px)]", "pb-24");
             buildContainer.classList.remove("max-h-screen", "pb-4");
         }
-        if (toggleBtn) toggleBtn.innerHTML = "👁️ ซ่อนแถบ";
+        if (toggleBtn) toggleBtn.innerHTML = "👁️ ซ่อนแถบเมนู (โหมดเต็มจอ)";
         floatRestoreBtn?.style.setProperty('display', 'none', 'important');
     }
 
