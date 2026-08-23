@@ -1,5 +1,5 @@
 // Path: ./sw.js
-const CACHE_NAME = 'kids-vocab-v2';
+const CACHE_NAME = 'kids-vocab-v3';
 
 // รายการไฟล์ทั้งหมดที่ต้องเก็บ Cache สำหรับการใช้งานออฟไลน์
 const ASSETS_TO_CACHE = [

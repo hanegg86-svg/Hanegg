@@ -193,12 +193,14 @@ function resizeBuildCanvas() {
         const availableWidth = (window.innerWidth * 0.5) - 32; 
         targetSize = Math.min(availableWidth, availableHeight);
     } else {
-        // แนวตั้ง: ขยายตามความกว้างจอ (รองรับสูงสุด 550px)
-        targetSize = Math.min(window.innerWidth - 32, 550);
+        // แนวตั้ง (Mobile Portrait): คำนวณจำกัดความสูงไม่ให้เกิน 36% ของหน้าจอ เพื่อเหลือพื้นที่ให้ UI ด้านล่างไม่ล้นทับ Nav
+        const availableWidth = window.innerWidth - 24;
+        const availableHeight = window.innerHeight * 0.36;
+        targetSize = Math.min(availableWidth, availableHeight);
     }
 
     // กำหนดขนาดขั้นต่ำและสูงสุดเพื่อความเหมาะสม
-    targetSize = Math.max(280, Math.min(targetSize, 700));
+    targetSize = Math.max(220, Math.min(targetSize, 700));
 
     TILE_SIZE = targetSize / GRID_SIZE;
     buildCanvas.width = targetSize;
