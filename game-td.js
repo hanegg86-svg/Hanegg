@@ -30,12 +30,62 @@ let tdMinionsSpawnedCount = 0;
 // ตัวแปรระดับความยาก ('easy' หรือ 'hard')
 let tdDifficulty = 'easy';
 
+// --- ตัวแปรสำหรับ Skill Buffs ---
+let tdSkillBuffs = { speedReduce: 0, bonusHp: 0, bonusUlt: 0, bonusCoins: 0, shopDiscount: 0, textList: [] };
+
 const tdPath = [
     {x: -30, y: 180}, {x: 180, y: 180}, {x: 180, y: 80},
     {x: 420, y: 80}, {x: 420, y: 230}, {x: 500, y: 230}
 ];
 const tdHero = { x: 535, y: 230, slashAnim: 0 };
 const tdTurretPos = { x: 300, y: 150 };
+
+function applyUserSkillBuffs() {
+    tdSkillBuffs = {
+        speedReduce: 0,
+        bonusHp: 0,
+        bonusUlt: 0,
+        bonusCoins: 0,
+        shopDiscount: 0,
+        textList: []
+    };
+
+    if (!currentUser || isParentUser) return;
+
+    const skills = (typeof userSkillsList !== 'undefined' && userSkillsList[currentUser]) ? userSkillsList[currentUser] : { knowledge: 0, fitness: 0, wealth: 0 };
+    const kLvl = typeof calculateSkillLevel === 'function' ? calculateSkillLevel(skills.knowledge || 0).level : 0;
+    const fLvl = typeof calculateSkillLevel === 'function' ? calculateSkillLevel(skills.fitness || 0).level : 0;
+    const wLvl = typeof calculateSkillLevel === 'function' ? calculateSkillLevel(skills.wealth || 0).level : 0;
+
+    if (kLvl > 0) {
+        tdSkillBuffs.speedReduce = kLvl * 0.05;
+        tdSkillBuffs.textList.push(`🧠 ความรู้ Lv.${kLvl}: ศัตรูช้าลง -${kLvl * 5}%`);
+    }
+
+    if (fLvl > 0) {
+        tdSkillBuffs.bonusHp = fLvl;
+        let ultBonus = 0;
+        if (fLvl >= 5) ultBonus = 2;
+        else if (fLvl >= 3) ultBonus = 1;
+        tdSkillBuffs.bonusUlt = ultBonus;
+
+        let ultText = ultBonus > 0 ? ` | 💣 ระเบิดฟรี +${ultBonus}` : '';
+        tdSkillBuffs.textList.push(`💪 พลังกาย Lv.${fLvl}: ❤️ Max HP +${fLvl}${ultText}`);
+    }
+
+    if (wLvl > 0) {
+        tdSkillBuffs.bonusCoins = wLvl * 50;
+        tdSkillBuffs.shopDiscount = wLvl * 0.05;
+        tdSkillBuffs.textList.push(`🪙 ความร่ำรวย Lv.${wLvl}: 🪙 เงินเริ่ม +${wLvl * 50} | ลดราคา ${wLvl * 5}%`);
+    }
+}
+
+function getShopPrice(basePrice) {
+    if (tdSkillBuffs && tdSkillBuffs.shopDiscount > 0) {
+        return Math.round(basePrice * (1 - tdSkillBuffs.shopDiscount));
+    }
+    return basePrice;
+}
 
 function drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.beginPath();
@@ -103,6 +153,9 @@ class TDEnemy {
 
         const speedMultiplier = (tdDifficulty === 'easy') ? 0.7 : 1.0;
         let speedBase = ((0.6 + (tdWave - 1) * 0.12) * speedMultiplier) * 1.265;
+        if (tdSkillBuffs && tdSkillBuffs.speedReduce > 0) {
+            speedBase *= (1 - tdSkillBuffs.speedReduce);
+        }
         if (this.isBoss) speedBase *= 0.225; 
 
         this.baseSpeed = speedBase;
@@ -325,15 +378,20 @@ function initMathTDGame() {
         tdUltBtn.onclick = useTDUltimate;
     }
 
-    tdHp = 10; tdScore = 0; tdWave = 1; tdTotalKillsInWave = 0; tdIsGameCleared = false;
-    tdCoins = 0;
-    tdUltimateCount = 1;
+    applyUserSkillBuffs();
+
+    tdHp = 10 + tdSkillBuffs.bonusHp; 
+    tdScore = 0; tdWave = 1; tdTotalKillsInWave = 0; tdIsGameCleared = false;
+    tdCoins = 0 + tdSkillBuffs.bonusCoins;
+    tdUltimateCount = 1 + tdSkillBuffs.bonusUlt;
     tdMultiShotUnlocked = false; 
     tdAutoTurretUnlocked = false; 
     tdTotalAnswersCount = 0;
     tdSlowTimer = 0; tdFreezeTimer = 0;
     tdWrongCount = 0; tdShakeTimer = 0; tdEnemies = []; tdParticles = []; tdSlashes = []; tdSpawnTimer = 0;
-    tdCurrentTarget = null; tdWaveNoticeTimer = 120; tdWaveNoticeText = "WAVE 1";
+    tdCurrentTarget = null; 
+    tdWaveNoticeText = "WAVE 1";
+    tdWaveNoticeTimer = (tdSkillBuffs.textList && tdSkillBuffs.textList.length > 0) ? 220 : 120;
 
     tdBossWaveStage = 0;
     tdMinionsSpawnedCount = 0;
@@ -358,6 +416,21 @@ function updateTDCoinsUI() {
     const coinEl = document.getElementById('td-coins');
     if (coinEl) coinEl.innerText = tdCoins;
 
+    const pFreeze = getShopPrice(100);
+    const pHeart = getShopPrice(200);
+    const pUlt = getShopPrice(300);
+    const pBow = getShopPrice(400);
+    const pTurret = getShopPrice(400);
+
+    const freezeText = document.getElementById('td-buy-freeze-text');
+    if (freezeText) freezeText.innerText = `🪙 ${pFreeze}`;
+
+    const heartText = document.getElementById('td-buy-heart-text');
+    if (heartText) heartText.innerText = `🪙 ${pHeart}`;
+
+    const ultText = document.getElementById('td-buy-ult-text');
+    if (ultText) ultText.innerText = `🪙 ${pUlt}`;
+
     const bowBtn = document.getElementById('td-buy-bow-btn');
     const bowText = document.getElementById('td-buy-bow-text');
     if (bowBtn && bowText) {
@@ -365,7 +438,7 @@ function updateTDCoinsUI() {
             bowText.innerText = "MAX";
             bowBtn.classList.add("opacity-50");
         } else {
-            bowText.innerText = "🪙 400";
+            bowText.innerText = `🪙 ${pBow}`;
             bowBtn.classList.remove("opacity-50");
         }
     }
@@ -377,30 +450,33 @@ function updateTDCoinsUI() {
             turretText.innerText = "MAX";
             turretBtn.classList.add("opacity-50");
         } else {
-            turretText.innerText = "🪙 400";
+            turretText.innerText = `🪙 ${pTurret}`;
             turretBtn.classList.remove("opacity-50");
         }
     }
 }
 
 function buyTDFreeze() {
-    if (tdCoins < 100) { alert("เหรียญไม่พอครับ! (ต้องใช้ 100 เหรียญ)"); return; }
-    tdCoins -= 100;
+    const price = getShopPrice(100);
+    if (tdCoins < price) { alert(`เหรียญไม่พอครับ! (ต้องใช้ ${price} เหรียญ)`); return; }
+    tdCoins -= price;
     tdFreezeTimer = 300; 
     updateTDCoinsUI();
 }
 
 function buyTDHeart() {
-    if (tdCoins < 200) { alert("เหรียญไม่พอครับ! (ต้องใช้ 200 เหรียญ)"); return; }
-    tdCoins -= 200;
+    const price = getShopPrice(200);
+    if (tdCoins < price) { alert(`เหรียญไม่พอครับ! (ต้องใช้ ${price} เหรียญ)`); return; }
+    tdCoins -= price;
     tdHp += 3;
     const hpEl = document.getElementById('td-hp'); if (hpEl) hpEl.innerText = tdHp;
     updateTDCoinsUI();
 }
 
 function buyTDUltimate() {
-    if (tdCoins < 300) { alert("เหรียญไม่พอครับ! (ต้องใช้ 300 เหรียญ)"); return; }
-    tdCoins -= 300;
+    const price = getShopPrice(300);
+    if (tdCoins < price) { alert(`เหรียญไม่พอครับ! (ต้องใช้ ${price} เหรียญ)`); return; }
+    tdCoins -= price;
     tdUltimateCount += 1;
     updateTDUltUI();
     updateTDCoinsUI();
@@ -408,8 +484,9 @@ function buyTDUltimate() {
 
 function buyTDUpgradeTower() {
     if (tdMultiShotUnlocked) { alert("หนูอัปเกรดธนูยิง 2 ตัวถาวรแล้วครับ!"); return; }
-    if (tdCoins < 400) { alert("เหรียญไม่พอครับ! (ต้องใช้ 400 เหรียญ)"); return; }
-    tdCoins -= 400;
+    const price = getShopPrice(400);
+    if (tdCoins < price) { alert(`เหรียญไม่พอครับ! (ต้องใช้ ${price} เหรียญ)`); return; }
+    tdCoins -= price;
     tdMultiShotUnlocked = true;
     updateTDCoinsUI();
     alert("🏹 อัปเกรดตัวเราสำเร็จ! ฮีโร่จะยิงโจมตีทีเดียว 2 หัวใจถาวรแล้วครับ!");
@@ -417,8 +494,9 @@ function buyTDUpgradeTower() {
 
 function buyTDAutoTurret() {
     if (tdAutoTurretUnlocked) { alert("คุณมีป้อมช่วยตีแล้วครับ!"); return; }
-    if (tdCoins < 400) { alert("เหรียญไม่พอครับ! (ต้องใช้ 400 เหรียญ)"); return; }
-    tdCoins -= 400;
+    const price = getShopPrice(400);
+    if (tdCoins < price) { alert(`เหรียญไม่พอครับ! (ต้องใช้ ${price} เหรียญ)`); return; }
+    tdCoins -= price;
     tdAutoTurretUnlocked = true;
     updateTDCoinsUI();
     alert("🏰 ซื้อป้อมช่วยตีสำเร็จ! ป้อมจะช่วยยิงมอนสเตอร์รองทุกๆ การเลือกตอบ 2 ครั้ง!");
@@ -860,12 +938,39 @@ function tdGameLoop() {
     }
 
     if (tdWaveNoticeTimer > 0 && !tdIsGameCleared && tdHp > 0) {
-        tdCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-        tdCtx.fillRect(0, 150, tdCanvas.width, 80);
-        tdCtx.fillStyle = '#FF70A6';
-        tdCtx.font = 'bold 36px Quicksand, Arial';
-        tdCtx.textAlign = 'center';
-        tdCtx.fillText(tdWaveNoticeText, tdCanvas.width / 2, 202);
+        if (tdWave === 1 && tdSkillBuffs && tdSkillBuffs.textList && tdSkillBuffs.textList.length > 0) {
+            const boxHeight = 85 + (tdSkillBuffs.textList.length * 24);
+            const boxY = (tdCanvas.height - boxHeight) / 2;
+            
+            tdCtx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            drawRoundedRect(tdCtx, 30, boxY, tdCanvas.width - 60, boxHeight, 16);
+            tdCtx.fill();
+            tdCtx.strokeStyle = '#6366F1';
+            tdCtx.lineWidth = 3;
+            tdCtx.stroke();
+
+            tdCtx.fillStyle = '#4F46E5';
+            tdCtx.font = 'bold 20px Quicksand, Arial';
+            tdCtx.textAlign = 'center';
+            tdCtx.fillText(`✨ บัฟสกิลของน้อง ${currentUser || ''} ✨`, tdCanvas.width / 2, boxY + 30);
+
+            tdCtx.font = 'bold 13px Quicksand, Arial';
+            tdCtx.fillStyle = '#1F2937';
+            tdSkillBuffs.textList.forEach((txt, idx) => {
+                tdCtx.fillText(txt, tdCanvas.width / 2, boxY + 56 + (idx * 22));
+            });
+
+            tdCtx.fillStyle = '#EC4899';
+            tdCtx.font = 'bold 18px Quicksand, Arial';
+            tdCtx.fillText(tdWaveNoticeText, tdCanvas.width / 2, boxY + boxHeight - 14);
+        } else {
+            tdCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            tdCtx.fillRect(0, 150, tdCanvas.width, 80);
+            tdCtx.fillStyle = '#FF70A6';
+            tdCtx.font = 'bold 36px Quicksand, Arial';
+            tdCtx.textAlign = 'center';
+            tdCtx.fillText(tdWaveNoticeText, tdCanvas.width / 2, 202);
+        }
         tdWaveNoticeTimer--;
     }
 

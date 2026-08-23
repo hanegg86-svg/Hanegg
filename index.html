@@ -494,7 +494,7 @@
                             <div class="flex justify-center gap-2">
                                 <button onclick="selectMathOperator('+')" class="w-10 h-10 bg-pink-500 active:bg-pink-600 text-white font-black text-xl rounded-full shadow-xs flex items-center justify-center bubble-btn">+</button>
                                 <button onclick="selectMathOperator('-')" class="w-10 h-10 bg-pink-500 active:bg-pink-600 text-white font-black text-xl rounded-full shadow-xs flex items-center justify-center bubble-btn">-</button>
-                                <button id="math-op-mul" onclick="selectMathOperator('×')" class="w-10 h-10 bg-pink-500 active:bg-pink-600 text-white font-black text-xl rounded-full shadow-xs flex items-center justify-center bubble-btn">×</button>
+                                <button id="math-op-mul" onclick="selectMathOperator('×')" class="w-10 h-10 bg-pink-500 active:bg-pink-600 text-white font-black text-xl rounded-full shadow-xs flex items-center justify-center bubble-btn">×Pattern</button>
                                 <button id="math-op-div" onclick="selectMathOperator('÷')" class="w-10 h-10 bg-pink-500 active:bg-pink-600 text-white font-black text-xl rounded-full shadow-xs flex items-center justify-center bubble-btn">÷</button>
                             </div>
                         </div>
@@ -733,17 +733,17 @@
                         <div class="grid grid-cols-5 gap-1">
                             <button onclick="buyTDFreeze()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
                                 <span class="text-sm">❄️</span>
-                                <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 100</span>
+                                <span id="td-buy-freeze-text" class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 100</span>
                             </button>
 
                             <button onclick="buyTDHeart()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
                                 <span class="text-sm">❤️+3</span>
-                                <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 200</span>
+                                <span id="td-buy-heart-text" class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 200</span>
                             </button>
 
                             <button onclick="buyTDUltimate()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">
                                 <span class="text-sm">💣</span>
-                                <span class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 300</span>
+                                <span id="td-buy-ult-text" class="text-[9px] text-amber-600 font-extrabold font-kids">🪙 300</span>
                             </button>
 
                             <button id="td-buy-bow-btn" onclick="buyTDUpgradeTower()" class="py-1 px-1 bg-white hover:bg-amber-100/60 border border-amber-200/60 rounded-xl flex flex-col items-center justify-center shadow-2xs transition active:scale-95">

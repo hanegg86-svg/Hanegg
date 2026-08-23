@@ -1,99 +1,77 @@
-// ==========================================
-// --- SERVICE WORKER (FULL PWA CACHE MANAGER) ---
-// ==========================================
+// Path: ./sw.js
+const CACHE_NAME = 'kids-vocab-v2';
 
-const CACHE_NAME = 'kids-vocab-v7'; // อัปเดตเป็น v7 เพื่อบังคับล้างแคชเก่าและโหลดหน้า index.html ใหม่ล่าสุด
-
-// รายการไฟล์ทั้งหมดในแอปเพื่อรองรับการใช้งานแบบ Offline 100%
+// รายการไฟล์ทั้งหมดที่ต้องเก็บ Cache สำหรับการใช้งานออฟไลน์
 const ASSETS_TO_CACHE = [
-    './',
-    './index.html',
-    './manifest.json',
-    './Icon.png?v=2',
-    
-    // Core & System Scripts (ระบุ ?v=2 ให้ตรงกับ index.html)
-    './core.js?v=2',
-    './quest-shop.js?v=2',
-    './minigames-main.js?v=2',
-    
-    // Mini-Game Scripts
-    './game-vocab.js?v=2',
-    './game-math.js?v=2',
-    './game-rpg.js?v=2',
-    './game-story.js?v=2',
-    './game-td.js?v=2',
-    './game-number-dungeon.js?v=2',
-    './game-build2.js',
-
-    // Character Avatars
-    './mario.png',
-    './peach.png',
-    './luigi.png',
-    './rosalina.png',
-
-    // Town Builder Assets & Sound
-    './bgm.mp3',
-    './house_lvl1.png',
-    './house_lvl2.png',
-    './house_lvl3.png',
-    './farm_lvl1.png',
-    './farm_lvl2.png',
-    './farm_lvl3.png',
-    './lumber_lvl1.png',
-    './lumber_lvl2.png',
-    './lumber_lvl3.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './Icon.png',
+  './core.js',
+  './quest-shop.js',
+  './minigames-main.js',
+  './game-vocab.js',
+  './game-math.js',
+  './game-rpg.js',
+  './game-story.js',
+  './game-td.js',
+  './game-number-dungeon.js',
+  './game-build2.js',
+  './mushroom.png',
+  './turtle.png',
+  './boss.png',
+  './mario.png',
+  './luigi.png',
+  './peach.png',
+  './rosalina.png'
 ];
 
+// --- 1. INSTALL EVENT ---
+// โหลดและบันทึกไฟล์ทั้งหมดเข้า Cache เมื่อเปิดแอปพลิเคชัน
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return Promise.allSettled(
-                ASSETS_TO_CACHE.map(url => cache.add(url).catch(err => console.warn(`Cache failed for: ${url}`, err)))
-            );
-        })
-    );
-    self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(ASSETS_TO_CACHE);
+      })
+      .then(() => self.skipWaiting())
+  );
 });
 
+// --- 2. ACTIVATE EVENT ---
+// ตรวจสอบและลบ Cache เวอร์ชันเก่าออกทันทีเมื่อเปลี่ยน CACHE_NAME
 self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((keys) => {
-            return Promise.all(
-                keys.map((key) => {
-                    if (key !== CACHE_NAME) {
-                        return caches.delete(key);
-                    }
-                })
-            );
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
         })
-    );
-    self.clients.claim();
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
+// --- 3. FETCH EVENT ---
+// ใช้กลยุทธ์ Network-First (ดึงข้อมูลล่าสุดจากอินเทอร์เน็ตก่อน ถ้าไม่มีหรือออฟไลน์จึงดึงจาก Cache)
 self.addEventListener('fetch', (event) => {
-    // รองรับเฉพาะ HTTP GET Request สำหรับ Cache Storage API เพื่อป้องกัน TypeError บน POST/PUT
-    if (event.request.method !== 'GET') {
-        return;
-    }
+  if (event.request.method !== 'GET') return;
 
-    // ข้ามการ Cache API หรือ Firebase Requests
-    if (event.request.url.includes('firebase') || event.request.url.includes('googleapis')) {
-        return;
-    }
-
-    // ปรับเป็น Network-First Strategy: ดึงไฟล์ใหม่ล่าสุดจากเซิร์ฟเวอร์ก่อนเสมอ
-    event.respondWith(
-        fetch(event.request).then((response) => {
-            if (response && response.status === 200 && response.type === 'basic') {
-                const responseToCache = response.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, responseToCache);
-                });
-            }
-            return response;
-        }).catch(() => {
-            // หากไม่มีอินเทอร์เน็ต ค่อยดึงไฟล์จาก Cache ในเครื่องมาใช้งานแทน
-            return caches.match(event.request);
-        })
-    );
+  event.respondWith(
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
+  );
 });
