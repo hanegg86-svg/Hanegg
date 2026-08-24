@@ -384,7 +384,7 @@
                     </div>
                 </div>
 
-                <!-- Photo Hunt Section (แทนที่ Spelling Section) -->
+                <!-- Photo Hunt Section (ซ่อนตัวหนังสือ แสดงรูปภาพ/Emoji ใหญ่ + ปุ่มกดฟังเสียง) -->
                 <div id="photo-hunt-section" class="w-full max-w-sm landscape:max-w-xl hidden flex-col items-center">
                     <div id="daily-limit-banner" class="w-full bg-rose-50 border border-rose-200 rounded-2xl p-4 text-center mb-4 hidden shadow-xs">
                         <div class="text-3xl mb-1">🛑</div>
@@ -398,16 +398,21 @@
                             <span id="photo-reward-tag" class="text-[10px] font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full font-kids">⭐ 2 ดาว + 150 EXP</span>
                         </div>
 
-                        <div class="flex items-center justify-between w-full bg-indigo-50/50 p-2.5 rounded-2xl border border-indigo-100 mb-2">
-                            <div class="flex items-center gap-2">
-                                <span id="photo-target-emoji" class="text-3xl">🍎</span>
+                        <!-- Target Visual Box (ซ่อนข้อความศัพท์ แสดงรูปภาพ/Emoji ขนาดใหญ่คู่กับปุ่มฟังเสียง) -->
+                        <div class="flex items-center justify-between w-full bg-indigo-50/80 p-3 rounded-2xl border border-indigo-100 mb-2 shadow-2xs">
+                            <div class="flex items-center gap-3">
+                                <div class="w-16 h-16 rounded-2xl bg-white shadow-xs border border-indigo-100 flex items-center justify-center overflow-hidden">
+                                    <span id="photo-target-emoji" class="text-4xl">🍎</span>
+                                    <img id="photo-target-img" class="w-full h-full object-cover hidden" alt="target visual">
+                                </div>
                                 <div class="text-left">
-                                    <div class="text-[10px] font-bold text-indigo-500 font-kids">เป้าหมายที่ต้องถ่าย:</div>
-                                    <h3 id="photo-target-word" class="text-lg font-black text-indigo-900 font-kids">Apple</h3>
+                                    <div class="text-xs font-black text-indigo-950 font-kids">ฟังเสียง & ส่องวัตถุในรูป 🎧</div>
+                                    <div class="text-[10px] font-bold text-indigo-500 font-kids mt-0.5">(ซ่อนตัวหนังสือฝึกฟัง)</div>
                                 </div>
                             </div>
-                            <button onclick="speakCurrentWordPrompt()" class="bg-sky-50 active:bg-sky-100 text-sky-800 font-bold p-2 rounded-xl border border-sky-200 text-xs flex items-center gap-1">
-                                <i data-lucide="volume-2" class="w-4 h-4"></i>
+                            <button onclick="speakCurrentWordPrompt()" class="bg-sky-500 hover:bg-sky-600 active:scale-95 text-white font-extrabold p-3 rounded-2xl border-2 border-sky-600 text-sm flex items-center gap-1.5 shadow-xs transition bubble-btn">
+                                <i data-lucide="volume-2" class="w-5 h-5"></i>
+                                <span class="font-kids text-xs">ฟังเสียง 🔊</span>
                             </button>
                         </div>
 

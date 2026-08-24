@@ -160,12 +160,19 @@ function updateCard() {
         document.getElementById("card-phonetic").innerText = `[ ${item.phonetic || item.th} ]`;
     }
 
-    // 🎯 อัปเดตข้อมูลโหมดส่องถ่ายรูป
+    // 🎯 อัปเดตข้อมูลโหมดส่องถ่ายรูป (แสดงรูปภาพ/Emoji ชัดเจน ซ่อนตัวหนังสือคำศัพท์)
     const photoEmoji = document.getElementById("photo-target-emoji");
-    const photoWord = document.getElementById("photo-target-word");
-    if (photoEmoji && photoWord) {
-        photoEmoji.innerText = item.emoji || "🍎";
-        photoWord.innerText = subjectMode === 'EN' ? item.en : item.th;
+    const photoImg = document.getElementById("photo-target-img");
+    if (photoEmoji && photoImg) {
+        if (item.image) {
+            photoEmoji.classList.add("hidden");
+            photoImg.classList.remove("hidden");
+            photoImg.src = item.image;
+        } else {
+            photoImg.classList.add("hidden");
+            photoEmoji.classList.remove("hidden");
+            photoEmoji.innerText = item.emoji || "🍎";
+        }
     }
 
     if (!currentDynamicAction || photoCorrectCount === 0) {
@@ -173,6 +180,11 @@ function updateCard() {
     }
     updatePhotoProgressUI();
     retakeVocabPhoto();
+
+    // 🔊 อ่านเสียงออกเสียงคำศัพท์ให้อัตโนมัติทันทีในโหมดส่องถ่ายรูป
+    if (vocabSubMode === 'photo') {
+        setTimeout(() => { speakCurrentWordPrompt(); }, 300);
+    }
 
     // 🎯 อัปเดตป้ายผู้เรียน (target-assigned-badge)
     const badgeEl = document.getElementById("target-assigned-badge");
