@@ -180,10 +180,15 @@ function updateCard() {
 function setupBulkPhotoSheet() {
     if (!filteredVocabList || filteredVocabList.length === 0) return;
 
-    // สุ่มดึงคำศัพท์ 5 คำประจำรอบ
-    const shuffled = [...filteredVocabList];
-    shuffleArray(shuffled);
-    bulkPhotoVocabItems = shuffled.slice(0, Math.min(5, filteredVocabList.length));
+    // ดึงคำศัพท์ 5 คำตามเงื่อนไขการเรียงลำดับ (vocabSortMode)
+    if (vocabSortMode === 'random') {
+        const shuffled = [...filteredVocabList];
+        shuffleArray(shuffled);
+        bulkPhotoVocabItems = shuffled.slice(0, Math.min(5, filteredVocabList.length));
+    } else {
+        // กรณี 'newest' (ใหม่->เก่า) และ 'oldest' (เก่า->ใหม่) ให้ดึง 5 คำแรกจาก filteredVocabList ที่ถูกจัดเรียงไว้แล้ว
+        bulkPhotoVocabItems = filteredVocabList.slice(0, Math.min(5, filteredVocabList.length));
+    }
 
     const listContainer = document.getElementById("bulk-5-items-list");
     if (!listContainer) return;
@@ -316,7 +321,7 @@ function retakeVocabPhoto() {
 
     if (btnSnap) btnSnap.classList.remove("hidden");
     if (btnRetake) btnRetake.classList.add("hidden");
-    if (btnAnalyze) btnAnalyze.add("hidden");
+    if (btnAnalyze) btnAnalyze.classList.add("hidden");
 }
 
 async function verifyPhotoWithGeminiAI() {
