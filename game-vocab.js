@@ -15,7 +15,10 @@ let vocabSortMode = 'newest'; // 'newest' | 'oldest' | 'random'
 
 // --- BULK PHOTO HUNT / HANDWRITING CHECKER STATE ---
 let currentBulkSet = 1; // 1 | 2 (เซตที่ 1 หรือ เซตที่ 2)
-let parentCustomSets = { 'พูน': { set1: [], set2: [] }, 'เพลิน': { set1: [], set2: [] } };
+let parentCustomSets = {
+    EN: { 'พูน': { set1: [], set2: [] }, 'เพลิน': { set1: [], set2: [] } },
+    TH: { 'พูน': { set1: [], set2: [] }, 'เพลิน': { set1: [], set2: [] } }
+};
 let editingCustomSetTab = 1;
 let editingCustomSetChild = 'พูน';
 let tempSelectedSet1 = [];
@@ -29,8 +32,15 @@ function loadParentCustomSets() {
     try {
         const saved = localStorage.getItem('kids_parent_custom_sets');
         if (saved) {
-            parentCustomSets = JSON.parse(saved);
+            const parsed = JSON.parse(saved);
+            if (parsed.EN || parsed.TH) {
+                parentCustomSets = parsed;
+            } else {
+                parentCustomSets.EN = parsed;
+            }
         }
+        if (!parentCustomSets.EN) parentCustomSets.EN = { 'พูน': { set1: [], set2: [] }, 'เพลิน': { set1: [], set2: [] } };
+        if (!parentCustomSets.TH) parentCustomSets.TH = { 'พูน': { set1: [], set2: [] }, 'เพลิน': { set1: [], set2: [] } };
     } catch (e) {
         console.error("Error loading custom sets:", e);
     }
@@ -59,7 +69,6 @@ function switchVocabPlayMode(mode) {
 
     [cardsBtn, photoBtn, matchBtn].forEach(btn => { if (btn) btn.className = inactiveClass; });
 
-    // แสดงปุ่ม "จัด 2 เซต (พ่อ/แม่)" หากล็อกอินเป็น พ่อนะ หรือ แม่พัด
     const manageSetsBtn = document.getElementById("btn-manage-custom-sets");
     if (manageSetsBtn) {
         if (isParentUser) manageSetsBtn.classList.remove("hidden");
@@ -188,7 +197,6 @@ function updateCard() {
         document.getElementById("card-phonetic").innerText = `[ ${item.phonetic || item.th} ]`;
     }
 
-    // 🎯 อัปเดตป้ายผู้เรียน (target-assigned-badge)
     const badgeEl = document.getElementById("target-assigned-badge");
     if (badgeEl) {
         const assignees = item.assignees || [];
@@ -235,9 +243,9 @@ function setupBulkPhotoSheet() {
 
     loadParentCustomSets();
     const activeChild = (currentUser === 'พูน' || currentUser === 'เพลิน') ? currentUser : (parentViewFilter !== 'all' ? parentViewFilter : 'พูน');
-    const customListKeys = (parentCustomSets[activeChild] && parentCustomSets[activeChild][`set${currentBulkSet}`]) ? parentCustomSets[activeChild][`set${currentBulkSet}`] : [];
+    const modeSets = parentCustomSets[subjectMode] ? parentCustomSets[subjectMode][activeChild] : null;
+    const customListKeys = (modeSets && modeSets[`set${currentBulkSet}`]) ? modeSets[`set${currentBulkSet}`] : [];
 
-    // ตรวจสอบว่าผู้ปกครองมีการเลือกจัดเซตคำศัพท์ไว้ 5 คำหรือไม่
     let matchedCustomItems = [];
     if (customListKeys && customListKeys.length > 0) {
         customListKeys.forEach(wordKey => {
@@ -247,10 +255,8 @@ function setupBulkPhotoSheet() {
     }
 
     if (matchedCustomItems.length > 0) {
-        // หากมีเซตที่พ่อแม่เลือกไว้ ให้ใช้เซตคำศัพท์ที่เลือก
         bulkPhotoVocabItems = matchedCustomItems.slice(0, 5);
     } else {
-        // หากยังไม่ได้จัดเซต ให้ดึง 5 คำตามการเรียงลำดับ vocabSortMode
         if (vocabSortMode === 'random') {
             const shuffled = [...filteredVocabList];
             shuffleArray(shuffled);
@@ -296,9 +302,16 @@ function openCustomSetModal() {
     const selectChild = document.getElementById("select-custom-set-child");
     if (selectChild) selectChild.value = editingCustomSetChild;
 
+    const langBadge = document.getElementById("custom-set-lang-tag");
+    if (langBadge) {
+        langBadge.innerText = subjectMode === 'EN' ? '🇬🇧 EN' : '🇹🇭 TH';
+    }
+
     editingCustomSetTab = 1;
-    tempSelectedSet1 = parentCustomSets[editingCustomSetChild]?.set1 ? [...parentCustomSets[editingCustomSetChild].set1] : [];
-    tempSelectedSet2 = parentCustomSets[editingCustomSetChild]?.set2 ? [...parentCustomSets[editingCustomSetChild].set2] : [];
+    const currentChildModeSets = parentCustomSets[subjectMode] ? parentCustomSets[subjectMode][editingCustomSetChild] : null;
+
+    tempSelectedSet1 = currentChildModeSets?.set1 ? [...currentChildModeSets.set1] : [];
+    tempSelectedSet2 = currentChildModeSets?.set2 ? [...currentChildModeSets.set2] : [];
 
     switchCustomSetEditTab(1);
     document.getElementById("custom-set-modal").classList.remove("hidden");
@@ -310,8 +323,10 @@ function closeCustomSetModal() {
 
 function changeCustomSetChild(childName) {
     editingCustomSetChild = childName;
-    tempSelectedSet1 = parentCustomSets[editingCustomSetChild]?.set1 ? [...parentCustomSets[editingCustomSetChild].set1] : [];
-    tempSelectedSet2 = parentCustomSets[editingCustomSetChild]?.set2 ? [...parentCustomSets[editingCustomSetChild].set2] : [];
+    const currentChildModeSets = parentCustomSets[subjectMode] ? parentCustomSets[subjectMode][editingCustomSetChild] : null;
+
+    tempSelectedSet1 = currentChildModeSets?.set1 ? [...currentChildModeSets.set1] : [];
+    tempSelectedSet2 = currentChildModeSets?.set2 ? [...currentChildModeSets.set2] : [];
     switchCustomSetEditTab(editingCustomSetTab);
 }
 
@@ -345,7 +360,6 @@ function renderCustomSetPicker() {
     if (!pickerContainer) return;
     const currentTempList = editingCustomSetTab === 1 ? tempSelectedSet1 : tempSelectedSet2;
 
-    // กรองคำศัพท์สำหรับเด็กคนนั้น
     const childVocabList = rawVocabList.filter(item => {
         if (!item.assignees || item.assignees.length === 0) return true;
         return item.assignees.includes(editingCustomSetChild);
@@ -393,14 +407,19 @@ function toggleCustomSetWord(wordKey) {
 }
 
 function saveCustomSets() {
-    if (!parentCustomSets[editingCustomSetChild]) {
-        parentCustomSets[editingCustomSetChild] = { set1: [], set2: [] };
+    if (!parentCustomSets[subjectMode]) {
+        parentCustomSets[subjectMode] = {};
     }
-    parentCustomSets[editingCustomSetChild].set1 = [...tempSelectedSet1];
-    parentCustomSets[editingCustomSetChild].set2 = [...tempSelectedSet2];
+    if (!parentCustomSets[subjectMode][editingCustomSetChild]) {
+        parentCustomSets[subjectMode][editingCustomSetChild] = { set1: [], set2: [] };
+    }
+
+    parentCustomSets[subjectMode][editingCustomSetChild].set1 = [...tempSelectedSet1];
+    parentCustomSets[subjectMode][editingCustomSetChild].set2 = [...tempSelectedSet2];
 
     saveParentCustomSets();
-    alert(`🎉 บันทึกการจัดเซตคำศัพท์สำหรับ น้อง${editingCustomSetChild} เรียบร้อยแล้วครับ!`);
+    const modeLabel = subjectMode === 'EN' ? 'ภาษาอังกฤษ' : 'ภาษาไทย';
+    alert(`🎉 บันทึกการจัดเซตคำศัพท์ ${modeLabel} สำหรับ น้อง${editingCustomSetChild} เรียบร้อยแล้วครับ!`);
     closeCustomSetModal();
     setupBulkPhotoSheet();
 }
@@ -623,7 +642,8 @@ function triggerPhotoHuntCompletionModal() {
     addEXPToUser(150);
     incrementTodayRounds();
 
-    document.getElementById("summary-total-count").innerText = "สำเร็จภารกิจสะกดคำ 5 ข้อ!";
+    const modeLabel = subjectMode === 'EN' ? 'EN' : 'TH';
+    document.getElementById("summary-total-count").innerText = `สำเร็จภารกิจสะกดคำ 5 ข้อ (${modeLabel})!`;
     document.getElementById("summary-stars-earned").innerText = "⭐ 2 ดวง";
     document.getElementById("summary-stars-earned").className = "text-sm text-amber-500 font-bold";
     document.getElementById("summary-exp-earned").innerText = "+150 EXP ✨";
@@ -638,7 +658,7 @@ function triggerPhotoHuntCompletionModal() {
         utterance.lang = 'th-TH';
         window.speechSynthesis.speak(utterance);
     }
-    sendInAppNotification('COMPLETED_SET', { setNum: `ภารกิจสะกดคำเซตที่ ${currentBulkSet} (รับ 2 ดาว)` });
+    sendInAppNotification('COMPLETED_SET', { setNum: `ภารกิจสะกดคำ ${modeLabel} เซตที่ ${currentBulkSet} (รับ 2 ดาว)` });
 }
 
 // ------------------------------------------
