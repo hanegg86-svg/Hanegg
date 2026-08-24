@@ -14,9 +14,35 @@ let parentViewFilter = 'all'; // 'all' | 'พูน' | 'เพลิน'
 let vocabSortMode = 'newest'; // 'newest' | 'oldest' | 'random'
 
 // --- BULK PHOTO HUNT / HANDWRITING CHECKER STATE ---
+let currentBulkSet = 1; // 1 | 2 (เซตที่ 1 หรือ เซตที่ 2)
+let parentCustomSets = { 'พูน': { set1: [], set2: [] }, 'เพลิน': { set1: [], set2: [] } };
+let editingCustomSetTab = 1;
+let editingCustomSetChild = 'พูน';
+let tempSelectedSet1 = [];
+let tempSelectedSet2 = [];
+
 let bulkPhotoVocabItems = []; // เก็บชุดคำศัพท์ 5 คำประจำรอบ
 let vocabMediaStream = null;
 let capturedPhotoBase64 = null;
+
+function loadParentCustomSets() {
+    try {
+        const saved = localStorage.getItem('kids_parent_custom_sets');
+        if (saved) {
+            parentCustomSets = JSON.parse(saved);
+        }
+    } catch (e) {
+        console.error("Error loading custom sets:", e);
+    }
+}
+
+function saveParentCustomSets() {
+    try {
+        localStorage.setItem('kids_parent_custom_sets', JSON.stringify(parentCustomSets));
+    } catch (e) {
+        console.error("Error saving custom sets:", e);
+    }
+}
 
 function switchVocabPlayMode(mode) {
     vocabSubMode = mode;
@@ -33,6 +59,13 @@ function switchVocabPlayMode(mode) {
 
     [cardsBtn, photoBtn, matchBtn].forEach(btn => { if (btn) btn.className = inactiveClass; });
 
+    // แสดงปุ่ม "จัด 2 เซต (พ่อ/แม่)" หากล็อกอินเป็น พ่อนะ หรือ แม่พัด
+    const manageSetsBtn = document.getElementById("btn-manage-custom-sets");
+    if (manageSetsBtn) {
+        if (isParentUser) manageSetsBtn.classList.remove("hidden");
+        else manageSetsBtn.classList.add("hidden");
+    }
+
     if (mode === 'cards') {
         stopVocabCamera();
         if (cardsBtn) cardsBtn.className = activeClass;
@@ -44,6 +77,7 @@ function switchVocabPlayMode(mode) {
         if (flashcardSec) flashcardSec.classList.add("hidden");
         if (photoSec) photoSec.classList.remove("hidden");
         if (matchingSec) matchingSec.classList.add("hidden");
+        loadParentCustomSets();
         setupBulkPhotoSheet();
         startVocabCamera();
     } else if (mode === 'match') {
@@ -174,20 +208,56 @@ function updateCard() {
 }
 
 // --------------------------------------------------------
-// --- BULK HANDWRITING CHECKER (5 ข้อในกระดาษ 1 แผ่น) ---
+// --- BULK HANDWRITING CHECKER & PARENT CUSTOM SETS ---
 // --------------------------------------------------------
+
+function switchBulkPhotoSet(setNum) {
+    currentBulkSet = setNum;
+    const btnSet1 = document.getElementById("btn-photo-set1");
+    const btnSet2 = document.getElementById("btn-photo-set2");
+
+    const activeClass = "px-3 py-1 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-2xs transition";
+    const inactiveClass = "px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition";
+
+    if (setNum === 1) {
+        if (btnSet1) btnSet1.className = activeClass;
+        if (btnSet2) btnSet2.className = inactiveClass;
+    } else {
+        if (btnSet1) btnSet1.className = inactiveClass;
+        if (btnSet2) btnSet2.className = activeClass;
+    }
+
+    setupBulkPhotoSheet();
+}
 
 function setupBulkPhotoSheet() {
     if (!filteredVocabList || filteredVocabList.length === 0) return;
 
-    // ดึงคำศัพท์ 5 คำตามเงื่อนไขการเรียงลำดับ (vocabSortMode)
-    if (vocabSortMode === 'random') {
-        const shuffled = [...filteredVocabList];
-        shuffleArray(shuffled);
-        bulkPhotoVocabItems = shuffled.slice(0, Math.min(5, filteredVocabList.length));
+    loadParentCustomSets();
+    const activeChild = (currentUser === 'พูน' || currentUser === 'เพลิน') ? currentUser : (parentViewFilter !== 'all' ? parentViewFilter : 'พูน');
+    const customListKeys = (parentCustomSets[activeChild] && parentCustomSets[activeChild][`set${currentBulkSet}`]) ? parentCustomSets[activeChild][`set${currentBulkSet}`] : [];
+
+    // ตรวจสอบว่าผู้ปกครองมีการเลือกจัดเซตคำศัพท์ไว้ 5 คำหรือไม่
+    let matchedCustomItems = [];
+    if (customListKeys && customListKeys.length > 0) {
+        customListKeys.forEach(wordKey => {
+            const found = rawVocabList.find(x => x.en === wordKey || x.th === wordKey);
+            if (found) matchedCustomItems.push(found);
+        });
+    }
+
+    if (matchedCustomItems.length > 0) {
+        // หากมีเซตที่พ่อแม่เลือกไว้ ให้ใช้เซตคำศัพท์ที่เลือก
+        bulkPhotoVocabItems = matchedCustomItems.slice(0, 5);
     } else {
-        // กรณี 'newest' (ใหม่->เก่า) และ 'oldest' (เก่า->ใหม่) ให้ดึง 5 คำแรกจาก filteredVocabList ที่ถูกจัดเรียงไว้แล้ว
-        bulkPhotoVocabItems = filteredVocabList.slice(0, Math.min(5, filteredVocabList.length));
+        // หากยังไม่ได้จัดเซต ให้ดึง 5 คำตามการเรียงลำดับ vocabSortMode
+        if (vocabSortMode === 'random') {
+            const shuffled = [...filteredVocabList];
+            shuffleArray(shuffled);
+            bulkPhotoVocabItems = shuffled.slice(0, Math.min(5, filteredVocabList.length));
+        } else {
+            bulkPhotoVocabItems = filteredVocabList.slice(0, Math.min(5, filteredVocabList.length));
+        }
     }
 
     const listContainer = document.getElementById("bulk-5-items-list");
@@ -209,11 +279,130 @@ function setupBulkPhotoSheet() {
         `;
     }).join('');
 
-    // ซ่อนผลลัพธ์เก่าก่อนหน้า
     const resultsBox = document.getElementById("bulk-results-box");
     if (resultsBox) resultsBox.classList.add("hidden");
     retakeVocabPhoto();
     lucide.createIcons();
+}
+
+// --------------------------------------------------------
+// --- PARENT MODAL FOR CUSTOM SET SELECTION (5 WORDS) ---
+// --------------------------------------------------------
+
+function openCustomSetModal() {
+    if (!isParentUser) return;
+    loadParentCustomSets();
+    editingCustomSetChild = (parentViewFilter === 'เพลิน') ? 'เพลิน' : 'พูน';
+    const selectChild = document.getElementById("select-custom-set-child");
+    if (selectChild) selectChild.value = editingCustomSetChild;
+
+    editingCustomSetTab = 1;
+    tempSelectedSet1 = parentCustomSets[editingCustomSetChild]?.set1 ? [...parentCustomSets[editingCustomSetChild].set1] : [];
+    tempSelectedSet2 = parentCustomSets[editingCustomSetChild]?.set2 ? [...parentCustomSets[editingCustomSetChild].set2] : [];
+
+    switchCustomSetEditTab(1);
+    document.getElementById("custom-set-modal").classList.remove("hidden");
+}
+
+function closeCustomSetModal() {
+    document.getElementById("custom-set-modal").classList.add("hidden");
+}
+
+function changeCustomSetChild(childName) {
+    editingCustomSetChild = childName;
+    tempSelectedSet1 = parentCustomSets[editingCustomSetChild]?.set1 ? [...parentCustomSets[editingCustomSetChild].set1] : [];
+    tempSelectedSet2 = parentCustomSets[editingCustomSetChild]?.set2 ? [...parentCustomSets[editingCustomSetChild].set2] : [];
+    switchCustomSetEditTab(editingCustomSetTab);
+}
+
+function switchCustomSetEditTab(tabNum) {
+    editingCustomSetTab = tabNum;
+    const tab1Btn = document.getElementById("custom-set-tab-1");
+    const tab2Btn = document.getElementById("custom-set-tab-2");
+
+    const activeClass = "flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs";
+    const inactiveClass = "flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600";
+
+    if (tabNum === 1) {
+        if (tab1Btn) tab1Btn.className = activeClass;
+        if (tab2Btn) tab2Btn.className = inactiveClass;
+    } else {
+        if (tab1Btn) tab1Btn.className = inactiveClass;
+        if (tab2Btn) tab2Btn.className = activeClass;
+    }
+
+    renderCustomSetPicker();
+}
+
+function renderCustomSetPicker() {
+    const pickerContainer = document.getElementById("custom-set-vocab-picker");
+    const set1Count = document.getElementById("set1-count");
+    const set2Count = document.getElementById("set2-count");
+
+    if (set1Count) set1Count.innerText = tempSelectedSet1.length;
+    if (set2Count) set2Count.innerText = tempSelectedSet2.length;
+
+    if (!pickerContainer) return;
+    const currentTempList = editingCustomSetTab === 1 ? tempSelectedSet1 : tempSelectedSet2;
+
+    // กรองคำศัพท์สำหรับเด็กคนนั้น
+    const childVocabList = rawVocabList.filter(item => {
+        if (!item.assignees || item.assignees.length === 0) return true;
+        return item.assignees.includes(editingCustomSetChild);
+    });
+
+    pickerContainer.innerHTML = childVocabList.map(item => {
+        const itemKey = item.en || item.th;
+        const isChecked = currentTempList.includes(itemKey);
+        let visualHtml = item.image 
+            ? `<img src="${item.image}" class="w-7 h-7 object-cover rounded-lg border">`
+            : `<span class="text-xl">${item.emoji || '🍎'}</span>`;
+
+        return `
+            <label class="flex items-center gap-2.5 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition">
+                <input type="checkbox" onchange="toggleCustomSetWord('${itemKey}')" ${isChecked ? 'checked' : ''} class="w-4 h-4 text-indigo-600 rounded">
+                ${visualHtml}
+                <div class="flex-1 min-w-0">
+                    <span class="font-bold text-xs text-indigo-900">${item.en}</span>
+                    <span class="text-[11px] text-slate-500 font-medium">(${item.th})</span>
+                </div>
+            </label>
+        `;
+    }).join('');
+}
+
+function toggleCustomSetWord(wordKey) {
+    let targetList = editingCustomSetTab === 1 ? tempSelectedSet1 : tempSelectedSet2;
+    const index = targetList.indexOf(wordKey);
+
+    if (index > -1) {
+        targetList.splice(index, 1);
+    } else {
+        if (targetList.length >= 5) {
+            alert("สามารถเลือกจัดคำศัพท์ได้สูงสุดเซตละ 5 คำเท่านั้นครับ!");
+            renderCustomSetPicker();
+            return;
+        }
+        targetList.push(wordKey);
+    }
+
+    if (editingCustomSetTab === 1) tempSelectedSet1 = targetList;
+    else tempSelectedSet2 = targetList;
+
+    renderCustomSetPicker();
+}
+
+function saveCustomSets() {
+    if (!parentCustomSets[editingCustomSetChild]) {
+        parentCustomSets[editingCustomSetChild] = { set1: [], set2: [] };
+    }
+    parentCustomSets[editingCustomSetChild].set1 = [...tempSelectedSet1];
+    parentCustomSets[editingCustomSetChild].set2 = [...tempSelectedSet2];
+
+    saveParentCustomSets();
+    alert(`🎉 บันทึกการจัดเซตคำศัพท์สำหรับ น้อง${editingCustomSetChild} เรียบร้อยแล้วครับ!`);
+    closeCustomSetModal();
+    setupBulkPhotoSheet();
 }
 
 function speakSingleBulkWord(index) {
@@ -449,7 +638,7 @@ function triggerPhotoHuntCompletionModal() {
         utterance.lang = 'th-TH';
         window.speechSynthesis.speak(utterance);
     }
-    sendInAppNotification('COMPLETED_SET', { setNum: "ภารกิจสะกดคำในกระดาษ 5 ข้อ (รับ 2 ดาว)" });
+    sendInAppNotification('COMPLETED_SET', { setNum: `ภารกิจสะกดคำเซตที่ ${currentBulkSet} (รับ 2 ดาว)` });
 }
 
 // ------------------------------------------

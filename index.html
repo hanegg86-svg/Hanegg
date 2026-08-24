@@ -398,6 +398,17 @@
                             <span id="photo-reward-tag" class="text-[10px] font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full font-kids">⭐ 2 ดาว + 150 EXP</span>
                         </div>
 
+                        <!-- แถบสลับ เซต 1 / เซต 2 และ ปุ่มเปิด Modal จัดเซตสำหรับพ่อแม่ -->
+                        <div class="flex items-center gap-2 mb-3 w-full justify-between">
+                            <div class="flex gap-1.5">
+                                <button id="btn-photo-set1" onclick="switchBulkPhotoSet(1)" class="px-3 py-1 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-2xs transition">📌 เซตที่ 1</button>
+                                <button id="btn-photo-set2" onclick="switchBulkPhotoSet(2)" class="px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">📌 เซตที่ 2</button>
+                            </div>
+                            <button id="btn-manage-custom-sets" onclick="openCustomSetModal()" class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 transition hidden">
+                                ⚙️ จัด 2 เซต (พ่อ/แม่)
+                            </button>
+                        </div>
+
                         <!-- 5 Items Sheet Box -->
                         <div class="w-full bg-indigo-50/80 p-3 rounded-2xl border border-indigo-100 mb-3 space-y-2">
                             <div class="flex justify-between items-center mb-1">
@@ -946,6 +957,41 @@
             <span class="text-2xl drop-shadow-sm">🎁</span><span>ร้านค้า</span>
         </button>
     </nav>
+
+    <!-- Modal: จัดเซตแบบฝึกหัด 5 คำ (Parent Custom Sets Modal) -->
+    <div id="custom-set-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-xl relative max-h-[85vh] flex flex-col border border-slate-100">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-bold font-kids text-slate-800 flex items-center gap-1.5">
+                    🎯 จัดเซตแบบฝึกหัดสะกดคำ (5 คำ/เซต)
+                </h3>
+                <button onclick="closeCustomSetModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="flex gap-2 mb-3 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+                <button id="custom-set-tab-1" onclick="switchCustomSetEditTab(1)" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs">📌 เซตที่ 1 (<span id="set1-count">0</span>/5)</button>
+                <button id="custom-set-tab-2" onclick="switchCustomSetEditTab(2)" class="flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600">📌 เซตที่ 2 (<span id="set2-count">0</span>/5)</button>
+            </div>
+
+            <div class="bg-indigo-50/50 p-2.5 rounded-2xl border border-indigo-100 mb-2 flex justify-between items-center">
+                <span class="text-xs font-bold text-indigo-900 font-kids">จัดเซตสำหรับเด็ก:</span>
+                <select id="select-custom-set-child" onchange="changeCustomSetChild(this.value)" class="bg-white border border-slate-200 rounded-xl px-2 py-1 text-xs font-bold text-indigo-900 focus:outline-none">
+                    <option value="พูน">👦 น้องพูน</option>
+                    <option value="เพลิน">👧 น้องเพลิน</option>
+                </select>
+            </div>
+
+            <div id="custom-set-vocab-picker" class="flex-1 overflow-y-auto space-y-2 pr-1 my-1">
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex gap-2">
+                <button onclick="closeCustomSetModal()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 rounded-xl text-xs">ยกเลิก</button>
+                <button onclick="saveCustomSets()" class="flex-1 bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-xs shadow-xs">บันทึกเซต 💾</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal RPG Skill Tree -->
     <div id="rpg-skill-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
