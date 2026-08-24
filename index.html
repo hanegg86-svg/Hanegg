@@ -305,7 +305,7 @@
             <div id="game-vocab-container" class="w-full flex flex-col items-center">
                 <div class="w-full max-w-sm landscape:max-w-xl bg-indigo-50/80 p-1 rounded-2xl border border-indigo-100 flex gap-1 mb-2">
                     <button id="vocab-mode-cards" onclick="switchVocabPlayMode('cards')" class="flex-1 py-1 rounded-xl text-xs font-bold bg-white text-indigo-900 shadow-2xs transition">🎴 ท่องศัพท์</button>
-                    <button id="vocab-mode-photo" onclick="switchVocabPlayMode('photo')" class="flex-1 py-1 rounded-xl text-xs font-bold text-indigo-700 hover:bg-white/50 transition">📸 ส่องถ่ายรูป</button>
+                    <button id="vocab-mode-photo" onclick="switchVocabPlayMode('photo')" class="flex-1 py-1 rounded-xl text-xs font-bold text-indigo-700 hover:bg-white/50 transition">📝 สะกด 5 คำในกระดาษ</button>
                     <button id="vocab-mode-match" onclick="switchVocabPlayMode('match')" class="flex-1 py-1 rounded-xl text-xs font-bold text-indigo-700 hover:bg-white/50 transition">🧩 จับคู่</button>
                 </div>
 
@@ -384,7 +384,7 @@
                     </div>
                 </div>
 
-                <!-- Photo Hunt Section (ซ่อนตัวหนังสือ แสดงรูปภาพ/Emoji ใหญ่ + ปุ่มกดฟังเสียง) -->
+                <!-- Bulk Photo Hunt Section (เขียน 5 ข้อลงในกระดาษแผ่นเดียว ถ่ายตรวจทีเดียวจบ) -->
                 <div id="photo-hunt-section" class="w-full max-w-sm landscape:max-w-xl hidden flex-col items-center">
                     <div id="daily-limit-banner" class="w-full bg-rose-50 border border-rose-200 rounded-2xl p-4 text-center mb-4 hidden shadow-xs">
                         <div class="text-3xl mb-1">🛑</div>
@@ -394,32 +394,20 @@
 
                     <div id="photo-hunt-card-box" class="bg-white border border-slate-100 rounded-3xl p-4 shadow-xs w-full text-center flex flex-col items-center">
                         <div class="w-full flex justify-between items-center mb-2 bg-indigo-50/60 px-3 py-1.5 rounded-full border border-indigo-100">
-                            <span id="photo-set-progress-text" class="text-xs font-bold text-indigo-900 font-kids">โหมดส่องถ่ายรูป (สำเร็จ 0/5 คำ)</span>
+                            <span id="photo-set-progress-text" class="text-xs font-bold text-indigo-900 font-kids">📝 เขียนสะกด 5 ข้อในกระดาษ</span>
                             <span id="photo-reward-tag" class="text-[10px] font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full font-kids">⭐ 2 ดาว + 150 EXP</span>
                         </div>
 
-                        <!-- Target Visual Box (ซ่อนข้อความศัพท์ แสดงรูปภาพ/Emoji ขนาดใหญ่คู่กับปุ่มฟังเสียง) -->
-                        <div class="flex items-center justify-between w-full bg-indigo-50/80 p-3 rounded-2xl border border-indigo-100 mb-2 shadow-2xs">
-                            <div class="flex items-center gap-3">
-                                <div class="w-16 h-16 rounded-2xl bg-white shadow-xs border border-indigo-100 flex items-center justify-center overflow-hidden">
-                                    <span id="photo-target-emoji" class="text-4xl">🍎</span>
-                                    <img id="photo-target-img" class="w-full h-full object-cover hidden" alt="target visual">
-                                </div>
-                                <div class="text-left">
-                                    <div class="text-xs font-black text-indigo-950 font-kids">ฟังเสียง & ส่องวัตถุในรูป 🎧</div>
-                                    <div class="text-[10px] font-bold text-indigo-500 font-kids mt-0.5">(ซ่อนตัวหนังสือฝึกฟัง)</div>
-                                </div>
+                        <!-- 5 Items Sheet Box -->
+                        <div class="w-full bg-indigo-50/80 p-3 rounded-2xl border border-indigo-100 mb-3 space-y-2">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs font-black text-indigo-950 font-kids">📝 เขียนข้อ 1-5 ลงกระดาษตามโจทย์นี้:</span>
+                                <button onclick="speakAll5Words()" class="bg-sky-500 hover:bg-sky-600 active:scale-95 text-white font-extrabold px-2.5 py-1 rounded-xl text-[10px] flex items-center gap-1 shadow-2xs font-kids">
+                                    <i data-lucide="volume-2" class="w-3.5 h-3.5"></i> ฟังทั้ง 5 คำ
+                                </button>
                             </div>
-                            <button onclick="speakCurrentWordPrompt()" class="bg-sky-500 hover:bg-sky-600 active:scale-95 text-white font-extrabold p-3 rounded-2xl border-2 border-sky-600 text-sm flex items-center gap-1.5 shadow-xs transition bubble-btn">
-                                <i data-lucide="volume-2" class="w-5 h-5"></i>
-                                <span class="font-kids text-xs">ฟังเสียง 🔊</span>
-                            </button>
-                        </div>
-
-                        <!-- Dynamic Challenge Banner -->
-                        <div class="w-full bg-amber-50 border-2 border-amber-300 rounded-2xl p-2.5 mb-2 text-center shadow-xs">
-                            <div class="text-[10px] font-bold text-amber-700 font-kids">🎯 เงื่อนไขภาพถ่ายป้องกันถ่ายซ้ำ:</div>
-                            <div id="photo-dynamic-action" class="text-sm font-black text-amber-900 font-kids mt-0.5">ชู 2 นิ้ว ✌️ เข้าไปในรูปด้วย</div>
+                            <div id="bulk-5-items-list" class="grid grid-cols-5 gap-1.5">
+                            </div>
                         </div>
 
                         <!-- Camera Display / Preview Canvas -->
@@ -427,24 +415,32 @@
                             <video id="vocab-camera-stream" autoplay playsinline class="w-full h-full object-cover"></video>
                             <img id="vocab-photo-preview" class="w-full h-full object-cover hidden" alt="Captured Photo">
                             <div id="vocab-camera-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div class="w-40 h-40 landscape:w-32 landscape:h-32 border-4 border-dashed border-indigo-400 opacity-80 rounded-3xl animate-pulse"></div>
+                                <div class="w-48 h-36 landscape:w-44 landscape:h-28 border-4 border-dashed border-indigo-400 opacity-80 rounded-2xl animate-pulse flex items-center justify-center text-white/80 font-bold text-xs bg-indigo-900/10">
+                                    วางกระดาษข้อ 1-5 ตรงนี้
+                                </div>
                             </div>
+                        </div>
+
+                        <!-- ผลการตรวจ Checklist 5 ข้อ -->
+                        <div id="bulk-results-box" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-2xl mb-3 hidden text-left space-y-1.5">
+                            <div class="text-xs font-black text-indigo-950 font-kids border-b border-slate-200 pb-1">📊 ผลการตรวจลายมือสะกดคำ:</div>
+                            <div id="bulk-results-list" class="space-y-1 text-xs font-bold"></div>
                         </div>
 
                         <div id="photo-ai-loading" class="mb-2 text-center hidden">
                             <span class="spinner"></span>
-                            <p class="text-xs text-indigo-700 font-bold mt-1">Gemini 3.5 Flash Lite กำลังตรวจรูป...</p>
+                            <p class="text-xs text-indigo-700 font-bold mt-1">Gemini 3.5 Flash Lite กำลังตรวจกระดาษสะกดคำ...</p>
                         </div>
 
                         <div class="flex gap-2 w-full">
                             <button id="btn-snap-photo" onclick="captureVocabPhoto()" class="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 active:scale-95 text-white font-bold py-2.5 rounded-2xl text-xs shadow-sm flex items-center justify-center gap-1">
-                                📸 ถ่ายรูป
+                                📸 ถ่ายรูปกระดาษ
                             </button>
                             <button id="btn-retake-photo" onclick="retakeVocabPhoto()" class="bg-slate-100 text-slate-600 font-bold py-2.5 px-3 rounded-2xl text-xs hidden">
                                 🔄 ถ่ายใหม่
                             </button>
                             <button id="btn-analyze-photo" onclick="verifyPhotoWithGeminiAI()" class="flex-1 bg-emerald-500 active:bg-emerald-600 text-white font-bold py-2.5 rounded-2xl text-xs shadow-sm hidden">
-                                ✨ ตรวจรูปส่องศัพท์
+                                ✨ ตรวจลายมือ 5 ข้อด้วย AI
                             </button>
                         </div>
                     </div>
