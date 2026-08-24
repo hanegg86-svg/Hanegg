@@ -1,3 +1,4 @@
+// game-number-dungeon.js
 // ==========================================
 // --- NUMBER DUNGEON MINIGAME SYSTEM (5x5 GRID) ---
 // ==========================================
@@ -213,23 +214,23 @@ function moveDungeonPlayer(r, c) {
 }
 
 function showCompletionModalDungeon() {
-    totalStars += 1;
-    saveUserStars();
+    if (typeof totalGoldTrophies !== 'undefined') totalGoldTrophies += 1; else if (typeof totalTrophies !== 'undefined') totalTrophies += 1;
+    if (typeof saveUserTrophies === 'function') saveUserTrophies();
     addEXPToUser(100);
     incrementTodayRounds(); // บันทึกเพิ่มจำนวนรอบที่เล่นประจำวัน
 
     document.getElementById("summary-total-count").innerText = "พิชิต Number Dungeon 5x5!";
-    document.getElementById("summary-stars-earned").innerText = "⭐ 1 ดวง";
+    document.getElementById("summary-stars-earned").innerText = "🏆 ถ้วยทอง 1 ใบ";
     document.getElementById("summary-stars-earned").className = "text-sm text-amber-500 font-bold";
     document.getElementById("summary-exp-earned").innerText = "+100 EXP ✨";
-    document.getElementById("summary-saved-badge").innerText = "✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
+    document.getElementById("summary-saved-badge").innerText = "✅ บันทึกถ้วยทองสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
     document.getElementById("summary-saved-badge").className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-2.5 rounded-xl border border-emerald-200";
     document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} พิชิตดันเจี้ยนสำเร็จแล้ว!`;
     document.getElementById("completion-modal").classList.remove("hidden");
 
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(`เก่งมากเลยครับ ${currentUser || ''} พิชิตดันเจี้ยนสำเร็จ รับไปเลย 1 ดาว`);
+        const utterance = new SpeechSynthesisUtterance(`เก่งมากเลยครับ ${currentUser || ''} พิชิตดันเจี้ยนสำเร็จ รับไปเลย ถ้วยทอง 1 ใบ`);
         utterance.lang = 'th-TH';
         window.speechSynthesis.speak(utterance);
     }

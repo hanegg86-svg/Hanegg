@@ -38,9 +38,9 @@ let defaultVocabTH = [
 ];
 
 let defaultRewards = [
-    { id: "1", name: "🍦 ไอศกรีม 1 ถ้วย", stars: 2 },
-    { id: "2", name: "🎮 เล่นเกม 15 นาที", stars: 3 },
-    { id: "3", name: "🧸 ของขวัญพิเศษ 1 ชิ้น", stars: 5 }
+    { id: "1", name: "🍦 ไอศกรีม 1 ถ้วย", stars: 2, cost: 2, currencyType: "stars" },
+    { id: "2", name: "🎮 เล่นเกม 15 นาที", stars: 3, cost: 3, currencyType: "trophies" },
+    { id: "3", name: "🧸 ของขวัญพิเศษ 1 ชิ้น", stars: 5, cost: 5, currencyType: "stars" }
 ];
 
 let defaultParentQuests = [
@@ -57,7 +57,11 @@ let filteredVocabList = [];
 let notificationsList = [];
 let currentIndex = 0;
 let setCorrectAnswers = 0; 
+
+// --- DUAL CURRENCY STATE ---
 let totalStars = 0;
+let totalTrophies = 0;
+
 let isFlipped = false;
 let currentResizedBase64 = null;
 
@@ -85,8 +89,9 @@ let userSkillsList = {
 let dbRefVocabEN, dbRefVocabTH, dbRefNotify, dbRefRewards, dbRefParentQuests, dbRefDailyConfig, dbRefLevelConfig, dbRefUserSkills;
 let isFirebaseActive = false;
 
-// --- Firebase Listener Unsubscribe References (Fixes Memory & Listener Leaks) ---
+// --- Firebase Listener Unsubscribe References ---
 let unsubUserStars = null;
+let unsubUserTrophies = null;
 let unsubUserExp = null;
 let unsubUserDailyRounds = null;
 let unsubUserInventory = null;
@@ -94,6 +99,7 @@ let unsubVocab = null;
 
 function cleanupUserListeners() {
     if (unsubUserStars) { unsubUserStars(); unsubUserStars = null; }
+    if (unsubUserTrophies) { unsubUserTrophies(); unsubUserTrophies = null; }
     if (unsubUserExp) { unsubUserExp(); unsubUserExp = null; }
     if (unsubUserDailyRounds) { unsubUserDailyRounds(); unsubUserDailyRounds = null; }
     if (unsubUserInventory) { unsubUserInventory(); unsubUserInventory = null; }
@@ -237,7 +243,12 @@ function switchMainTab(tab) {
     } else if (tab === 'shop') {
         if (navShop) { navShop.classList.remove("text-slate-400"); navShop.classList.add("text-indigo-600"); }
         shopSec.classList.remove("hidden"); shopSec.classList.add("flex");
-        document.getElementById("quest-user-stars").innerText = `⭐ ${totalStars}`;
+        
+        const qStarsEl = document.getElementById("quest-user-stars");
+        if (qStarsEl) qStarsEl.innerText = `⭐ ${totalStars}`;
+        
+        const qTrophiesEl = document.getElementById("quest-user-trophies");
+        if (qTrophiesEl) qTrophiesEl.innerText = `🏆 ${totalTrophies}`;
         
         const parentAddSec = document.getElementById("parent-add-reward-section");
         if (isParentUser) {
@@ -445,7 +456,6 @@ function setProfile(name, isParent) {
         if (parentFilterBox) parentFilterBox.classList.add("hidden");
     }
 
-    // รีเซ็ตโหมดการเล่นกลับมาที่ 'ท่องศัพท์ (cards)' เสมอเพื่อป้องกันหน้าจอค้างผิดโหมด
     if (typeof switchVocabPlayMode === 'function') switchVocabPlayMode('cards');
 
     if(typeof filterVocabForUser === 'function') filterVocabForUser();
@@ -537,7 +547,19 @@ function loadUserStars() {
         unsubUserStars = onValue(ref(db, `user_stars/${currentUser}`), (snapshot) => {
             const val = snapshot.val();
             totalStars = val !== null ? val : 0;
-            document.getElementById("score").innerText = totalStars;
+            const scoreEl = document.getElementById("score");
+            if (scoreEl) scoreEl.innerText = totalStars;
+            const qStarsEl = document.getElementById("quest-user-stars");
+            if (qStarsEl) qStarsEl.innerText = `⭐ ${totalStars}`;
+        });
+
+        unsubUserTrophies = onValue(ref(db, `user_trophies/${currentUser}`), (snapshot) => {
+            const val = snapshot.val();
+            totalTrophies = val !== null ? val : 0;
+            const trophyEl = document.getElementById("score-trophy");
+            if (trophyEl) trophyEl.innerText = totalTrophies;
+            const qTrophiesEl = document.getElementById("quest-user-trophies");
+            if (qTrophiesEl) qTrophiesEl.innerText = `🏆 ${totalTrophies}`;
         });
 
         unsubUserExp = onValue(ref(db, `user_exp/${currentUser}`), (snapshot) => {
@@ -578,7 +600,17 @@ function loadUserStars() {
         }
     } else {
         totalStars = parseInt(localStorage.getItem(`total_stars_${currentUser || 'guest'}`) || "0", 10);
-        document.getElementById("score").innerText = totalStars;
+        const scoreEl = document.getElementById("score");
+        if (scoreEl) scoreEl.innerText = totalStars;
+        const qStarsEl = document.getElementById("quest-user-stars");
+        if (qStarsEl) qStarsEl.innerText = `⭐ ${totalStars}`;
+
+        totalTrophies = parseInt(localStorage.getItem(`total_trophies_${currentUser || 'guest'}`) || "0", 10);
+        const trophyEl = document.getElementById("score-trophy");
+        if (trophyEl) trophyEl.innerText = totalTrophies;
+        const qTrophiesEl = document.getElementById("quest-user-trophies");
+        if (qTrophiesEl) qTrophiesEl.innerText = `🏆 ${totalTrophies}`;
+
         currentChildEXP = parseInt(localStorage.getItem(`user_exp_${currentUser || 'guest'}`) || "0", 10);
         updateUserLevelAndAvatarDisplay();
 
@@ -681,7 +713,24 @@ function saveUserStars() {
     } else {
         localStorage.setItem(`total_stars_${currentUser || 'guest'}`, totalStars.toString());
     }
-    document.getElementById("score").innerText = totalStars;
+    const scoreEl = document.getElementById("score");
+    if (scoreEl) scoreEl.innerText = totalStars;
+    const qStarsEl = document.getElementById("quest-user-stars");
+    if (qStarsEl) qStarsEl.innerText = `⭐ ${totalStars}`;
+}
+
+function saveUserTrophies() {
+    if (isFirebaseActive && currentUser) {
+        const { ref, set } = window.firebaseModules;
+        const db = window.firebaseModules.getDatabase();
+        set(ref(db, `user_trophies/${currentUser}`), totalTrophies);
+    } else {
+        localStorage.setItem(`total_trophies_${currentUser || 'guest'}`, totalTrophies.toString());
+    }
+    const trophyEl = document.getElementById("score-trophy");
+    if (trophyEl) trophyEl.innerText = totalTrophies;
+    const qTrophiesEl = document.getElementById("quest-user-trophies");
+    if (qTrophiesEl) qTrophiesEl.innerText = `🏆 ${totalTrophies}`;
 }
 
 function incrementTodayRounds() {

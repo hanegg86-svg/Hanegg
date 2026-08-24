@@ -24,7 +24,6 @@ function createNewParentQuest() {
     const assignPoon = document.getElementById("quest-assign-poon").checked;
     const assignPloern = document.getElementById("quest-assign-ploern").checked;
 
-    // --- ดึงค่า Skill ที่พ่อแม่กำหนด ---
     const skillTypeEl = document.getElementById("new-quest-skill-type");
     const skillPointsEl = document.getElementById("new-quest-skill-points");
     const skillType = skillTypeEl ? skillTypeEl.value : 'none';
@@ -229,12 +228,25 @@ function saveRewardsToStorage() {
 
 function addNewRewardItem() {
     const name = document.getElementById("new-reward-name").value.trim();
-    const stars = parseInt(document.getElementById("new-reward-stars").value, 10);
-    if (!name || isNaN(stars) || stars <= 0) { alert("กรุณากรอกชื่อรางวัลและจำนวนดาวให้ถูกต้องครับ"); return; }
-    rewardsList.push({ id: Date.now().toString(), name: name, stars: stars });
+    const costInput = document.getElementById("new-reward-cost") || document.getElementById("new-reward-stars");
+    const cost = parseInt(costInput ? costInput.value : "0", 10);
+    const currencySelect = document.getElementById("new-reward-currency");
+    const currencyType = currencySelect ? currencySelect.value : "stars";
+
+    if (!name || isNaN(cost) || cost <= 0) { alert("กรุณากรอกชื่อรางวัลและจำนวนให้ถูกต้องครับ"); return; }
+    
+    rewardsList.push({ 
+        id: Date.now().toString(), 
+        name: name, 
+        stars: cost, 
+        cost: cost, 
+        currencyType: currencyType 
+    });
+    
     saveRewardsToStorage();
     document.getElementById("new-reward-name").value = "";
-    document.getElementById("new-reward-stars").value = "";
+    if (document.getElementById("new-reward-cost")) document.getElementById("new-reward-cost").value = "";
+    if (document.getElementById("new-reward-stars")) document.getElementById("new-reward-stars").value = "";
     alert(`เพิ่มรางวัล "${name}" เรียบร้อยแล้ว!`);
 }
 
@@ -268,24 +280,44 @@ function renderRewardsList() {
         container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">ยังไม่มีรายการของรางวัล</div>`;
         return;
     }
-    container.innerHTML = rewardsList.map(r => `
+    container.innerHTML = rewardsList.map(r => {
+        const cType = r.currencyType || "stars";
+        const icon = cType === "trophies" ? "🏆" : "⭐";
+        const label = cType === "trophies" ? "ถ้วยทอง" : "ดาว";
+        const costVal = r.cost !== undefined ? r.cost : r.stars;
+
+        return `
         <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex justify-between items-center shadow-2xs">
             <div>
                 <div class="font-bold text-slate-800 text-xs font-kids">${r.name}</div>
-                <div class="text-[10px] text-amber-600 font-bold">ใช้ ${r.stars} ดาว ⭐</div>
+                <div class="text-[10px] text-amber-600 font-bold">ใช้ ${costVal} ${label} ${icon}</div>
             </div>
             <div class="flex items-center gap-1.5">
-                ${isParentUser ? `<button onclick="deleteRewardItem('${r.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 p-2 rounded-xl text-xs font-bold border border-rose-200">🗑️ ลบ</button>` : `<button onclick="requestReward('${r.name}', ${r.stars})" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold py-1.5 px-3 rounded-xl shadow-xs">กดส่งคำขอแลก ✨</button>`}
+                ${isParentUser ? `<button onclick="deleteRewardItem('${r.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 p-2 rounded-xl text-xs font-bold border border-rose-200">🗑️ ลบ</button>` : `<button onclick="requestReward('${r.name}', ${costVal}, '${cType}')" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold py-1.5 px-3 rounded-xl shadow-xs">กดส่งคำขอแลก ✨</button>`}
             </div>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 }
 
-function requestReward(rewardName, starsReq) {
-    if (totalStars < starsReq) { alert(`ดาวสะสมไม่พอครับ! ต้องการ ${starsReq} ดาว (ตอนนี้มี ${totalStars} ดาว)`); return; }
-    if (confirm(`คุณต้องการใช้ ${starsReq} ดาว เพื่อส่งคำขอแลก "${rewardName}" ถึงพ่อนะ และ แม่พัด ใช่ไหมครับ?`)) {
-        totalStars -= starsReq;
-        saveUserStars();
-        sendInAppNotification('REQUEST_REWARD', { rewardName: rewardName, starsUsed: starsReq });
+function requestReward(rewardName, costReq, currencyType = "stars") {
+    const currentBalance = currencyType === "trophies" ? totalTrophies : totalStars;
+    const label = currencyType === "trophies" ? "ถ้วยทอง" : "ดาว";
+    const icon = currencyType === "trophies" ? "🏆" : "⭐";
+
+    if (currentBalance < costReq) { 
+        alert(`${label}สะสมไม่พอครับ! ต้องการ ${costReq} ${label} (ตอนนี้มี ${currentBalance} ${label})`); 
+        return; 
+    }
+    
+    if (confirm(`คุณต้องการใช้ ${costReq} ${label} ${icon} เพื่อส่งคำขอแลก "${rewardName}" ถึงพ่อนะ และ แม่พัด ใช่ไหมครับ?`)) {
+        if (currencyType === "trophies") {
+            totalTrophies -= costReq;
+            saveUserTrophies();
+        } else {
+            totalStars -= costReq;
+            saveUserStars();
+        }
+        sendInAppNotification('REQUEST_REWARD', { rewardName: rewardName, starsUsed: costReq, currencyType: currencyType });
         alert(`ส่งคำขอแลก "${rewardName}" ถึงพ่อนะและแม่พัดแล้วครับ! รอคุณพ่อคุณแม่ออนุมัตินะครับ ✨`);
     }
 }
@@ -442,7 +474,7 @@ function renderNotifications() {
         return;
     }
 
-    const avatars = { 'พ่อนะ': '👨‍💼', 'แม่พัด': '👩‍💼', 'พูน': '👦', 'เพลิน': '👧' };
+    const avatars = { 'พ่อนนะ': '👨‍💼', 'แม่พัด': '👩‍💼', 'พูน': '👦', 'เพลิน': '👧' };
     listEl.innerHTML = notificationsList.map(n => {
         const isPending = n.status === 'pending';
         const itemKey = n.id || n.timestamp;
@@ -457,10 +489,14 @@ function renderNotifications() {
                     <p class="text-[10px] text-slate-500 font-medium mt-0.5">เหตุผล: "${n.details.reason}"</p>
                 </div>${deleteBtnHtml}</div>`;
         } else if (n.type === 'REQUEST_REWARD') {
+            const cType = n.details.currencyType || "stars";
+            const cIcon = cType === "trophies" ? "🏆" : "⭐";
+            const cName = cType === "trophies" ? "ถ้วยทอง" : "ดาว";
+
             return `<div class="p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 flex flex-col gap-2 shadow-2xs">
                 <div class="flex items-start gap-2.5"><span class="text-2xl bg-white p-1.5 rounded-xl border border-indigo-100">${avatars[n.user] || '👦'}</span><div class="flex-1">
                     <div class="flex justify-between items-center mb-0.5"><span class="font-bold text-xs text-indigo-950 font-kids">🎁 คำขอแลกรางวัล!</span><span class="text-[9px] font-bold text-slate-400">${n.time}</span></div>
-                    <p class="text-[11px] text-slate-700 font-bold">น้อง <span class="text-indigo-700 font-bold">${n.user}</span> ขอแลก: <span class="text-emerald-700 font-bold">${n.details.rewardName}</span> (ใช้ ${n.details.starsUsed} ดาว)</p>
+                    <p class="text-[11px] text-slate-700 font-bold">น้อง <span class="text-indigo-700 font-bold">${n.user}</span> ขอแลก: <span class="text-emerald-700 font-bold">${n.details.rewardName}</span> (ใช้ ${n.details.starsUsed} ${cName} ${cIcon})</p>
                 </div></div>
                 ${isParentUser && isPending ? `
                     <div class="flex gap-1.5 mt-1 border-t border-indigo-100 pt-2">
@@ -493,7 +529,7 @@ function renderNotifications() {
             return `<div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-start gap-2.5 shadow-2xs">
                 <span class="text-2xl bg-white p-1.5 rounded-xl border border-slate-200">${avatars[n.user] || '👦'}</span><div class="flex-1">
                 <div class="flex justify-between items-center mb-0.5"><span class="font-bold text-xs text-slate-800 font-kids">${n.user} เล่นเกม Math TD ได้คะแนนสูง! ⚔️</span><span class="text-[9px] font-bold text-slate-400">${n.time}</span></div>
-                <p class="text-[11px] text-slate-600 font-medium">คะแนนรวม <span class="font-bold text-indigo-600">${n.details.score}</span> | ได้รับ <span class="font-bold text-amber-500">⭐ ${n.details.stars} ดวง</span></p></div>${deleteBtnHtml}</div>`;
+                <p class="text-[11px] text-slate-600 font-medium">คะแนนรวม <span class="font-bold text-indigo-600">${n.details.score}</span> | ได้รับ <span class="font-bold text-amber-500">🏆 ${n.details.stars} ถ้วยทอง</span></p></div>${deleteBtnHtml}</div>`;
         } else {
             return `<div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-start gap-2.5 shadow-2xs">
                 <span class="text-2xl bg-white p-1.5 rounded-xl border border-slate-200">${avatars[n.user] || '👦'}</span><div class="flex-1">
@@ -512,13 +548,11 @@ function approveParentQuest(notifyId, userName, starsReward, skillType, skillPoi
             const { ref, runTransaction } = window.firebaseModules;
             const db = window.firebaseModules.getDatabase();
             
-            // อัปเดตดาวแบบ Transaction
             const userStarRef = ref(db, `user_stars/${userName}`);
             runTransaction(userStarRef, (currentStars) => {
                 return (currentStars || 0) + starsReward;
             });
 
-            // อัปเดต EXP แบบ Transaction
             const userExpRef = ref(db, `user_exp/${userName}`);
             runTransaction(userExpRef, (currentExp) => {
                 return (currentExp || 0) + (starsReward * 100);
@@ -536,12 +570,10 @@ function approveParentQuest(notifyId, userName, starsReward, skillType, skillPoi
             }
         }
 
-        // 🌟 เพิ่มแต้ม Skill ให้เด็ก 🌟
         if (skillType && skillType !== 'none' && skillPoints > 0) {
             addSkillPointsToUser(userName, skillType, skillPoints);
         }
 
-        // บันทึกเวลาทำเสร็จ
         if (notifyItem && notifyItem.details && notifyItem.details.questTitle) {
             const quest = parentQuestsList.find(q => q.title === notifyItem.details.questTitle);
             if (quest) {

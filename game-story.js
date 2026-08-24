@@ -1,3 +1,4 @@
+// game-story.js
 // ==========================================
 // --- AI STORYTELLER VARIABLES ---
 // ==========================================
@@ -233,35 +234,35 @@ function speakStoryPageText() {
 function triggerStoryCompletionModal() {
     incrementTodayRounds(); 
 
-    // --- คำนวณ RPG Bonus (EXP / Stars) ---
+    // --- คำนวณ RPG Bonus (EXP / Trophies) ---
     const expBoostLevel = (typeof getSkillLevel === 'function') ? getSkillLevel('expBoost') : 0;
-    const doubleStarLevel = (typeof getSkillLevel === 'function') ? getSkillLevel('doubleStar') : 0;
+    const doubleTrophyLevel = (typeof getSkillLevel === 'function') ? (getSkillLevel('doubleTrophy') || getSkillLevel('doubleStar')) : 0;
 
     let baseEXP = 150;
     let bonusEXP = Math.round(baseEXP * (expBoostLevel * 0.15)); // เพิ่ม 15% ต่อระดับสกิล
     let totalEarnedEXP = baseEXP + bonusEXP;
 
-    let earnedStars = 1;
-    let doubleStarTriggered = false;
-    if (doubleStarLevel > 0 && Math.random() < (doubleStarLevel * 0.25)) { // โอกาส 25% ต่อระดับสกิล
-        earnedStars = 2;
-        doubleStarTriggered = true;
+    let earnedTrophies = 1;
+    let doubleTrophyTriggered = false;
+    if (doubleTrophyLevel > 0 && Math.random() < (doubleTrophyLevel * 0.25)) { // โอกาส 25% ต่อระดับสกิล
+        earnedTrophies = 2;
+        doubleTrophyTriggered = true;
     }
 
-    totalStars += earnedStars; 
-    saveUserStars(); 
+    if (typeof totalGoldTrophies !== 'undefined') totalGoldTrophies += earnedTrophies; else if (typeof totalTrophies !== 'undefined') totalTrophies += earnedTrophies; 
+    if (typeof saveUserTrophies === 'function') saveUserTrophies(); 
     addEXPToUser(totalEarnedEXP);
 
-    document.getElementById("summary-stars-earned").innerText = `⭐ ${earnedStars} ดวง ${doubleStarTriggered ? '(🌟 โบนัสดาว x2!)' : ''}`;
+    document.getElementById("summary-stars-earned").innerText = `🏆 ถ้วยทอง ${earnedTrophies} ใบ ${doubleTrophyTriggered ? '(🏆 โบนัสถ้วยทอง x2!)' : ''}`;
     document.getElementById("summary-stars-earned").className = "text-sm text-amber-500 font-bold";
     document.getElementById("summary-exp-earned").innerText = `+${totalEarnedEXP} EXP ✨ ${bonusEXP > 0 ? `(โบนัส +${bonusEXP})` : ''}`;
-    document.getElementById("summary-saved-badge").innerText = "✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
+    document.getElementById("summary-saved-badge").innerText = "✅ บันทึกถ้วยทองสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
     document.getElementById("summary-saved-badge").className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-2.5 rounded-xl border border-emerald-200";
 
     sendInAppNotification('COMPLETED_STORY', { title: generatedStoryData.title, lang: selectedStoryLang });
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        const msg = selectedStoryLang === 'EN' ? `Awesome job ${currentUser || ''}! You found all items and completed the adventure story!` : `เก่งมากเลยครับ ${currentUser || ''} ถ่ายรูปส่องตามหาไอเทมครบทุกภารกิจ พิชิตเกมนิทานจบ 10 หน้า รับไปเลย ${earnedStars} ดาว`;
+        const msg = selectedStoryLang === 'EN' ? `Awesome job ${currentUser || ''}! You found all items and completed the adventure story!` : `เก่งมากเลยครับ ${currentUser || ''} ถ่ายรูปส่องตามหาไอเทมครบทุกภารกิจ พิชิตเกมนิทานจบ 10 หน้า รับไปเลย ถ้วยทอง ${earnedTrophies} ใบ`;
         const utterance = new SpeechSynthesisUtterance(msg); utterance.lang = selectedStoryLang === 'EN' ? 'en-US' : 'th-TH';
         window.speechSynthesis.speak(utterance);
     }

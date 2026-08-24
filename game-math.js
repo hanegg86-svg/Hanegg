@@ -1,3 +1,4 @@
+// game-math.js
 // ==========================================
 // --- MATH COMBINATION GAME VARIABLES ---
 // ==========================================
@@ -185,14 +186,16 @@ function resetCurrentMathQuestion() { isBombActive = false; mathCurrentNumbers =
 function skipMathQuestion() { if (confirm("ต้องการข้ามข้อนี้ใช่หรือไม่?")) generateMathPuzzle(); }
 
 function triggerMathCompletionModal() {
-    totalStars += 1; saveUserStars(); addEXPToUser(100); incrementTodayRounds(); 
+    if (typeof totalGoldTrophies !== 'undefined') totalGoldTrophies += 1; else if (typeof totalTrophies !== 'undefined') totalTrophies += 1;
+    if (typeof saveUserTrophies === 'function') saveUserTrophies(); 
+    addEXPToUser(100); incrementTodayRounds(); 
     mathQuestionIndex = 1; 
     mathBombQuota = 2; // รีเซ็ตโควต้าระเบิดหลังจบเกม
     document.getElementById("summary-total-count").innerText = "5 / 5 ข้อ";
-    document.getElementById("summary-stars-earned").innerText = "⭐ 1 ดวง";
+    document.getElementById("summary-stars-earned").innerText = "🏆 ถ้วยทอง 1 ใบ";
     document.getElementById("summary-stars-earned").className = "text-sm text-amber-500 font-bold";
     document.getElementById("summary-exp-earned").innerText = "+100 EXP ✨";
-    document.getElementById("summary-saved-badge").innerText = "✅ บันทึกดาวสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
+    document.getElementById("summary-saved-badge").innerText = "✅ บันทึกถ้วยทองสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
     document.getElementById("summary-saved-badge").className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-2.5 rounded-xl border border-emerald-200";
     document.getElementById("completion-subtitle").innerText = `🎉 เล่นเกมคิดเลขผสมคำตอบถูกครบ 5 ข้อแล้ว!`;
     document.getElementById("completion-modal").classList.remove("hidden");

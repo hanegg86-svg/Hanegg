@@ -156,9 +156,16 @@
                 </div>
             </button>
             
-            <div class="flex items-center gap-1.5 bg-yellow-400 px-3 py-1.5 rounded-full border-2 border-yellow-600 shadow-[0_3px_0_0_#ca8a04] min-h-[42px] landscape:min-h-[36px]">
+            <!-- 🌟 ดาว -->
+            <div class="flex items-center gap-1.5 bg-yellow-400 px-2.5 py-1.5 rounded-full border-2 border-yellow-600 shadow-[0_3px_0_0_#ca8a04] min-h-[42px] landscape:min-h-[36px]">
                 <span class="text-base drop-shadow-sm">🌟</span>
                 <span id="score" class="text-base font-black text-white font-kids drop-shadow-md">0</span>
+            </div>
+
+            <!-- 🏆 ถ้วยทอง -->
+            <div class="flex items-center gap-1.5 bg-amber-500 px-2.5 py-1.5 rounded-full border-2 border-amber-700 shadow-[0_3px_0_0_#b45309] min-h-[42px] landscape:min-h-[36px]">
+                <span class="text-base drop-shadow-sm">🏆</span>
+                <span id="score-trophy" class="text-base font-black text-white font-kids drop-shadow-md">0</span>
             </div>
         </div>
 
@@ -856,9 +863,14 @@
 
                 <div id="reward-shop-view">
                     <div class="text-center mb-3">
-                        <p class="text-xs text-slate-500">สะสมดาวจากการทำภารกิจเพื่อแลกรางวัล!</p>
-                        <div class="mt-1 bg-amber-50 py-1 px-4 rounded-full inline-block border border-amber-200 font-bold text-amber-800 text-xs">
-                            ดาวสะสม: <span id="quest-user-stars" class="text-amber-500 text-base font-kids">⭐ 0</span>
+                        <p class="text-xs text-slate-500">สะสมดาวและถ้วยทองเพื่อนำมาแลกรางวัลสุดพิเศษ!</p>
+                        <div class="mt-1 flex justify-center gap-2">
+                            <div class="bg-amber-50 py-1 px-3 rounded-full border border-amber-200 font-bold text-amber-800 text-xs">
+                                ดาวสะสม: <span id="quest-user-stars" class="text-amber-500 text-base font-kids">⭐ 0</span>
+                            </div>
+                            <div class="bg-amber-50 py-1 px-3 rounded-full border border-amber-200 font-bold text-amber-800 text-xs">
+                                ถ้วยทอง: <span id="quest-user-trophies" class="text-amber-600 text-base font-kids">🏆 0</span>
+                            </div>
                         </div>
                     </div>
 
@@ -867,8 +879,12 @@
                         <div class="space-y-2">
                             <input type="text" id="new-reward-name" placeholder="ชื่อของรางวัล (เช่น ไอศกรีม 1 ถ้วย)" class="w-full border border-slate-200 rounded-xl p-2 text-xs focus:outline-none focus:border-indigo-500">
                             <div class="flex gap-2">
-                                <input type="number" id="new-reward-stars" min="1" placeholder="จำนวนดาว" class="w-1/2 border border-slate-200 rounded-xl p-2 text-xs text-center font-bold focus:outline-none focus:border-indigo-500">
-                                <button onclick="addNewRewardItem()" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs">
+                                <select id="new-reward-currency" class="w-1/3 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-700 focus:outline-none">
+                                    <option value="stars">🌟 ดาว</option>
+                                    <option value="trophies">🏆 ถ้วยทอง</option>
+                                </select>
+                                <input type="number" id="new-reward-cost" min="1" placeholder="จำนวน" class="w-1/3 border border-slate-200 rounded-xl p-2 text-xs text-center font-bold focus:outline-none focus:border-indigo-500">
+                                <button onclick="addNewRewardItem()" class="w-1/3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs">
                                     บันทึกรางวัล 💾
                                 </button>
                             </div>
@@ -1060,7 +1076,7 @@
                     <span id="summary-total-count" class="text-emerald-600">สำเร็จ!</span>
                 </div>
                 <div class="flex justify-between items-center text-xs font-bold text-slate-700">
-                    <span>ดาวที่ได้รับในรอบนี้:</span>
+                    <span>รางวัลที่ได้รับในรอบนี้:</span>
                     <span id="summary-stars-earned" class="text-amber-500">⭐ 1 ดวง</span>
                 </div>
                 <div class="flex justify-between items-center text-xs font-bold text-slate-700 pt-1 border-t border-indigo-100">

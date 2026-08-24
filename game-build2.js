@@ -1,3 +1,4 @@
+// game-build2_2.js
 // ==========================================
 // --- MINI TOWN BUILDER: HARD MODE ENGINE ---
 // ==========================================
@@ -829,8 +830,9 @@ function triggerVictory() {
     isBuildGameOver = true;
     if (buildIntervalId) clearInterval(buildIntervalId);
 
-    if (typeof totalStars !== 'undefined') totalStars += 1;
-    if (typeof saveUserStars === 'function') saveUserStars();
+    if (typeof totalGoldTrophies !== 'undefined') totalGoldTrophies += 1;
+    else if (typeof totalTrophies !== 'undefined') totalTrophies += 1;
+    if (typeof saveUserTrophies === 'function') saveUserTrophies();
 
     if (typeof addEXPToUser === 'function') addEXPToUser(100);
     if (typeof incrementTodayRounds === 'function') incrementTodayRounds();
@@ -845,7 +847,7 @@ function triggerVictory() {
 
     const vicText = document.getElementById('victory-text');
     const vicModal = document.getElementById('victory-modal');
-    if (vicText) vicText.innerText = `ชนะในเวลา ${formatTime(gameTime)}! รับ ⭐+1, +100 EXP ✨ และ 🪙+1`;
+    if (vicText) vicText.innerText = `ชนะในเวลา ${formatTime(gameTime)}! รับ 🏆 ถ้วยทอง +1, +100 EXP ✨ และ 🪙+1`;
     if (vicModal) vicModal.style.display = 'flex';
 
     saveAndFetchBuildLeaderboard(gameTime);

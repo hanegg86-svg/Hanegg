@@ -1,13 +1,14 @@
+// game-rpg_2.js
 // ==========================================
 // --- RPG SYSTEM STATE & MANAGEMENT ---
 // ==========================================
 
 let playerRPG = JSON.parse(localStorage.getItem('player_rpg')) || {
     skills: {
-        hintVision: 0,   // สกิลคำใบ้พิเศษจาก AI เมื่อส่องหาของไม่เจอ
-        timeWarp: 0,     // ข้ามภารกิจถ่ายรูปได้ (ใช้คูลดาวน์)
-        expBoost: 0,     // สกิลเพิ่ม % EXP Bonus
-        doubleStar: 0    // โอกาสได้ดาว x2 เมื่ออ่านจบเรื่อง
+        hintVision: 0,    // สกิลคำใบ้พิเศษจาก AI เมื่อส่องหาของไม่เจอ
+        timeWarp: 0,      // ข้ามภารกิจถ่ายรูปได้ (ใช้คูลดาวน์)
+        expBoost: 0,      // สกิลเพิ่ม % EXP Bonus
+        doubleTrophy: 0   // โอกาสได้ถ้วยทอง x2 เมื่ออ่านจบเรื่อง
     }
 };
 
@@ -26,7 +27,7 @@ function updateRPGUI() {
         getSkillLevel('hintVision') + 
         getSkillLevel('timeWarp') + 
         getSkillLevel('expBoost') + 
-        getSkillLevel('doubleStar')
+        (getSkillLevel('doubleTrophy') || getSkillLevel('doubleStar'))
     ));
 
     // อัปเดต Display บนหน้าอ่านนิทาน
@@ -59,7 +60,7 @@ function updateRPGUI() {
         { key: 'hintVision', max: 3 },
         { key: 'timeWarp', max: 3 },
         { key: 'expBoost', max: 3 },
-        { key: 'doubleStar', max: 3 }
+        { key: 'doubleTrophy', max: 3 }
     ];
 
     skills.forEach(s => {
@@ -92,7 +93,7 @@ function learnSkill(skillKey) {
         getSkillLevel('hintVision') + 
         getSkillLevel('timeWarp') + 
         getSkillLevel('expBoost') + 
-        getSkillLevel('doubleStar')
+        (getSkillLevel('doubleTrophy') || getSkillLevel('doubleStar'))
     ));
 
     if (availableSP <= 0) {
