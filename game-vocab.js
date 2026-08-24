@@ -1,8 +1,8 @@
 // ==========================================
-// --- VOCAB & SPELLING & MATCHING GAME ---
+// --- VOCAB, PHOTO HUNT & MATCHING GAME ---
 // ==========================================
 
-let vocabSubMode = 'cards'; // 'cards' | 'spell' | 'match'
+let vocabSubMode = 'cards'; // 'cards' | 'photo' | 'match'
 let matchCardsList = [];
 let selectedMatchCards = [];
 let matchedPairsCount = 0;
@@ -13,35 +13,52 @@ let ocrExtractedList = [];
 let parentViewFilter = 'all'; // 'all' | 'พูน' | 'เพลิน'
 let vocabSortMode = 'newest'; // 'newest' | 'oldest' | 'random'
 
+// --- PHOTO HUNT GAME STATE ---
+let dynamicActions = [
+    "ชู 2 นิ้ว ✌️ ข้างๆ วัตถุ",
+    "ชูนิ้วโป้ง 👍 ข้างๆ วัตถุ",
+    "ทำมือโอเค 👌 ใกล้ๆ วัตถุ",
+    "เอานิ้วชี้ 👆 แตะไปที่วัตถุ",
+    "แบมือ ✋ ไว้ข้างๆ วัตถุ"
+];
+let currentDynamicAction = "";
+let photoCorrectCount = 0;
+let vocabMediaStream = null;
+let capturedPhotoBase64 = null;
+
 function switchVocabPlayMode(mode) {
     vocabSubMode = mode;
     const cardsBtn = document.getElementById("vocab-mode-cards");
-    const spellBtn = document.getElementById("vocab-mode-spell");
+    const photoBtn = document.getElementById("vocab-mode-photo");
     const matchBtn = document.getElementById("vocab-mode-match");
 
     const flashcardSec = document.getElementById("flashcard-section");
-    const spellingSec = document.getElementById("spelling-section");
+    const photoSec = document.getElementById("photo-hunt-section");
     const matchingSec = document.getElementById("matching-section");
 
     const activeClass = "flex-1 py-1.5 rounded-xl text-xs font-black bg-white border-2 border-indigo-200 text-indigo-900 shadow-[0_3px_0_0_#c7d2fe] transition-all active:translate-y-1 active:shadow-none";
     const inactiveClass = "flex-1 py-1.5 rounded-xl text-xs font-black text-indigo-700 hover:bg-white/50 border-2 border-transparent transition-all";
 
-    [cardsBtn, spellBtn, matchBtn].forEach(btn => { if (btn) btn.className = inactiveClass; });
+    [cardsBtn, photoBtn, matchBtn].forEach(btn => { if (btn) btn.className = inactiveClass; });
 
     if (mode === 'cards') {
+        stopVocabCamera();
         if (cardsBtn) cardsBtn.className = activeClass;
         if (flashcardSec) flashcardSec.classList.remove("hidden");
-        if (spellingSec) spellingSec.classList.add("hidden");
+        if (photoSec) photoSec.classList.add("hidden");
         if (matchingSec) matchingSec.classList.add("hidden");
-    } else if (mode === 'spell') {
-        if (spellBtn) spellBtn.className = activeClass;
+    } else if (mode === 'photo') {
+        if (photoBtn) photoBtn.className = activeClass;
         if (flashcardSec) flashcardSec.classList.add("hidden");
-        if (spellingSec) spellingSec.classList.remove("hidden");
+        if (photoSec) photoSec.classList.remove("hidden");
         if (matchingSec) matchingSec.classList.add("hidden");
+        startVocabCamera();
+        updateCard();
     } else if (mode === 'match') {
+        stopVocabCamera();
         if (matchBtn) matchBtn.className = activeClass;
         if (flashcardSec) flashcardSec.classList.add("hidden");
-        if (spellingSec) spellingSec.classList.add("hidden");
+        if (photoSec) photoSec.classList.add("hidden");
         if (matchingSec) matchingSec.classList.remove("hidden");
         startMatchingGame();
     }
@@ -66,7 +83,6 @@ function changeVocabSortMode(val) {
 function filterVocabForUser() {
     let baseList = [...rawVocabList];
 
-    // 1. กรองตามสิทธิ์ผู้เรียน / ตัวเลือกของผู้ปกครอง
     if (isParentUser) {
         if (parentViewFilter === 'พูน' || parentViewFilter === 'เพลิน') {
             baseList = baseList.filter(item => {
@@ -81,7 +97,6 @@ function filterVocabForUser() {
         });
     }
 
-    // 2. จัดเรียงลำดับคำศัพท์
     if (vocabSortMode === 'newest') {
         filteredVocabList = baseList.reverse();
     } else if (vocabSortMode === 'oldest') {
@@ -108,14 +123,6 @@ function renderSpelledLetters(word) {
     return word.split('').map(char => {
         if (char === ' ') return '<span class="letter-space"></span>';
         return `<span class="letter-box">${char.toUpperCase()}</span>`;
-    }).join('');
-}
-
-function renderBlankLetters(word) {
-    if (!word) return '';
-    return word.split('').map(char => {
-        if (char === ' ') return '<span class="letter-space"></span>';
-        return `<span class="blank-box"></span>`;
     }).join('');
 }
 
@@ -153,29 +160,19 @@ function updateCard() {
         document.getElementById("card-phonetic").innerText = `[ ${item.phonetic || item.th} ]`;
     }
 
-    const spellEmoji = document.getElementById("spell-card-emoji");
-    const spellImg = document.getElementById("spell-card-img");
-    if (item.image) {
-        spellEmoji.classList.add("hidden"); spellImg.classList.remove("hidden"); spellImg.src = item.image;
-    } else {
-        spellImg.classList.add("hidden"); spellEmoji.classList.remove("hidden"); spellEmoji.innerText = item.emoji || "💡";
+    // 🎯 อัปเดตข้อมูลโหมดส่องถ่ายรูป
+    const photoEmoji = document.getElementById("photo-target-emoji");
+    const photoWord = document.getElementById("photo-target-word");
+    if (photoEmoji && photoWord) {
+        photoEmoji.innerText = item.emoji || "🍎";
+        photoWord.innerText = subjectMode === 'EN' ? item.en : item.th;
     }
 
-    if (subjectMode === 'EN') {
-        document.getElementById("spell-card-title").innerText = item.th;
-        document.getElementById("spell-card-subtitle").innerHTML = renderBlankLetters(item.en);
-        document.getElementById("spell-input").placeholder = "พิมพ์คำศัพท์ภาษาอังกฤษ...";
-    } else {
-        document.getElementById("spell-card-title").innerText = item.en;
-        document.getElementById("spell-card-subtitle").innerHTML = renderBlankLetters(item.th);
-        document.getElementById("spell-input").placeholder = "พิมพ์คำภาษาไทย...";
+    if (!currentDynamicAction || photoCorrectCount === 0) {
+        pickRandomDynamicAction();
     }
-
-    const posInSet = (currentIndex % 5) + 1;
-    const currentSetNum = Math.floor(currentIndex / 5) + 1;
-    document.getElementById("set-progress-text").innerText = `ชุดที่ ${currentSetNum} (คำที่ ${posInSet}/5)`;
-    document.getElementById("spell-input").value = "";
-    document.getElementById("speech-status").innerText = "";
+    updatePhotoProgressUI();
+    retakeVocabPhoto();
 
     // 🎯 อัปเดตป้ายผู้เรียน (target-assigned-badge)
     const badgeEl = document.getElementById("target-assigned-badge");
@@ -196,33 +193,199 @@ function updateCard() {
     checkDailyLimitStatus();
 }
 
-function checkSpellingAnswer() {
-    if (filteredVocabList.length === 0) return;
+// ------------------------------------------
+// --- AI PHOTO HUNT LOGIC (DYNAMIC CHECK) ---
+// ------------------------------------------
+
+function pickRandomDynamicAction() {
+    const randIdx = Math.floor(Math.random() * dynamicActions.length);
+    currentDynamicAction = dynamicActions[randIdx];
+    const el = document.getElementById("photo-dynamic-action");
+    if (el) el.innerText = currentDynamicAction;
+}
+
+function updatePhotoProgressUI() {
+    const textEl = document.getElementById("photo-set-progress-text");
+    if (textEl) {
+        textEl.innerText = `โหมดส่องถ่ายรูป (สำเร็จ ${photoCorrectCount}/5 คำ)`;
+    }
+}
+
+async function startVocabCamera() {
+    const video = document.getElementById("vocab-camera-stream");
+    if (!video) return;
+    try {
+        if (vocabMediaStream) stopVocabCamera();
+        vocabMediaStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" } },
+            audio: false
+        });
+        video.srcObject = vocabMediaStream;
+    } catch (err) {
+        console.error("Camera access error:", err);
+        alert("ไม่สามารถเปิดกล้องได้ กรุณายินยอมให้เข้าถึงกล้องถ่ายรูปครับ");
+    }
+}
+
+function stopVocabCamera() {
+    if (vocabMediaStream) {
+        vocabMediaStream.getTracks().forEach(track => track.stop());
+        vocabMediaStream = null;
+    }
+}
+
+function captureVocabPhoto() {
+    const video = document.getElementById("vocab-camera-stream");
+    const preview = document.getElementById("vocab-photo-preview");
+    const overlay = document.getElementById("vocab-camera-overlay");
+    const btnSnap = document.getElementById("btn-snap-photo");
+    const btnRetake = document.getElementById("btn-retake-photo");
+    const btnAnalyze = document.getElementById("btn-analyze-photo");
+
+    if (!video || !video.videoWidth) return;
+
+    const canvas = document.createElement("canvas");
+    const maxDim = 600;
+    let w = video.videoWidth, h = video.videoHeight;
+    if (w > h) { if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; } } 
+    else { if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; } }
+
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, w, h);
+
+    capturedPhotoBase64 = canvas.toDataURL("image/jpeg", 0.75);
+    preview.src = capturedPhotoBase64;
+
+    video.classList.add("hidden");
+    preview.classList.remove("hidden");
+    if (overlay) overlay.classList.add("hidden");
+
+    btnSnap.classList.add("hidden");
+    btnRetake.classList.remove("hidden");
+    btnAnalyze.classList.remove("hidden");
+}
+
+function retakeVocabPhoto() {
+    capturedPhotoBase64 = null;
+    const video = document.getElementById("vocab-camera-stream");
+    const preview = document.getElementById("vocab-photo-preview");
+    const overlay = document.getElementById("vocab-camera-overlay");
+    const btnSnap = document.getElementById("btn-snap-photo");
+    const btnRetake = document.getElementById("btn-retake-photo");
+    const btnAnalyze = document.getElementById("btn-analyze-photo");
+
+    if (video) video.classList.remove("hidden");
+    if (preview) preview.classList.add("hidden");
+    if (overlay) overlay.classList.remove("hidden");
+
+    if (btnSnap) btnSnap.classList.remove("hidden");
+    if (btnRetake) btnRetake.classList.add("hidden");
+    if (btnAnalyze) btnAnalyze.classList.add("hidden");
+}
+
+async function verifyPhotoWithGeminiAI() {
+    if (!filteredVocabList || filteredVocabList.length === 0) return;
+    if (!capturedPhotoBase64) { alert("กรุณาถ่ายรูปก่อนครับ!"); return; }
+
     if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
-        alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`); return;
+        alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
+        return;
     }
 
-    const inputVal = document.getElementById("spell-input").value.trim().toLowerCase();
+    const apiKey = localStorage.getItem("gemini_api_key");
+    if (!apiKey) { alert("กรุณาแจ้งพ่อนะหรือแม่พัดให้ช่วยตั้งค่า Gemini API Key ก่อนครับ"); return; }
+
     const currentItem = filteredVocabList[currentIndex];
-    const targetVal = (subjectMode === 'EN' ? currentItem.en : currentItem.th).trim().toLowerCase();
-    if (!inputVal) { alert("กรุณาพิมพ์สะกดคำก่อนนะครับ!"); return; }
+    const targetWord = subjectMode === 'EN' ? currentItem.en : currentItem.th;
 
-    const cleanedInput = inputVal.replace(/[\s\-]/g, '');
-    const cleanedTarget = targetVal.replace(/[\s\-]/g, '');
+    const loadingBox = document.getElementById("photo-ai-loading");
+    const btnAnalyze = document.getElementById("btn-analyze-photo");
+    if (loadingBox) loadingBox.classList.remove("hidden");
+    if (btnAnalyze) btnAnalyze.disabled = true;
 
-    if (cleanedInput === cleanedTarget) {
-        alert(`🎉 ถูกต้องแล้วครับเก่งมาก! ${currentItem.en} = ${currentItem.th}`);
-        setCorrectAnswers += 1;
-        const isEndOfSet = ((currentIndex + 1) % 5 === 0) || (currentIndex === filteredVocabList.length - 1);
-        if (isEndOfSet) {
-            if (setCorrectAnswers >= 5 || setCorrectAnswers === (filteredVocabList.length % 5)) { triggerCompletionModal(); } 
-            else { alert(`จบชุดแล้ว! ท่องถูกไป ${setCorrectAnswers}/5 คำ (พยายามอีกนิดเพื่อเก็บ 1 ดาวนะครับ)`); setCorrectAnswers = 0; nextCard(); }
-        } else { nextCard(); }
-    } else { alert(`❌ ยังไม่ถูกต้อง ลองใหม่อีกครั้งนะครับ!`); }
+    const base64Data = capturedPhotoBase64.split(',')[1];
+    const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
+
+    const prompt = `วิเคราะห์รูปภาพนี้สำหรับเกมเด็ก:
+1. ตรวจสอบว่าในภาพมีวัตถุ/สิ่งของที่ตรงกับคำศัพท์คำว่า "${targetWord}" หรือไม่
+2. ตรวจสอบว่าในภาพมีการทำท่าทางเงื่อนไขคือ "${currentDynamicAction}" ร่วมอยู่ด้วยหรือไม่ (เพื่อป้องกันการใช้ภาพเดิมซ้ำ)
+
+ตอบกลับเป็น JSON รูปแบบนี้เท่านั้น ห้ามใส่ markdown หรือข้อความอื่น:
+{"match": true/false, "reason": "คำอธิบายภาษาไทยสั้นๆ ให้อ่านเข้าใจง่ายสำหรับเด็ก"}`;
+
+    try {
+        const response = await fetch(textUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [
+                        { text: prompt },
+                        { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+                    ]
+                }],
+                generationConfig: { temperature: 0.2 }
+            })
+        });
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+
+        const rawText = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const result = JSON.parse(rawText);
+
+        if (result.match) {
+            alert(`🎉 เก่งมากเลยครับถูกต้อง! ${result.reason || ''}`);
+            photoCorrectCount++;
+            updatePhotoProgressUI();
+
+            if (photoCorrectCount >= 5) {
+                triggerPhotoHuntCompletionModal();
+                photoCorrectCount = 0;
+            } else {
+                pickRandomDynamicAction();
+                nextCard();
+            }
+        } else {
+            alert(`❌ ยังไม่ตรงกับโจทย์ครับ!\nคำแนะนำ: ${result.reason || 'ลองหาสิ่งของและทำท่าทางให้ตรงตามเงื่อนไขดูใหม่นะ'}`);
+            retakeVocabPhoto();
+        }
+    } catch (error) {
+        alert("เกิดข้อผิดพลาดในการตรวจสอบรูปภาพ: " + (error.message || "กรุณาลองใหม่อีกครั้ง"));
+    } finally {
+        if (loadingBox) loadingBox.classList.add("hidden");
+        if (btnAnalyze) btnAnalyze.disabled = false;
+    }
+}
+
+function triggerPhotoHuntCompletionModal() {
+    totalStars += 2;
+    saveUserStars();
+    addEXPToUser(150);
+    incrementTodayRounds();
+
+    document.getElementById("summary-total-count").innerText = "สำเร็จภารกิจส่องถ่ายรูป 5 คำ!";
+    document.getElementById("summary-stars-earned").innerText = "⭐ 2 ดวง";
+    document.getElementById("summary-stars-earned").className = "text-sm text-amber-500 font-bold";
+    document.getElementById("summary-exp-earned").innerText = "+150 EXP ✨";
+    document.getElementById("summary-saved-badge").innerText = "✅ บันทึกดาวสะสม ⭐⭐ และแจ้งเตือนผู้ปกครองเรียบร้อย!";
+    document.getElementById("summary-saved-badge").className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-2.5 rounded-xl border border-emerald-200";
+    document.getElementById("completion-subtitle").innerText = `🎉 น้อง${currentUser || 'เด็กๆ'} สุดยอดมาก ส่องถ่ายรูปครบ 5 คำ!`;
+    document.getElementById("completion-modal").classList.remove("hidden");
+
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(`เก่งมากเลยครับ ${currentUser || ''} รับไปเลย 2 ดาว และ 150 EXP`);
+        utterance.lang = 'th-TH';
+        window.speechSynthesis.speak(utterance);
+    }
+    sendInAppNotification('COMPLETED_SET', { setNum: "ภารกิจส่องถ่ายรูป 5 คำ (รับ 2 ดาว)" });
 }
 
 // ------------------------------------------
-// --- MATCHING GAME LOGIC (ปรับเป็น 8 คู่) ---
+// --- MATCHING GAME LOGIC ---
 // ------------------------------------------
 function startMatchingGame() {
     if (!filteredVocabList || filteredVocabList.length < 2) {
@@ -606,7 +769,6 @@ async function scanImageWithGemini() {
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner"></span> Gemini 3.5 Flash Lite กำลังวิเคราะห์รูป...`;
 
-    // 💡 ปรับ Prompt ให้รองรับทั้งภาษาอังกฤษ (EN) และภาษาไทย (TH) ตามโหมดที่เปิดอยู่
     let prompt = "";
     if (subjectMode === 'EN') {
         prompt = `วิเคราะห์รูปภาพนี้ ดึงคำศัพท์ภาษาอังกฤษที่พบในรูปภาพ หรือวัตถุหลักๆ ในรูปภาพออกมาเป็นรายการคำศัพท์สำหรับเด็ก พร้อมคำแปลภาษาไทย คำอ่านทับศัพท์ภาษาไทย และเลือก Emoji 1 ตัวที่ตรงกับคำนั้นมากที่สุด 
@@ -684,7 +846,6 @@ function saveSelectedOcrVocab() {
     ocrExtractedList.forEach((item, index) => {
         const checkbox = document.getElementById(`ocr-check-${index}`);
         if (checkbox && checkbox.checked) {
-            // เช็กซ้ำตามโหมด
             const exists = rawVocabList.some(x => {
                 if (subjectMode === 'EN') return x.en && item.en && x.en.toLowerCase() === item.en.toLowerCase();
                 return x.th && item.th && x.th.trim() === item.th.trim();

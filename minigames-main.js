@@ -2,9 +2,11 @@
 // --- MINI GAMES SWITCHER ---
 // ==========================================
 function switchMiniGame(subGame) {
-    // หยุด Loop และ BGM ของเกมสร้างเมืองเมื่อสลับไปเล่นเกมอื่น
     if (subGame !== 'build' && typeof stopTownBuilderGame === 'function') {
         stopTownBuilderGame();
+    }
+    if (subGame !== 'vocab' && typeof stopVocabCamera === 'function') {
+        stopVocabCamera();
     }
 
     currentMiniGame = subGame;
@@ -25,10 +27,8 @@ function switchMiniGame(subGame) {
 
     const langSwitchBox = document.getElementById("lang-switch-box");
 
-    // --- อัปเดตคลาส CSS เป็นธีม 3D มาริโอ้/พีช ---
     const activeClass = "flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-pink-500 text-white shadow-[0_4px_0_0_#be185d] border-2 border-pink-700 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap";
     const inactiveClass = "flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap";
-    // --------------------------------------------------
 
     [btnVocab, btnMath, btnStory, btnTd, btnDungeon, btnBuild].forEach(b => { if (b) b.className = inactiveClass; });
     [vocabContainer, mathContainer, storyContainer, tdContainer, dungeonContainer, buildContainer].forEach(c => {
@@ -41,6 +41,9 @@ function switchMiniGame(subGame) {
         if (btnVocab) btnVocab.className = activeClass;
         if (vocabContainer) { vocabContainer.classList.remove("hidden"); vocabContainer.classList.add("flex"); }
         if (langSwitchBox) langSwitchBox.classList.remove("hidden");
+        if (typeof vocabSubMode !== "undefined" && vocabSubMode === 'photo' && typeof startVocabCamera === "function") {
+            startVocabCamera();
+        }
     } else if (subGame === 'math') {
         if (btnMath) btnMath.className = activeClass;
         if (mathContainer) { mathContainer.classList.remove("hidden"); mathContainer.classList.add("flex"); }
@@ -86,9 +89,14 @@ function restartSession() {
         if (typeof initTownBuilderGame === "function") initTownBuilderGame();
     }
     else { 
-        if (typeof setCorrectAnswers !== "undefined") setCorrectAnswers = 0; 
-        if (typeof filteredVocabList !== "undefined" && typeof shuffleArray === "function") shuffleArray(filteredVocabList); 
-        if (typeof currentIndex !== "undefined") currentIndex = 0; 
-        if (typeof updateCard === "function") updateCard(); 
+        if (typeof vocabSubMode !== "undefined" && vocabSubMode === 'photo') {
+            photoCorrectCount = 0;
+            if (typeof updateCard === "function") updateCard();
+        } else {
+            if (typeof setCorrectAnswers !== "undefined") setCorrectAnswers = 0; 
+            if (typeof filteredVocabList !== "undefined" && typeof shuffleArray === "function") shuffleArray(filteredVocabList); 
+            if (typeof currentIndex !== "undefined") currentIndex = 0; 
+            if (typeof updateCard === "function") updateCard(); 
+        }
     }
 }

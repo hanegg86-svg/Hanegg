@@ -1,5 +1,5 @@
 // Path: ./sw.js
-const CACHE_NAME = 'kids-vocab-v6'; // อัปเดตเวอร์ชันแคชเป็น v6 เพื่อบังคับโหลดระบบบอสและสกิลดันเจี้ยนล่าสุด
+const CACHE_NAME = 'kids-vocab-v7'; // อัปเดตเวอร์ชันแคชเป็น v7 เพื่อบังคับโหลดระบบส่องถ่ายรูปคำศัพท์ AI ล่าสุด
 
 // รายการไฟล์ทั้งหมดที่ต้องเก็บ Cache สำหรับการใช้งานออฟไลน์
 const ASSETS_TO_CACHE = [
@@ -27,7 +27,7 @@ const ASSETS_TO_CACHE = [
 ];
 
 // --- 1. INSTALL EVENT ---
-// โหลดและบันทึกไฟล์ทั้งหมดเข้า Cache เมื่อเปิดแอปพลิเคชัน
+// โหลดและบันทึกไฟล์ทั้งหมดเข้า Cache เมื่อเปิดแอปพลิเคชัน[span_0](start_span)[span_0](end_span)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -39,7 +39,7 @@ self.addEventListener('install', (event) => {
 });
 
 // --- 2. ACTIVATE EVENT ---
-// ตรวจสอบและลบ Cache เวอร์ชันเก่าออกทันทีเมื่อเปลี่ยน CACHE_NAME
+// ตรวจสอบและลบ Cache เวอร์ชันเก่าออกทันทีเมื่อเปลี่ยน CACHE_NAME[span_1](start_span)[span_1](end_span)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -55,7 +55,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // --- 3. FETCH EVENT ---
-// ใช้กลยุทธ์ Network-First (ดึงข้อมูลล่าสุดจากอินเทอร์เน็ตก่อน ถ้าไม่มีหรือออฟไลน์จึงดึงจาก Cache)
+// ใช้กลยุทธ์ Network-First (ดึงข้อมูลล่าสุดจากอินเทอร์เน็ตก่อน ถ้าไม่มีหรือออฟไลน์จึงดึงจาก Cache)[span_2](start_span)[span_2](end_span)
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
