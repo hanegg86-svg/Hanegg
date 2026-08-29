@@ -1107,7 +1107,20 @@ function renderOcrPreviewList() {
 
 function saveSelectedOcrVocab() {
     let addedCount = 0;
-    const assignees = ["พูน", "เพลิน"];
+    
+    // อ่านค่าผู้เรียนจาก Checkbox ที่เลือกไว้ใน Modal
+    const assignees = [];
+    if (document.getElementById("assign-poon") && document.getElementById("assign-poon").checked) {
+        assignees.push("พูน");
+    }
+    if (document.getElementById("assign-ploern") && document.getElementById("assign-ploern").checked) {
+        assignees.push("เพลิน");
+    }
+
+    // หากไม่ได้เลือกไว้เลย ให้กำหนดค่าเริ่มต้นสำหรับทุกคน
+    if (assignees.length === 0) {
+        assignees.push("พูน", "เพลิน");
+    }
 
     ocrExtractedList.forEach((item, index) => {
         const checkbox = document.getElementById(`ocr-check-${index}`);
