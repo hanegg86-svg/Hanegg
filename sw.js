@@ -1,5 +1,5 @@
 // Path: ./sw.js
-const CACHE_NAME = 'kids-vocab-v12'; // อัปเดตแคชเป็น v12 แยกเก็บเซตคำศัพท์ 5 คำ (เซต 1 และ เซต 2) แยกเป็น 2 วิชา (EN / TH)
+const CACHE_NAME = 'kids-vocab-v13'; // อัปเดตแคชเป็น v13 เพื่อล้างแคชเก่าและโหลด game-vocab.js ตัวใหม่
 
 // รายการไฟล์ทั้งหมดที่ต้องเก็บ Cache สำหรับการใช้งานออฟไลน์
 const ASSETS_TO_CACHE = [
