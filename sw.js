@@ -1,6 +1,6 @@
 // sw.js - Service Worker สำหรับจัดการ Offline Cache ของแอป Kids Vocab
 
-const CACHE_NAME = 'kids-vocab-v3';
+const CACHE_NAME = 'kids-vocab-v4';
 
 // รายการไฟล์ทั้งหมดที่ต้องดึงมาเก็บใน Cache เพื่อใช้งานแบบออฟไลน์
 const ASSETS_TO_CACHE = [
