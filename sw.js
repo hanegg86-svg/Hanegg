@@ -1,6 +1,6 @@
 // sw.js - Service Worker สำหรับจัดการ Offline Cache ของแอป Kids Vocab
 
-const CACHE_NAME = 'kids-vocab-v2'; // อัปเดตเวอร์ชันเป็น v2 เพื่อล้างแคชเก่า
+const CACHE_NAME = 'kids-vocab-v2';
 
 // รายการไฟล์ทั้งหมดที่ต้องดึงมาเก็บใน Cache เพื่อใช้งานแบบออฟไลน์
 const ASSETS_TO_CACHE = [
@@ -22,7 +22,7 @@ const ASSETS_TO_CACHE = [
     './game-td.js?v=2',
     './game-number-dungeon.js?v=2',
     './game-build2.js',
-    './game-plant.js?v=2' // เพิ่มไฟล์สคริปต์ระบบพรรณไม้
+    './game-plant.js?v=2'
 ];
 
 // 1. ขั้นตอน Install: ทำการดาวน์โหลดและบันทึกไฟล์ลง Cache
@@ -70,7 +70,6 @@ self.addEventListener('fetch', (event) => {
                 return cachedResponse;
             }
             return fetch(event.request).then((response) => {
-                // ตรวจสอบว่า Response ถูกต้องหรือไม่ก่อนนำไปแคชเพิ่มเติม
                 if (!response || response.status !== 200 || response.type !== 'basic') {
                     return response;
                 }
@@ -83,7 +82,6 @@ self.addEventListener('fetch', (event) => {
                 return response;
             });
         }).catch(() => {
-            // กรณีออฟไลน์และค้นหาในแคชไม่พบ
             if (event.request.mode === 'navigate') {
                 return caches.match('./index.html');
             }

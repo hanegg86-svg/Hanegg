@@ -86,6 +86,8 @@ let userSkillsList = {
     'เพลิน': { knowledge: 0, fitness: 0, wealth: 0 }
 };
 
+window.currentUserData = window.currentUserData || { plantLibrary: [] };
+
 let dbRefVocabEN, dbRefVocabTH, dbRefNotify, dbRefRewards, dbRefParentQuests, dbRefDailyConfig, dbRefLevelConfig, dbRefUserSkills;
 let isFirebaseActive = false;
 
@@ -95,6 +97,7 @@ let unsubUserTrophies = null;
 let unsubUserExp = null;
 let unsubUserDailyRounds = null;
 let unsubUserInventory = null;
+let unsubUserPlantLibrary = null;
 let unsubVocab = null;
 
 function cleanupUserListeners() {
@@ -103,6 +106,7 @@ function cleanupUserListeners() {
     if (unsubUserExp) { unsubUserExp(); unsubUserExp = null; }
     if (unsubUserDailyRounds) { unsubUserDailyRounds(); unsubUserDailyRounds = null; }
     if (unsubUserInventory) { unsubUserInventory(); unsubUserInventory = null; }
+    if (unsubUserPlantLibrary) { unsubUserPlantLibrary(); unsubUserPlantLibrary = null; }
 }
 
 function attachVocabListener() {
@@ -466,6 +470,21 @@ function setProfile(name, isParent) {
     if(typeof updateCard === 'function') updateCard();
     if(typeof renderParentQuestsList === 'function') renderParentQuestsList();
     if(typeof renderNotifications === 'function') renderNotifications();
+    if(typeof renderPlantLibrary === 'function') renderPlantLibrary();
+}
+
+function saveUserData() {
+    if (!currentUser) return;
+    if (!window.currentUserData) window.currentUserData = {};
+    const plantLib = window.currentUserData.plantLibrary || [];
+
+    if (isFirebaseActive) {
+        const { ref, set } = window.firebaseModules;
+        const db = window.firebaseModules.getDatabase();
+        set(ref(db, `user_plant_library/${currentUser}`), plantLib);
+    } else {
+        localStorage.setItem(`user_plant_library_${currentUser}`, JSON.stringify(plantLib));
+    }
 }
 
 function addSkillPointsToUser(childName, skillType, points) {
@@ -540,6 +559,8 @@ function calculateLevelFromEXP(exp) {
 
 function loadUserStars() {
     cleanupUserListeners();
+    if (!window.currentUserData) window.currentUserData = {};
+
     if (isFirebaseActive && currentUser) {
         const { ref, onValue } = window.firebaseModules;
         const db = window.firebaseModules.getDatabase();
@@ -566,6 +587,14 @@ function loadUserStars() {
             const val = snapshot.val();
             currentChildEXP = val !== null ? val : 0;
             updateUserLevelAndAvatarDisplay();
+        });
+
+        unsubUserPlantLibrary = onValue(ref(db, `user_plant_library/${currentUser}`), (snapshot) => {
+            const val = snapshot.val();
+            let parsed = [];
+            if (val) { parsed = Array.isArray(val) ? val : Object.values(val); }
+            window.currentUserData.plantLibrary = parsed;
+            if (typeof renderPlantLibrary === 'function') renderPlantLibrary();
         });
 
         const todayStr = getTodayDateString();
@@ -613,6 +642,10 @@ function loadUserStars() {
 
         currentChildEXP = parseInt(localStorage.getItem(`user_exp_${currentUser || 'guest'}`) || "0", 10);
         updateUserLevelAndAvatarDisplay();
+
+        const localPlantData = localStorage.getItem(`user_plant_library_${currentUser || 'guest'}`);
+        window.currentUserData.plantLibrary = localPlantData ? JSON.parse(localPlantData) : [];
+        if (typeof renderPlantLibrary === 'function') renderPlantLibrary();
 
         const todayStr = getTodayDateString();
         todayPlayedRounds = parseInt(localStorage.getItem(`daily_rounds_${currentUser}_${todayStr}`) || "0", 10);

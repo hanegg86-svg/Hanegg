@@ -72,6 +72,7 @@ function switchMiniGame(subGame) {
     } else if (subGame === 'plant') {
         if (btnPlant) btnPlant.className = activeClass;
         if (plantContainer) { plantContainer.classList.remove("hidden"); plantContainer.classList.add("flex"); }
+        if (typeof renderPlantLibrary === "function") renderPlantLibrary();
         if (typeof initPlantGame === "function") initPlantGame();
     }
     if (typeof checkDailyLimitStatus === "function") checkDailyLimitStatus();
@@ -98,6 +99,7 @@ function restartSession() {
         if (typeof initTownBuilderGame === "function") initTownBuilderGame();
     }
     else if (currentMiniGame === 'plant') {
+        if (typeof renderPlantLibrary === "function") renderPlantLibrary();
         if (typeof initPlantGame === "function") initPlantGame();
     }
     else { 
