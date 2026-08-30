@@ -1,381 +1,331 @@
-// ==========================================
-// --- MINI GAME: PLANT & FLOWER SCANNER AI ---
-// ==========================================
+// game-plant.js - ระบบมินิเกมสำรวจพรรณไม้ด้วย AI พร้อมระบบตรวจจับและอัปเกรดต้นไม้ซ้ำ
 
 let plantStream = null;
-let currentPlantBase64 = "";
-let currentPlantData = null;
-let plantFilter = 'all';
+let plantCapturedBase64 = null;
+let currentPlantResult = null;
+let currentPlantFilter = 'all';
 
-// ย่อขนาดรูปสูงสุดไม่เกิน 400px และบีบอัดคุณภาพเหลือ 30% (0.3)
-function compressPlantImage(src, maxWidth = 400, maxHeight = 400, quality = 0.3) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-            let width = img.width;
-            let height = img.height;
-
-            if (width > height) {
-                if (width > maxWidth) {
-                    height = Math.round((height * maxWidth) / width);
-                    width = maxWidth;
-                }
-            } else {
-                if (height > maxHeight) {
-                    width = Math.round((width * maxHeight) / height);
-                    height = maxHeight;
-                }
-            }
-
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = width;
-            tempCanvas.height = height;
-            const ctx = tempCanvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            const compressedDataUrl = tempCanvas.toDataURL('image/jpeg', quality);
-            resolve(compressedDataUrl);
-        };
-        img.src = src;
-    });
-}
-
+// 1. เปิดกล้องสำหรับสแกนพรรณไม้
 async function startPlantCamera() {
+    const video = document.getElementById('plant-webcam');
+    const placeholder = document.getElementById('plant-cam-placeholder');
+    const previewImg = document.getElementById('plant-preview-img');
+    const btnStart = document.getElementById('btn-start-plant-cam');
+    const btnCapture = document.getElementById('btn-capture-plant-cam');
+
     try {
-        const preview = document.getElementById('plant-preview-img');
-        const webcam = document.getElementById('plant-webcam');
-        const startCamBtn = document.getElementById('btn-start-plant-cam');
-        const captureBtn = document.getElementById('btn-capture-plant-cam');
-
-        if (preview) preview.classList.add('hidden');
-        
         plantStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' },
-            audio: false
+            video: { facingMode: { ideal: "environment" } }
         });
-        if (webcam) {
-            webcam.srcObject = plantStream;
-            webcam.classList.remove('hidden');
-        }
-        if (startCamBtn) startCamBtn.classList.add('hidden');
-        if (captureBtn) captureBtn.classList.remove('hidden');
+        video.srcObject = plantStream;
+        video.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        previewImg.classList.add('hidden');
+        btnStart.classList.add('hidden');
+        btnCapture.classList.remove('hidden');
     } catch (err) {
-        alert('ไม่สามารถเข้าถึงกล้องได้: ' + err.message);
+        alert("ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้งานกล้องในเบราว์เซอร์");
+        console.error("Camera error:", err);
     }
 }
 
-async function capturePlantPhoto() {
-    if (!plantStream) return;
-    const webcam = document.getElementById('plant-webcam');
+// 2. ถ่ายภาพจาก กล้อง WebCam
+function capturePlantPhoto() {
+    const video = document.getElementById('plant-webcam');
+    const previewImg = document.getElementById('plant-preview-img');
+    const btnStart = document.getElementById('btn-start-plant-cam');
+    const btnCapture = document.getElementById('btn-capture-plant-cam');
+
     const canvas = document.createElement('canvas');
-    canvas.width = webcam.videoWidth || 640;
-    canvas.height = webcam.videoHeight || 480;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const rawDataUrl = canvas.toDataURL('image/jpeg');
-    const compressedDataUrl = await compressPlantImage(rawDataUrl, 400, 400, 0.3);
+    plantCapturedBase64 = canvas.toDataURL('image/jpeg', 0.85);
 
-    const preview = document.getElementById('plant-preview-img');
-    if (preview) {
-        preview.src = compressedDataUrl;
-        preview.classList.remove('hidden');
-    }
-    currentPlantBase64 = compressedDataUrl.split(',')[1];
-    stopPlantCamera();
-}
-
-function stopPlantCamera() {
+    // ปิดกล้องแล้วแสดงรูป Preview
     if (plantStream) {
         plantStream.getTracks().forEach(track => track.stop());
         plantStream = null;
     }
-    const webcam = document.getElementById('plant-webcam');
-    const startCamBtn = document.getElementById('btn-start-plant-cam');
-    const captureBtn = document.getElementById('btn-capture-plant-cam');
 
-    if (webcam) webcam.classList.add('hidden');
-    if (startCamBtn) startCamBtn.classList.remove('hidden');
-    if (captureBtn) captureBtn.classList.add('hidden');
+    video.classList.add('hidden');
+    previewImg.src = plantCapturedBase64;
+    previewImg.classList.remove('hidden');
+    btnStart.classList.remove('hidden');
+    btnCapture.classList.add('hidden');
 }
 
-async function handlePlantFileSelect(event) {
-    stopPlantCamera();
+// 3. เลือกไฟล์รูปภาพจากคลังรูป
+function handlePlantFileSelect(event) {
     const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-            const compressedDataUrl = await compressPlantImage(e.target.result, 400, 400, 0.3);
-            const preview = document.getElementById('plant-preview-img');
-            if (preview) {
-                preview.src = compressedDataUrl;
-                preview.classList.remove('hidden');
-            }
-            currentPlantBase64 = compressedDataUrl.split(',')[1];
-        };
-        reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        plantCapturedBase64 = e.target.result;
+
+        const video = document.getElementById('plant-webcam');
+        const placeholder = document.getElementById('plant-cam-placeholder');
+        const previewImg = document.getElementById('plant-preview-img');
+
+        if (plantStream) {
+            plantStream.getTracks().forEach(track => track.stop());
+            plantStream = null;
+        }
+
+        video.classList.add('hidden');
+        placeholder.classList.add('hidden');
+        previewImg.src = plantCapturedBase64;
+        previewImg.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
 }
 
+// 4. วิเคราะห์พรรณไม้ด้วย Gemini API (ระบุ Model: Gemini Flash Lite 3.5)
 async function analyzePlantWithAI() {
-    const apiKey = localStorage.getItem("gemini_api_key");
+    if (!plantCapturedBase64) {
+        alert("กรุณาถ่ายรูปหรือเลือกรูปภาพต้นไม้ก่อนครับ");
+        return;
+    }
+
+    const apiKey = localStorage.getItem('gemini_api_key') || window.geminiApiKey;
     if (!apiKey) {
-        alert('กรุณากรอก Gemini API Key ในเมนูตั้งค่าก่อนครับ');
-        openKeyModal();
+        alert("กรุณาตั้งค่า Gemini API Key ในเมนูตั้งค่าก่อนใช้งานครับ");
         return;
     }
 
-    if (!currentPlantBase64) {
-        alert('กรุณาเลือกรูปภาพหรือถ่ายรูปต้นไม้/ดอกไม้ก่อนครับ');
-        return;
-    }
-
-    const analyzeBtn = document.getElementById('btn-analyze-plant');
     const loadingEl = document.getElementById('plant-ai-loading');
-    const resultDiv = document.getElementById('plant-result-box');
+    const resultBox = document.getElementById('plant-result-box');
+    const btnAnalyze = document.getElementById('btn-analyze-plant');
 
-    if (analyzeBtn) { analyzeBtn.disabled = true; analyzeBtn.classList.add('opacity-50'); }
-    if (loadingEl) loadingEl.classList.remove('hidden');
-    if (resultDiv) resultDiv.classList.add('hidden');
+    loadingEl.classList.remove('hidden');
+    resultBox.classList.add('hidden');
+    btnAnalyze.disabled = true;
 
-    const modelName = "gemini-3.5-flash-lite";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+    const base64Data = plantCapturedBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
 
-    const promptText = `วิเคราะห์ภาพต้นไม้หรือดอกไม้นี้แล้วตอบกลับเป็นรูปแบบ JSON ภาษาไทยเท่านั้น โดยใช้โครงสร้างตามนี้:
+    const prompt = `วิเคราะห์รูปภาพพรรณไม้หรือดอกไม้นี้ และตอบกลับในรูปแบบ JSON วัตถุบริสุทธิ์เท่านั้น (ไม่เอา markdown หรือ text อื่น):
 {
-    "commonName": "ชื่อภาษาไทยหรือชื่อสามัญ",
-    "scientificName": "ชื่อวิทยาศาสตร์",
-    "category": "ระบุหมวดหมู่จากตัวเลือกนี้เท่านั้น: ไม้ดอก, ไม้ใบ, แคคตัส, ไม้ผล, หรือ อื่นๆ",
-    "careGuide": "อธิบายวิธีการดูแลสั้นๆ (ปริมาณแสงแดด การให้น้ำ และชนิดดิน)",
-    "toxicity": "ระบุความปลอดภัยว่าเป็นพิษต่อเด็ก สุนัข หรือแมวหรือไม่",
-    "highlights": "อธิบายจุดเด่น ประโยชน์ หรือความหมายสิริมงคล"
+  "nameTh": "ชื่อต้นไม้ภาษาไทย",
+  "nameSci": "ชื่อวิทยาศาสตร์ (Scientific Name)",
+  "category": "เลือกจาก: ไม้ดอก / ไม้ใบ / แคคตัส / ไม้ผล / พืชผักสวนครัว / อื่นๆ",
+  "care": "อธิบายการดูแลสั้นๆ เหมาะสำหรับเด็ก (เช่น รดน้ำวันละครั้ง ชอบแดดปานกลาง)",
+  "toxicity": "ปลอดภัยสำหรับสัตว์เลี้ยงและเด็กหรือไม่ (เช่น ปลอดภัย / มีพิษหากรับประทาน)",
+  "highlight": "จุดเด่นหรือประโยชน์สั้นๆ 1 ประโยค"
 }`;
 
-    const payload = {
-        contents: [
-            {
-                parts: [
-                    { text: promptText },
-                    {
-                        inline_data: {
-                            mime_type: "image/jpeg",
-                            data: currentPlantBase64
-                        }
-                    }
-                ]
-            }
-        ],
-        generationConfig: {
-            response_mime_type: "application/json"
-        }
-    };
-
     try {
-        const response = await fetch(url, {
+        // เรียกใช้ API โดยระบุ Model เป็น Gemini Flash Lite 3.5
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                contents: [{
+                    parts: [
+                        { text: prompt },
+                        { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+                    ]
+                }]
+            })
         });
 
         const data = await response.json();
+        let textResult = data.candidates[0].content.parts[0].text;
+        textResult = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
 
-        if (data.error) {
-            alert('เกิดข้อผิดพลาดจาก API: ' + data.error.message);
-        } else {
-            const textResult = data.candidates[0].content.parts[0].text;
-            const plantInfo = JSON.parse(textResult);
+        currentPlantResult = JSON.parse(textResult);
+        currentPlantResult.image = plantCapturedBase64;
 
-            currentPlantData = {
-                id: Date.now().toString(),
-                ...plantInfo,
-                image: 'data:image/jpeg;base64,' + currentPlantBase64,
-                timestamp: new Date().toLocaleDateString('th-TH')
-            };
+        // แสดงผลลัพธ์
+        document.getElementById('plant-res-name').innerText = currentPlantResult.nameTh || "ไม่ทราบชื่อ";
+        document.getElementById('plant-res-sci').innerText = currentPlantResult.nameSci || "-";
+        document.getElementById('plant-res-cat').innerText = currentPlantResult.category || "ไม้ใบ";
+        document.getElementById('plant-res-care').innerText = currentPlantResult.care || "-";
+        document.getElementById('plant-res-tox').innerText = currentPlantResult.toxicity || "ปลอดภัย";
+        document.getElementById('plant-res-high').innerText = currentPlantResult.highlight || "-";
 
-            document.getElementById('plant-res-name').innerText = plantInfo.commonName || "ไม่ทราบชื่อ";
-            document.getElementById('plant-res-sci').innerText = plantInfo.scientificName || "-";
-            document.getElementById('plant-res-cat').innerText = plantInfo.category || "-";
-            document.getElementById('plant-res-care').innerText = plantInfo.careGuide || "-";
-            document.getElementById('plant-res-tox').innerText = plantInfo.toxicity || "-";
-            document.getElementById('plant-res-high').innerText = plantInfo.highlights || "-";
-
-            if (resultDiv) resultDiv.classList.remove('hidden');
-        }
-    } catch (error) {
-        alert('เกิดข้อผิดพลาดในการวิเคราะห์: ' + error.message);
+        resultBox.classList.remove('hidden');
+    } catch (err) {
+        console.error("Plant AI Error:", err);
+        alert("ไม่สามารถวิเคราะห์รูปภาพได้ กรุณาลองใหม่อีกครั้ง");
     } finally {
-        if (analyzeBtn) { analyzeBtn.disabled = false; analyzeBtn.classList.remove('opacity-50'); }
-        if (loadingEl) loadingEl.classList.add('hidden');
+        loadingEl.classList.add('hidden');
+        btnAnalyze.disabled = false;
     }
 }
 
-function getChildPlantLibraryKey(childName) {
-    const user = childName || currentUser || 'guest';
-    return `plant_library_${user}`;
-}
-
-function getChildPlantMilestoneKey(childName) {
-    const user = childName || currentUser || 'guest';
-    return `plant_milestones_${user}`;
-}
-
+// 5. บันทึกลงคลังพรรณไม้ (พร้อมระบบตรวจจับซ้ำแบบ 4B: อัปเกรด Level & รับโบนัส EXP)
 function savePlantToLibrary() {
-    if (!currentPlantData) return;
-    const child = currentUser || 'พูน';
-    const storageKey = getChildPlantLibraryKey(child);
-    let library = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    if (!currentPlantResult) return;
 
-    library.unshift(currentPlantData);
-    localStorage.setItem(storageKey, JSON.stringify(library));
-
-    if (isFirebaseActive) {
-        const { ref, set } = window.firebaseModules;
-        const db = window.firebaseModules.getDatabase();
-        set(ref(db, `plant_library/${child}`), library);
-    }
-
-    alert(`บันทึก ${currentPlantData.commonName} ลงคลังเรียบร้อยแล้ว!`);
-    
-    // ตรวจสอบเงื่อนไขสะสมพรรณไม้ครบทุกๆ 10 ชนิดเพื่อรับ 1 ดาว ⭐ + 100 EXP
-    checkPlantMilestoneReward(child, library);
-
-    renderPlantLibrary();
-    document.getElementById('plant-result-box').classList.add('hidden');
-}
-
-function checkPlantMilestoneReward(childName, libraryList) {
-    if (!childName || isParentUser) return;
-
-    // คำนวณจำนวนชนิดที่ไม่ซ้ำกัน
-    const uniqueSpecies = new Set();
-    libraryList.forEach(item => {
-        const key = (item.scientificName && item.scientificName !== '-') ? item.scientificName.toLowerCase() : item.commonName.trim();
-        if (key) uniqueSpecies.add(key);
-    });
-
-    const uniqueCount = uniqueSpecies.size;
-    const milesKey = getChildPlantMilestoneKey(childName);
-    let awardedMilestones = JSON.parse(localStorage.getItem(milesKey) || '[]');
-
-    // สะสมครบทุกๆ 10 ชนิด รับ 1 ดาว + 100 EXP
-    const targetMilestoneLevel = Math.floor(uniqueCount / 10);
-
-    if (targetMilestoneLevel > 0) {
-        let newlyAwarded = 0;
-        for (let i = 1; i <= targetMilestoneLevel; i++) {
-            const milestoneTarget = i * 10;
-            if (!awardedMilestones.includes(milestoneTarget)) {
-                awardedMilestones.push(milestoneTarget);
-                newlyAwarded++;
-            }
-        }
-
-        if (newlyAwarded > 0) {
-            localStorage.setItem(milesKey, JSON.stringify(awardedMilestones));
-            const totalStarsEarned = newlyAwarded * 1;
-            const totalExpEarned = newlyAwarded * 100;
-
-            totalStars += totalStarsEarned;
-            saveUserStars();
-            addEXPToUser(totalExpEarned);
-
-            sendInAppNotification('PLANT_MILESTONE', {
-                count: uniqueCount,
-                stars: totalStarsEarned,
-                exp: totalExpEarned
-            });
-
-            alert(`🎉 ยินดีด้วยน้อง ${childName}!\nสะสมพรรณไม้ครบ ${targetMilestoneLevel * 10} ชนิดแล้ว!\n⭐ ได้รับ +${totalStarsEarned} ดาว และ ✨ +${totalExpEarned} EXP!`);
-        }
-    }
-}
-
-function deletePlantFromLibrary(event, index) {
-    event.stopPropagation();
-    const child = currentUser || 'พูน';
-    const storageKey = getChildPlantLibraryKey(child);
-    let library = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    library.splice(index, 1);
-    localStorage.setItem(storageKey, JSON.stringify(library));
-
-    if (isFirebaseActive) {
-        const { ref, set } = window.firebaseModules;
-        const db = window.firebaseModules.getDatabase();
-        set(ref(db, `plant_library/${child}`), library);
-    }
-    renderPlantLibrary();
-}
-
-function setPlantFilter(category, btnElement) {
-    plantFilter = category;
-    document.querySelectorAll('.plant-filter-btn').forEach(btn => {
-        btn.className = "plant-filter-btn px-3 py-1 text-xs font-bold bg-slate-100 text-slate-600 rounded-full transition hover:bg-slate-200";
-    });
-    btnElement.className = "plant-filter-btn px-3 py-1 text-xs font-bold bg-emerald-600 text-white rounded-full shadow-xs transition";
-    renderPlantLibrary();
-}
-
-function renderPlantLibrary() {
-    const libraryList = document.getElementById('plant-library-list');
-    const badgeCountEl = document.getElementById('plant-unique-count-tag');
-    if (!libraryList) return;
-
-    const child = currentUser || 'พูน';
-    const storageKey = getChildPlantLibraryKey(child);
-    let library = JSON.parse(localStorage.getItem(storageKey) || '[]');
-
-    const uniqueSpecies = new Set();
-    library.forEach(item => {
-        const key = (item.scientificName && item.scientificName !== '-') ? item.scientificName.toLowerCase() : item.commonName.trim();
-        if (key) uniqueSpecies.add(key);
-    });
-
-    if (badgeCountEl) {
-        badgeCountEl.innerText = `สะสมได้ ${uniqueSpecies.size} ชนิด (${uniqueSpecies.size % 10}/10 สู่ดาว ⭐ ดอกถัดไป)`;
-    }
-
-    let filteredLibrary = library;
-    if (plantFilter !== 'all') {
-        filteredLibrary = library.filter(item => item.category && item.category.includes(plantFilter));
-    }
-
-    if (filteredLibrary.length === 0) {
-        libraryList.innerHTML = '<p class="text-center text-slate-400 text-xs py-6 font-bold">ไม่พบรายการพรรณไม้ในหมวดหมู่นี้</p>';
+    if (!window.currentUserData) {
+        alert("กรุณาเลือกผู้ใช้ก่อนบันทึกครับ");
         return;
     }
 
-    libraryList.innerHTML = filteredLibrary.map((item, index) => {
-        const originalIndex = library.indexOf(item);
-        return `
-            <div class="bg-white border border-slate-200 rounded-2xl p-2.5 flex items-center gap-3 shadow-2xs hover:shadow-xs transition cursor-pointer" onclick="openPlantDetailModal(${originalIndex})">
-                <img src="${item.image}" alt="${item.commonName}" class="w-16 h-16 object-cover rounded-xl border border-slate-100 flex-shrink-0">
-                <div class="flex-1 min-w-0">
-                    <h4 class="font-bold text-slate-800 text-xs truncate font-kids">${item.commonName}</h4>
-                    <p class="text-[10px] text-slate-400 italic truncate">${item.scientificName || '-'}</p>
-                    <div class="flex items-center gap-1 mt-1">
-                        <span class="bg-emerald-50 text-emerald-700 text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-emerald-100">${item.category || 'พรรณไม้'}</span>
-                        <span class="text-[9px] text-slate-400">${item.timestamp || ''}</span>
-                    </div>
-                </div>
-                <button onclick="deletePlantFromLibrary(event, ${originalIndex})" class="bg-rose-50 text-rose-700 hover:bg-rose-100 p-1.5 rounded-xl text-xs font-bold border border-rose-200 flex-shrink-0">🗑️</button>
-            </div>
-        `;
-    }).join('');
+    if (!window.currentUserData.plantLibrary) {
+        window.currentUserData.plantLibrary = [];
+    }
+
+    const library = window.currentUserData.plantLibrary;
+
+    // Normalization เพื่อเช็คความซ้ำ (เทียบชื่อวิทยาศาสตร์ หรือ ชื่อภาษาไทย)
+    const normSci = (currentPlantResult.nameSci || '').toLowerCase().trim();
+    const normTh = (currentPlantResult.nameTh || '').replace(/^(ต้น|ดอก)/, '').trim().toLowerCase();
+
+    // ค้นหาว่ามีต้นไม้นี้อยู่เดิมหรือไม่
+    const existingIndex = library.findIndex(item => {
+        const itemSci = (item.nameSci || '').toLowerCase().trim();
+        const itemTh = (item.nameTh || '').replace(/^(ต้น|ดอก)/, '').trim().toLowerCase();
+        
+        return (normSci && itemSci === normSci) || (normTh && itemTh === normTh);
+    });
+
+    if (existingIndex !== -1) {
+        // === กรณีเจอต้นไม้ซ้ำ (อัปเกรด Level การ์ดเดิม) ===
+        const existingPlant = library[existingIndex];
+        existingPlant.count = (existingPlant.count || 1) + 1;
+        existingPlant.level = (existingPlant.level || 1) + 1;
+        existingPlant.lastUpdated = new Date().toISOString();
+        
+        // อัปเดตรูปภาพให้สดใหม่ขึ้น
+        existingPlant.image = currentPlantResult.image;
+
+        // รับโบนัส EXP พิเศษสำหรับการสแกนซ้ำ
+        const bonusEXP = 20;
+        if (typeof addEXP === 'function') addEXP(bonusEXP);
+
+        alert(`🌿 หนูเคยสะสม [${existingPlant.nameTh}] ไปแล้ว!\n✨ อัปเกรดการ์ดเป็น Lv.${existingPlant.level} (สแกนแล้ว ${existingPlant.count} ครั้ง)\n🎁 รับโบนัสพิเศษ +${bonusEXP} EXP!`);
+
+    } else {
+        // === กรณีพบพรรณไม้ชนิดใหม่ ===
+        const newPlant = {
+            id: 'plant_' + Date.now(),
+            nameTh: currentPlantResult.nameTh,
+            nameSci: currentPlantResult.nameSci,
+            category: currentPlantResult.category,
+            care: currentPlantResult.care,
+            toxicity: currentPlantResult.toxicity,
+            highlight: currentPlantResult.highlight,
+            image: currentPlantResult.image,
+            level: 1,
+            count: 1,
+            createdAt: new Date().toISOString()
+        };
+
+        library.push(newPlant);
+
+        // คำนวณจำนวนชนิดที่ไม่ซ้ำ (Unique Species)
+        const uniqueCount = library.length;
+        const bonusEXP = 100;
+        if (typeof addEXP === 'function') addEXP(bonusEXP);
+
+        // เช็คเงื่อนไขครบ 10 ชนิดเพื่อมอบดาว ⭐
+        if (uniqueCount % 10 === 0) {
+            if (typeof addStar === 'function') addStar();
+            alert(`🎉 ยินดีด้วย! สะสมพรรณไม้ชนิดใหม่ครบ ${uniqueCount} ชนิดแล้ว!\n⭐ รับดาวสะสม +1 ดวง และ +${bonusEXP} EXP!`);
+        } else {
+            const leftToStar = 10 - (uniqueCount % 10);
+            alert(`🎉 บันทึก [${newPlant.nameTh}] ชนิดใหม่สำเร็จ!\n✨ รับ +${bonusEXP} EXP (สะสมอีก ${leftToStar} ชนิดเพื่อรับดาว ⭐)`);
+        }
+    }
+
+    // บันทึกข้อมูลกลับ Firebase / LocalStorage
+    if (typeof saveUserData === 'function') saveUserData();
+
+    // ซ่อนกล่องผลลัพธ์และรีเฟรชรายการ
+    document.getElementById('plant-result-box').classList.add('hidden');
+    currentPlantResult = null;
+    renderPlantLibrary();
 }
 
-function openPlantDetailModal(index) {
-    const child = currentUser || 'พูน';
-    const storageKey = getChildPlantLibraryKey(child);
-    let library = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    const item = library[index];
-    if (!item) return;
+// 6. แสดงรายการคลังพรรณไม้
+function renderPlantLibrary() {
+    const container = document.getElementById('plant-library-list');
+    const uniqueCountTag = document.getElementById('plant-unique-count-tag');
+    if (!container) return;
 
-    document.getElementById('modal-plant-img').src = item.image;
-    document.getElementById('modal-plant-name').innerText = item.commonName || "ไม่ทราบชื่อ";
-    document.getElementById('modal-plant-sci').innerText = item.scientificName || "-";
-    document.getElementById('modal-plant-cat').innerText = item.category || "-";
-    document.getElementById('modal-plant-care').innerText = item.careGuide || "-";
-    document.getElementById('modal-plant-tox').innerText = item.toxicity || "-";
-    document.getElementById('modal-plant-high').innerText = item.highlights || "-";
+    const library = (window.currentUserData && window.currentUserData.plantLibrary) ? window.currentUserData.plantLibrary : [];
+
+    // อัปเดตตัวเลขแสดงผลสะสม
+    const uniqueCount = library.length;
+    const progressToStar = uniqueCount % 10;
+    if (uniqueCountTag) {
+        uniqueCountTag.innerText = `สะสมได้ ${uniqueCount} ชนิด (${progressToStar}/10 สู่ดาว ⭐ ดอกถัดไป)`;
+    }
+
+    // กรองตามหมวดหมู่
+    let filtered = library;
+    if (currentPlantFilter !== 'all') {
+        filtered = library.filter(item => item.category === currentPlantFilter);
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-6 text-slate-400 font-bold text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                🌱 ยังไม่มีพรรณไม้ในหมวดนี้ ถ่ายรูปสแกนสะสมเลย!
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = filtered.map(item => `
+        <div class="bg-white border border-slate-200 hover:border-emerald-300 p-2.5 rounded-2xl flex items-center justify-between shadow-2xs transition">
+            <div class="flex items-center gap-2.5 overflow-hidden cursor-pointer" onclick="openPlantDetailModal('${item.id}')">
+                <img src="${item.image}" class="w-12 h-12 object-cover rounded-xl border border-slate-100 flex-shrink-0">
+                <div class="truncate">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-extrabold text-slate-800 text-xs truncate font-kids">${item.nameTh}</span>
+                        <span class="bg-emerald-100 text-emerald-800 font-black text-[9px] px-1.5 py-0.2 rounded-md">Lv.${item.level || 1}</span>
+                    </div>
+                    <p class="text-[10px] text-slate-400 italic truncate">${item.nameSci || '-'}</p>
+                    <span class="text-[9px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full inline-block mt-0.5">${item.category || 'ไม้ใบ'}</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+                <button onclick="openPlantDetailModal('${item.id}')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold p-2 rounded-xl text-xs transition">
+                    👁️
+                </button>
+                <button onclick="deletePlantItem('${item.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold p-2 rounded-xl text-xs transition">
+                    🗑️
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 7. ฟิลเตอร์หมวดหมู่
+function setPlantFilter(category, btnEl) {
+    currentPlantFilter = category;
+    document.querySelectorAll('.plant-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-emerald-600', 'text-white');
+        btn.classList.add('bg-slate-100', 'text-slate-600');
+    });
+
+    if (btnEl) {
+        btnEl.classList.remove('bg-slate-100', 'text-slate-600');
+        btnEl.classList.add('bg-emerald-600', 'text-white');
+    }
+
+    renderPlantLibrary();
+}
+
+// 8. เปิด/ปิด Modal ดูรายละเอียด
+function openPlantDetailModal(plantId) {
+    const library = (window.currentUserData && window.currentUserData.plantLibrary) ? window.currentUserData.plantLibrary : [];
+    const plant = library.find(p => p.id === plantId);
+    if (!plant) return;
+
+    document.getElementById('modal-plant-img').src = plant.image;
+    document.getElementById('modal-plant-name').innerText = `${plant.nameTh} (Lv.${plant.level || 1})`;
+    document.getElementById('modal-plant-sci').innerText = plant.nameSci || '-';
+    document.getElementById('modal-plant-cat').innerText = plant.category || 'ไม้ใบ';
+    document.getElementById('modal-plant-care').innerText = plant.care || '-';
+    document.getElementById('modal-plant-tox').innerText = plant.toxicity || '-';
+    document.getElementById('modal-plant-high').innerText = plant.highlight || '-';
 
     document.getElementById('plant-detail-modal').classList.remove('hidden');
 }
@@ -384,6 +334,13 @@ function closePlantDetailModal() {
     document.getElementById('plant-detail-modal').classList.add('hidden');
 }
 
-function initPlantGame() {
-    renderPlantLibrary();
+// 9. ลบพรรณไม้ออกจากคลัง
+function deletePlantItem(plantId) {
+    if (!confirm("คุณต้องการลบพรรณไม้นี้ออกจากคลังหรือไม่?")) return;
+
+    if (window.currentUserData && window.currentUserData.plantLibrary) {
+        window.currentUserData.plantLibrary = window.currentUserData.plantLibrary.filter(p => p.id !== plantId);
+        if (typeof saveUserData === 'function') saveUserData();
+        renderPlantLibrary();
+    }
 }
