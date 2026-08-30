@@ -44,7 +44,6 @@ function capturePlantPhoto() {
 
     plantCapturedBase64 = canvas.toDataURL('image/jpeg', 0.85);
 
-    // ปิดกล้องแล้วแสดงรูป Preview
     if (plantStream) {
         plantStream.getTracks().forEach(track => track.stop());
         plantStream = null;
@@ -117,7 +116,6 @@ async function analyzePlantWithAI() {
 }`;
 
     try {
-        // เรียกใช้ API โดยระบุ Model เป็น Gemini Flash Lite 3.5
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -138,7 +136,6 @@ async function analyzePlantWithAI() {
         currentPlantResult = JSON.parse(textResult);
         currentPlantResult.image = plantCapturedBase64;
 
-        // แสดงผลลัพธ์
         document.getElementById('plant-res-name').innerText = currentPlantResult.nameTh || "ไม่ทราบชื่อ";
         document.getElementById('plant-res-sci').innerText = currentPlantResult.nameSci || "-";
         document.getElementById('plant-res-cat').innerText = currentPlantResult.category || "ไม้ใบ";
@@ -156,13 +153,25 @@ async function analyzePlantWithAI() {
     }
 }
 
-// 5. บันทึกลงคลังพรรณไม้ (พร้อมระบบตรวจจับซ้ำแบบ 4B: อัปเกรด Level & รับโบนัส EXP)
+// 5. บันทึกลงคลังพรรณไม้ (พร้อมระบบเรียกคืนโปรไฟล์อัตโนมัติหากหลุด)
 function savePlantToLibrary() {
     if (!currentPlantResult) return;
 
+    // กู้คืนโปรไฟล์ผู้ใช้จาก LocalStorage หากค่า currentUser เป็น null
+    if (!currentUser) {
+        const lastUser = localStorage.getItem("last_active_user");
+        const lastIsParent = localStorage.getItem("last_is_parent") === "true";
+        if (lastUser && typeof setProfile === 'function') {
+            setProfile(lastUser, lastIsParent);
+        } else {
+            alert("กรุณาเลือกผู้ใช้ก่อนบันทึกครับ");
+            if (typeof openProfileModal === 'function') openProfileModal();
+            return;
+        }
+    }
+
     if (!window.currentUserData) {
-        alert("กรุณาเลือกผู้ใช้ก่อนบันทึกครับ");
-        return;
+        window.currentUserData = { plantLibrary: [] };
     }
 
     if (!window.currentUserData.plantLibrary) {
@@ -171,11 +180,9 @@ function savePlantToLibrary() {
 
     const library = window.currentUserData.plantLibrary;
 
-    // Normalization เพื่อเช็คความซ้ำ (เทียบชื่อวิทยาศาสตร์ หรือ ชื่อภาษาไทย)
     const normSci = (currentPlantResult.nameSci || '').toLowerCase().trim();
     const normTh = (currentPlantResult.nameTh || '').replace(/^(ต้น|ดอก)/, '').trim().toLowerCase();
 
-    // ค้นหาว่ามีต้นไม้นี้อยู่เดิมหรือไม่
     const existingIndex = library.findIndex(item => {
         const itemSci = (item.nameSci || '').toLowerCase().trim();
         const itemTh = (item.nameTh || '').replace(/^(ต้น|ดอก)/, '').trim().toLowerCase();
@@ -184,23 +191,18 @@ function savePlantToLibrary() {
     });
 
     if (existingIndex !== -1) {
-        // === กรณีเจอต้นไม้ซ้ำ (อัปเกรด Level การ์ดเดิม) ===
         const existingPlant = library[existingIndex];
         existingPlant.count = (existingPlant.count || 1) + 1;
         existingPlant.level = (existingPlant.level || 1) + 1;
         existingPlant.lastUpdated = new Date().toISOString();
-        
-        // อัปเดตรูปภาพให้สดใหม่ขึ้น
         existingPlant.image = currentPlantResult.image;
 
-        // รับโบนัส EXP พิเศษสำหรับการสแกนซ้ำ
         const bonusEXP = 20;
-        if (typeof addEXP === 'function') addEXP(bonusEXP);
+        if (typeof addEXPToUser === 'function') addEXPToUser(bonusEXP);
 
         alert(`🌿 หนูเคยสะสม [${existingPlant.nameTh}] ไปแล้ว!\n✨ อัปเกรดการ์ดเป็น Lv.${existingPlant.level} (สแกนแล้ว ${existingPlant.count} ครั้ง)\n🎁 รับโบนัสพิเศษ +${bonusEXP} EXP!`);
 
     } else {
-        // === กรณีพบพรรณไม้ชนิดใหม่ ===
         const newPlant = {
             id: 'plant_' + Date.now(),
             nameTh: currentPlantResult.nameTh,
@@ -217,12 +219,10 @@ function savePlantToLibrary() {
 
         library.push(newPlant);
 
-        // คำนวณจำนวนชนิดที่ไม่ซ้ำ (Unique Species)
         const uniqueCount = library.length;
         const bonusEXP = 100;
-        if (typeof addEXP === 'function') addEXP(bonusEXP);
+        if (typeof addEXPToUser === 'function') addEXPToUser(bonusEXP);
 
-        // เช็คเงื่อนไขครบ 10 ชนิดเพื่อมอบดาว ⭐
         if (uniqueCount % 10 === 0) {
             if (typeof addStar === 'function') addStar();
             alert(`🎉 ยินดีด้วย! สะสมพรรณไม้ชนิดใหม่ครบ ${uniqueCount} ชนิดแล้ว!\n⭐ รับดาวสะสม +1 ดวง และ +${bonusEXP} EXP!`);
@@ -232,10 +232,8 @@ function savePlantToLibrary() {
         }
     }
 
-    // บันทึกข้อมูลกลับ Firebase / LocalStorage
     if (typeof saveUserData === 'function') saveUserData();
 
-    // ซ่อนกล่องผลลัพธ์และรีเฟรชรายการ
     document.getElementById('plant-result-box').classList.add('hidden');
     currentPlantResult = null;
     renderPlantLibrary();
@@ -249,14 +247,12 @@ function renderPlantLibrary() {
 
     const library = (window.currentUserData && window.currentUserData.plantLibrary) ? window.currentUserData.plantLibrary : [];
 
-    // อัปเดตตัวเลขแสดงผลสะสม
     const uniqueCount = library.length;
     const progressToStar = uniqueCount % 10;
     if (uniqueCountTag) {
         uniqueCountTag.innerText = `สะสมได้ ${uniqueCount} ชนิด (${progressToStar}/10 สู่ดาว ⭐ ดอกถัดไป)`;
     }
 
-    // กรองตามหมวดหมู่
     let filtered = library;
     if (currentPlantFilter !== 'all') {
         filtered = library.filter(item => item.category === currentPlantFilter);

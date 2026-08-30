@@ -1,28 +1,28 @@
 // sw.js - Service Worker สำหรับจัดการ Offline Cache ของแอป Kids Vocab
 
-const CACHE_NAME = 'kids-vocab-v2';
+const CACHE_NAME = 'kids-vocab-v3';
 
 // รายการไฟล์ทั้งหมดที่ต้องดึงมาเก็บใน Cache เพื่อใช้งานแบบออฟไลน์
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './manifest.json',
-    './Icon.png?v=2',
+    './Icon.png?v=3',
     './luigi.png',
     './rosalina.png',
     './mario.png',
     './peach.png',
-    './core.js?v=2',
-    './quest-shop.js?v=2',
-    './minigames-main.js?v=2',
-    './game-vocab.js?v=2',
-    './game-math.js?v=2',
-    './game-rpg.js?v=2',
-    './game-story.js?v=2',
-    './game-td.js?v=2',
-    './game-number-dungeon.js?v=2',
+    './core.js?v=3',
+    './quest-shop.js?v=3',
+    './minigames-main.js?v=3',
+    './game-vocab.js?v=3',
+    './game-math.js?v=3',
+    './game-rpg.js?v=3',
+    './game-story.js?v=3',
+    './game-td.js?v=3',
+    './game-number-dungeon.js?v=3',
     './game-build2.js',
-    './game-plant.js?v=2'
+    './game-plant.js?v=3'
 ];
 
 // 1. ขั้นตอน Install: ทำการดาวน์โหลดและบันทึกไฟล์ลง Cache

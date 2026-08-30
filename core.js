@@ -212,7 +212,16 @@ function initData() {
     document.getElementById("input-daily-limit-rounds").value = dailyLimitRounds;
 
     setTimeout(initFirebase, 300);
-    openProfileModal();
+
+    // Auto-restore profile หากเคยล็อกอินไว้แล้ว
+    const lastUser = localStorage.getItem("last_active_user");
+    const lastIsParent = localStorage.getItem("last_is_parent") === "true";
+    if (lastUser) {
+        setProfile(lastUser, lastIsParent);
+        document.getElementById("profile-modal").classList.add("hidden");
+    } else {
+        openProfileModal();
+    }
 }
 
 function switchMainTab(tab) {
@@ -415,6 +424,11 @@ function closePinModal() {
 function setProfile(name, isParent) {
     currentUser = name;
     isParentUser = isParent;
+
+    // เซฟการจำค่าผู้ใช้ลง LocalStorage
+    localStorage.setItem("last_active_user", name);
+    localStorage.setItem("last_is_parent", isParent ? "true" : "false");
+
     document.getElementById("user-name").innerText = name;
     
     const avatarImages = { 
