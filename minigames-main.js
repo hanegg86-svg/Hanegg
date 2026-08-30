@@ -8,6 +8,9 @@ function switchMiniGame(subGame) {
     if (subGame !== 'vocab' && typeof stopVocabCamera === 'function') {
         stopVocabCamera();
     }
+    if (subGame !== 'plant' && typeof stopPlantCamera === 'function') {
+        stopPlantCamera();
+    }
 
     currentMiniGame = subGame;
 
@@ -17,6 +20,7 @@ function switchMiniGame(subGame) {
     const btnTd = document.getElementById("game-subtab-td");
     const btnDungeon = document.getElementById("game-subtab-dungeon");
     const btnBuild = document.getElementById("game-subtab-build");
+    const btnPlant = document.getElementById("game-subtab-plant");
 
     const vocabContainer = document.getElementById("game-vocab-container");
     const mathContainer = document.getElementById("game-math-container");
@@ -24,14 +28,15 @@ function switchMiniGame(subGame) {
     const tdContainer = document.getElementById("game-td-container");
     const dungeonContainer = document.getElementById("game-dungeon-container");
     const buildContainer = document.getElementById("game-build-container");
+    const plantContainer = document.getElementById("game-plant-container");
 
     const langSwitchBox = document.getElementById("lang-switch-box");
 
     const activeClass = "flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-pink-500 text-white shadow-[0_4px_0_0_#be185d] border-2 border-pink-700 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap";
     const inactiveClass = "flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap";
 
-    [btnVocab, btnMath, btnStory, btnTd, btnDungeon, btnBuild].forEach(b => { if (b) b.className = inactiveClass; });
-    [vocabContainer, mathContainer, storyContainer, tdContainer, dungeonContainer, buildContainer].forEach(c => {
+    [btnVocab, btnMath, btnStory, btnTd, btnDungeon, btnBuild, btnPlant].forEach(b => { if (b) b.className = inactiveClass; });
+    [vocabContainer, mathContainer, storyContainer, tdContainer, dungeonContainer, buildContainer, plantContainer].forEach(c => {
         if (c) { c.classList.add("hidden"); c.classList.remove("flex"); }
     });
 
@@ -64,6 +69,10 @@ function switchMiniGame(subGame) {
         if (btnBuild) btnBuild.className = activeClass;
         if (buildContainer) { buildContainer.classList.remove("hidden"); buildContainer.classList.add("flex"); }
         if (typeof initTownBuilderGame === "function") initTownBuilderGame();
+    } else if (subGame === 'plant') {
+        if (btnPlant) btnPlant.className = activeClass;
+        if (plantContainer) { plantContainer.classList.remove("hidden"); plantContainer.classList.add("flex"); }
+        if (typeof initPlantGame === "function") initPlantGame();
     }
     if (typeof checkDailyLimitStatus === "function") checkDailyLimitStatus();
 }
@@ -87,6 +96,9 @@ function restartSession() {
     } 
     else if (currentMiniGame === 'build') {
         if (typeof initTownBuilderGame === "function") initTownBuilderGame();
+    }
+    else if (currentMiniGame === 'plant') {
+        if (typeof initPlantGame === "function") initPlantGame();
     }
     else { 
         if (typeof vocabSubMode !== "undefined" && vocabSubMode === 'photo') {

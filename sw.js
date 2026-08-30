@@ -1,7 +1,6 @@
 // Path: ./sw.js
-const CACHE_NAME = 'kids-vocab-v13'; // อัปเดตแคชเป็น v13 เพื่อล้างแคชเก่าและโหลด game-vocab.js ตัวใหม่
+const CACHE_NAME = 'kids-vocab-v14'; // อัปเดตแคชเป็น v14 รวม Plant Scan AI Game
 
-// รายการไฟล์ทั้งหมดที่ต้องเก็บ Cache สำหรับการใช้งานออฟไลน์
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -17,6 +16,7 @@ const ASSETS_TO_CACHE = [
   './game-td.js',
   './game-number-dungeon.js',
   './game-build2.js',
+  './game-plant.js',
   './mushroom.png',
   './turtle.png',
   './boss.png',
@@ -26,7 +26,6 @@ const ASSETS_TO_CACHE = [
   './rosalina.png'
 ];
 
-// --- 1. INSTALL EVENT ---
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -37,7 +36,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// --- 2. ACTIVATE EVENT ---
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -52,7 +50,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// --- 3. FETCH EVENT ---
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
