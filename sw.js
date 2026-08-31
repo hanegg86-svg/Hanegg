@@ -1,6 +1,6 @@
-// sw.js - Service Worker สำหรับจัดการ Offline Cache ของแอป Kids Vocab
+// sw.js - Service Worker สำหรับจัดการ Offline Cache และบังคับเคลียร์แคชเวอร์ชันเก่าทันที (Force Clear)
 
-const CACHE_NAME = 'kids-vocab-v4';
+const CACHE_NAME = 'kids-vocab-v5';
 
 // รายการไฟล์ทั้งหมดที่ต้องดึงมาเก็บใน Cache เพื่อใช้งานแบบออฟไลน์
 const ASSETS_TO_CACHE = [
@@ -25,19 +25,18 @@ const ASSETS_TO_CACHE = [
     './game-plant.js?v=4'
 ];
 
-// 1. ขั้นตอน Install: ทำการดาวน์โหลดและบันทึกไฟล์ลง Cache
+// 1. ขั้นตอน Install: บังคับให้ Service Worker ตัวใหม่เปิดใช้งานทันที (skipWaiting)
 self.addEventListener('install', (event) => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[Service Worker] Caching all app assets');
+            console.log('[Service Worker] Caching all app assets (v5)');
             return cache.addAll(ASSETS_TO_CACHE);
-        }).then(() => {
-            return self.skipWaiting();
         })
     );
 });
 
-// 2. ขั้นตอน Activate: ทำความสะอาดลบ Cache เวอร์ชันเก่าทิ้ง
+// 2. ขั้นตอน Activate: กวาดล้างแคชเก่าทิ้งทั้งหมด และเข้ายึดการควบคุมทุกแท็บทันที (clients.claim)
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -55,7 +54,7 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// 3. ขั้นตอน Fetch: ค้นหาไฟล์จาก Cache ก่อน หากไม่มีจึงดึงจาก Network
+// 3. ขั้นตอน Fetch: ดึงหน้าหลัก (index.html) จาก Network ก่อนเสมอเพื่อรับ UI ล่าสุด
 self.addEventListener('fetch', (event) => {
     // ข้ามการแคชคำขอไปยัง Google Gemini API และ Firebase Database
     if (event.request.url.includes('generativelanguage.googleapis.com') || 
@@ -64,27 +63,44 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // สำหรับคำขอหน้าหลักและ Navigation: ดึงจาก Network ก่อนเสมอ หากออฟไลน์จึงเปิดจากแคช
+    if (event.request.mode === 'navigate' || event.request.url.endsWith('index.html') || event.request.url.endsWith('/')) {
+        event.respondWith(
+            fetch(event.request)
+                .then((networkResponse) => {
+                    if (networkResponse && networkResponse.status === 200) {
+                        const responseClone = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(event.request, responseClone);
+                        });
+                    }
+                    return networkResponse;
+                })
+                .catch(() => {
+                    return caches.match('./index.html') || caches.match('./');
+                })
+        );
+        return;
+    }
+
+    // สำหรับไฟล์ Assets อื่นๆ: ตรวจสอบจาก Cache ก่อน หากไม่มีจึงดึงจาก Network
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) {
                 return cachedResponse;
             }
-            return fetch(event.request).then((response) => {
-                if (!response || response.status !== 200 || response.type !== 'basic') {
-                    return response;
+            return fetch(event.request).then((networkResponse) => {
+                if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+                    return networkResponse;
                 }
 
-                const responseToCache = response.clone();
+                const responseToCache = networkResponse.clone();
                 caches.open(CACHE_NAME).then((cache) => {
                     cache.put(event.request, responseToCache);
                 });
 
-                return response;
+                return networkResponse;
             });
-        }).catch(() => {
-            if (event.request.mode === 'navigate') {
-                return caches.match('./index.html');
-            }
         })
     );
 });
