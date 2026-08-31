@@ -170,6 +170,14 @@ function savePlantToLibrary() {
         }
     }
 
+    // ตรวจสอบกรณีที่ AI ระบุชนิดไม่ได้หรือไม่ชัดเจน (ไม่ให้บันทึก และไม่แจก EXP)
+    const nameTh = (currentPlantResult.nameTh || "").trim();
+    const nameSci = (currentPlantResult.nameSci || "").trim();
+    if (!nameTh || nameTh === "ไม่ทราบชื่อ" || nameTh === "-" || nameTh.toLowerCase() === "unknown") {
+        alert("⚠️ ไม่สามารถระบุชนิดพรรณไม้ได้ชัดเจน กรุณาลองถ่ายรูปใหม่อีกครั้งให้ชัดเจนครับ");
+        return;
+    }
+
     if (!window.currentUserData) {
         window.currentUserData = { plantLibrary: [] };
     }
@@ -191,17 +199,17 @@ function savePlantToLibrary() {
     });
 
     if (existingIndex !== -1) {
-        // กรณีซ้ำ: อัปเกรดการ์ดแต่ไม่แจก EXP
+        // กรณีพบชนิดซ้ำ: อัปเกรดการ์ดและบันทึกจำนวนครั้ง แต่ไม่แจก EXP
         const existingPlant = library[existingIndex];
         existingPlant.count = (existingPlant.count || 1) + 1;
         existingPlant.level = (existingPlant.level || 1) + 1;
         existingPlant.lastUpdated = new Date().toISOString();
         existingPlant.image = currentPlantResult.image;
 
-        alert(`🌿 หนูเคยสะสม [${existingPlant.nameTh}] ไปแล้ว!\n✨ อัปเกรดการ์ดเป็น Lv.${existingPlant.level} (สแกนแล้ว ${existingPlant.count} ครั้ง)\n(ถ่ายต้นไม้ซ้ำชนิดเดิม จะไม่ได้ EXP เพิ่มนะครับ)`);
+        alert(`🌿 หนูเคยสะสม [${existingPlant.nameTh}] ไปแล้ว!\n✨ อัปเกรดการ์ดเป็น Lv.${existingPlant.level} (สแกนแล้ว ${existingPlant.count} ครั้ง)\n(ชนิดซ้ำเดิม ไม่ได้รับ EXP เพิ่มเติม)`);
 
     } else {
-        // กรณีชนิดใหม่: เพิ่มเข้าคลัง +10 EXP และตรวจสอบเงื่อนไขรับดาวเมื่อครบทุก 10 ชนิด
+        // กรณีพบชนิดใหม่: บันทึกลงคลัง และมอบ +10 EXP
         const newPlant = {
             id: 'plant_' + Date.now(),
             nameTh: currentPlantResult.nameTh,
@@ -219,16 +227,11 @@ function savePlantToLibrary() {
         library.push(newPlant);
 
         const uniqueCount = library.length;
-        const bonusEXP = 10; // ให้ 10 EXP สำหรับชนิดใหม่
+        const bonusEXP = 10;
         if (typeof addEXPToUser === 'function') addEXPToUser(bonusEXP);
 
         if (uniqueCount % 10 === 0) {
-            if (typeof addStar === 'function') {
-                addStar();
-            } else if (typeof saveUserStars === 'function') {
-                totalStars += 1;
-                saveUserStars();
-            }
+            if (typeof addStar === 'function') addStar();
             alert(`🎉 ยินดีด้วย! สะสมพรรณไม้ชนิดใหม่ครบ ${uniqueCount} ชนิดแล้ว!\n⭐ รับดาวสะสม +1 ดวง และ +${bonusEXP} EXP!`);
         } else {
             const leftToStar = 10 - (uniqueCount % 10);
