@@ -19,7 +19,7 @@ function compressImageToLimit(imgSource, maxDim = 320, maxKb = 50) {
             }
         } else {
             if (height > maxDim) {
-                width = Math.round((width * maxDim) / height);
+                width = Math.round((height * maxDim) / height);
                 height = maxDim;
             }
         }
@@ -32,7 +32,6 @@ function compressImageToLimit(imgSource, maxDim = 320, maxKb = 50) {
         let quality = 0.75;
         let resultBase64 = canvas.toDataURL('image/jpeg', quality);
 
-        // ตรวจสอบขนาดจริงและลดค่า quality ลงทีละระดับจนกว่าขนาดจะไม่เกิน maxKb (50 KB)
         while (quality > 0.2) {
             const sizeKb = (resultBase64.length * 0.75) / 1024;
             if (sizeKb <= maxKb) break;
@@ -42,6 +41,44 @@ function compressImageToLimit(imgSource, maxDim = 320, maxKb = 50) {
 
         resolve(resultBase64);
     });
+}
+
+// ฟังก์ชันสำหรับผู้ปกครอง: บีบอัดรูปพรรณไม้เก่าทั้งหมดในคลังให้เหลือ <= 50 KB
+async function batchOptimizeOldPlantImages() {
+    if (!isParentUser) {
+        alert("เฉพาะ พ่อนะ และ แม่พัด เท่านั้นที่ใช้งานฟังก์ชันนี้ได้ครับ!");
+        return;
+    }
+
+    if (!window.currentUserData || !window.currentUserData.plantLibrary || window.currentUserData.plantLibrary.length === 0) {
+        alert("ยังไม่มีพรรณไม้ในคลังสะสมของเด็กๆ ครับ");
+        return;
+    }
+
+    if (!confirm("คุณต้องการบีบอัดรูปพรรณไม้เก่าทั้งหมดในคลังให้เหลือไม่เกิน 50 KB ใช่หรือไม่?")) return;
+
+    let optimizedCount = 0;
+    const library = window.currentUserData.plantLibrary;
+
+    for (let plant of library) {
+        if (plant.image && plant.image.startsWith('data:image')) {
+            await new Promise((resolve) => {
+                const img = new Image();
+                img.onload = async () => {
+                    const compressed = await compressImageToLimit(img, 320, 50);
+                    plant.image = compressed;
+                    optimizedCount++;
+                    resolve();
+                };
+                img.onerror = () => resolve();
+                img.src = plant.image;
+            });
+        }
+    }
+
+    if (typeof saveUserData === 'function') saveUserData();
+    renderPlantLibrary();
+    alert(`🎉 บีบอัดรูปภาพพรรณไม้เก่าสำเร็จทั้งหมด ${optimizedCount} รูป! ประหยัดพื้นที่จัดเก็บเรียบร้อยแล้ว`);
 }
 
 // 1. เปิดกล้องสำหรับสแกนพรรณไม้
@@ -194,7 +231,6 @@ async function analyzePlantWithAI() {
 function savePlantToLibrary() {
     if (!currentPlantResult) return;
 
-    // กู้คืนโปรไฟล์ผู้ใช้จาก LocalStorage หากค่า currentUser เป็น null
     if (!currentUser) {
         const lastUser = localStorage.getItem("last_active_user");
         const lastIsParent = localStorage.getItem("last_is_parent") === "true";
@@ -207,9 +243,7 @@ function savePlantToLibrary() {
         }
     }
 
-    // ตรวจสอบกรณีที่ AI ระบุชนิดไม่ได้หรือไม่ชัดเจน (ไม่ให้บันทึก และไม่แจก EXP)
     const nameTh = (currentPlantResult.nameTh || "").trim();
-    const nameSci = (currentPlantResult.nameSci || "").trim();
     if (!nameTh || nameTh === "ไม่ทราบชื่อ" || nameTh === "-" || nameTh.toLowerCase() === "unknown") {
         alert("⚠️ ไม่สามารถระบุชนิดพรรณไม้ได้ชัดเจน กรุณาลองถ่ายรูปใหม่อีกครั้งให้ชัดเจนครับ");
         return;
@@ -236,7 +270,6 @@ function savePlantToLibrary() {
     });
 
     if (existingIndex !== -1) {
-        // กรณีพบชนิดซ้ำ: อัปเกรดการ์ดและบันทึกจำนวนครั้ง แต่ไม่แจก EXP
         const existingPlant = library[existingIndex];
         existingPlant.count = (existingPlant.count || 1) + 1;
         existingPlant.level = (existingPlant.level || 1) + 1;
@@ -246,7 +279,6 @@ function savePlantToLibrary() {
         alert(`🌿 หนูเคยสะสม [${existingPlant.nameTh}] ไปแล้ว!\n✨ อัปเกรดการ์ดเป็น Lv.${existingPlant.level} (สแกนแล้ว ${existingPlant.count} ครั้ง)\n(ชนิดซ้ำเดิม ไม่ได้รับ EXP เพิ่มเติม)`);
 
     } else {
-        // กรณีพบชนิดใหม่: บันทึกลงคลัง และมอบ +10 EXP
         const newPlant = {
             id: 'plant_' + Date.now(),
             nameTh: currentPlantResult.nameTh,
@@ -283,10 +315,20 @@ function savePlantToLibrary() {
     renderPlantLibrary();
 }
 
-// 6. แสดงรายการคลังพรรณไม้
+// 6. แสดงรายการคลังพรรณไม้ พร้อมควบคุมการแสดงผลปุ่มผู้ปกครอง
 function renderPlantLibrary() {
     const container = document.getElementById('plant-library-list');
     const uniqueCountTag = document.getElementById('plant-unique-count-tag');
+    const parentToolsBox = document.getElementById('parent-plant-tools-box');
+
+    if (parentToolsBox) {
+        if (isParentUser) {
+            parentToolsBox.classList.remove('hidden');
+        } else {
+            parentToolsBox.classList.add('hidden');
+        }
+    }
+
     if (!container) return;
 
     const library = (window.currentUserData && window.currentUserData.plantLibrary) ? window.currentUserData.plantLibrary : [];

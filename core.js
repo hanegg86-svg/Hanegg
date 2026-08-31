@@ -1049,3 +1049,31 @@ function deleteLevelAvatar(child, lvl) {
         }
     }
 }
+
+// ฟังก์ชันล้าง Cache ของ Service Worker ทั้งหมดและรีเฟรชหน้าเว็บใหม่
+async function clearAppCacheAndReload() {
+    if (!isParentUser) {
+        alert("เฉพาะ พ่อนะ หรือ แม่พัด เท่านั้นที่สามารถล้างแคชระบบได้ครับ!");
+        return;
+    }
+
+    if (confirm("คุณต้องการล้างแคชแอปทั้งหมดและรีเฟรชระบบใหม่ใช่หรือไม่?")) {
+        try {
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+            }
+            if (navigator.serviceWorker) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+            }
+            alert("ล้างแคชแอปเรียบร้อยแล้ว ระบบกำลังรีเฟรชหน้าใหม่...");
+            window.location.reload(true);
+        } catch (err) {
+            console.error("Clear Cache Error:", err);
+            window.location.reload(true);
+        }
+    }
+}
