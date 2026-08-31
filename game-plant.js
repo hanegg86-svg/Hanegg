@@ -5,6 +5,45 @@ let plantCapturedBase64 = null;
 let currentPlantResult = null;
 let currentPlantFilter = 'all';
 
+// ฟังก์ชันกลางสำหรับย่อขนาดและบีบอัดรูปภาพให้อยู่ในเกณฑ์ไม่เกิน 50 KB
+function compressImageToLimit(imgSource, maxDim = 320, maxKb = 50) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        let width = imgSource.videoWidth || imgSource.naturalWidth || imgSource.width || 320;
+        let height = imgSource.videoHeight || imgSource.naturalHeight || imgSource.height || 240;
+
+        if (width > height) {
+            if (width > maxDim) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+            }
+        } else {
+            if (height > maxDim) {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+            }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgSource, 0, 0, width, height);
+
+        let quality = 0.75;
+        let resultBase64 = canvas.toDataURL('image/jpeg', quality);
+
+        // ตรวจสอบขนาดจริงและลดค่า quality ลงทีละระดับจนกว่าขนาดจะไม่เกิน maxKb (50 KB)
+        while (quality > 0.2) {
+            const sizeKb = (resultBase64.length * 0.75) / 1024;
+            if (sizeKb <= maxKb) break;
+            quality -= 0.1;
+            resultBase64 = canvas.toDataURL('image/jpeg', quality);
+        }
+
+        resolve(resultBase64);
+    });
+}
+
 // 1. เปิดกล้องสำหรับสแกนพรรณไม้
 async function startPlantCamera() {
     const video = document.getElementById('plant-webcam');
@@ -29,20 +68,14 @@ async function startPlantCamera() {
     }
 }
 
-// 2. ถ่ายภาพจาก กล้อง WebCam
-function capturePlantPhoto() {
+// 2. ถ่ายภาพจาก กล้อง WebCam พร้อมบีบอัดภาพให้อยู่ในเกณฑ์ <= 50 KB
+async function capturePlantPhoto() {
     const video = document.getElementById('plant-webcam');
     const previewImg = document.getElementById('plant-preview-img');
     const btnStart = document.getElementById('btn-start-plant-cam');
     const btnCapture = document.getElementById('btn-capture-plant-cam');
 
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    plantCapturedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+    plantCapturedBase64 = await compressImageToLimit(video, 320, 50);
 
     if (plantStream) {
         plantStream.getTracks().forEach(track => track.stop());
@@ -56,28 +89,32 @@ function capturePlantPhoto() {
     btnCapture.classList.add('hidden');
 }
 
-// 3. เลือกไฟล์รูปภาพจากคลังรูป
+// 3. เลือกไฟล์รูปภาพจากคลังรูป พร้อมบีบอัดภาพให้อยู่ในเกณฑ์ <= 50 KB
 function handlePlantFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function (e) {
-        plantCapturedBase64 = e.target.result;
+        const img = new Image();
+        img.onload = async function () {
+            plantCapturedBase64 = await compressImageToLimit(img, 320, 50);
 
-        const video = document.getElementById('plant-webcam');
-        const placeholder = document.getElementById('plant-cam-placeholder');
-        const previewImg = document.getElementById('plant-preview-img');
+            const video = document.getElementById('plant-webcam');
+            const placeholder = document.getElementById('plant-cam-placeholder');
+            const previewImg = document.getElementById('plant-preview-img');
 
-        if (plantStream) {
-            plantStream.getTracks().forEach(track => track.stop());
-            plantStream = null;
-        }
+            if (plantStream) {
+                plantStream.getTracks().forEach(track => track.stop());
+                plantStream = null;
+            }
 
-        video.classList.add('hidden');
-        placeholder.classList.add('hidden');
-        previewImg.src = plantCapturedBase64;
-        previewImg.classList.remove('hidden');
+            video.classList.add('hidden');
+            placeholder.classList.add('hidden');
+            previewImg.src = plantCapturedBase64;
+            previewImg.classList.remove('hidden');
+        };
+        img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
