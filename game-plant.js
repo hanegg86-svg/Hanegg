@@ -43,42 +43,71 @@ function compressImageToLimit(imgSource, maxDim = 320, maxKb = 50) {
     });
 }
 
-// ฟังก์ชันสำหรับผู้ปกครอง: บีบอัดรูปพรรณไม้เก่าทั้งหมดในคลังให้เหลือ <= 50 KB
+// ฟังก์ชันสำหรับผู้ปกครอง: บีบอัดรูปพรรณไม้เก่าทั้งหมดของเด็กๆ (พูน และ เพลิน) ให้เหลือ <= 50 KB
 async function batchOptimizeOldPlantImages() {
     if (!isParentUser) {
         alert("เฉพาะ พ่อนะ และ แม่พัด เท่านั้นที่ใช้งานฟังก์ชันนี้ได้ครับ!");
         return;
     }
 
-    if (!window.currentUserData || !window.currentUserData.plantLibrary || window.currentUserData.plantLibrary.length === 0) {
-        alert("ยังไม่มีพรรณไม้ในคลังสะสมของเด็กๆ ครับ");
-        return;
-    }
-
-    if (!confirm("คุณต้องการบีบอัดรูปพรรณไม้เก่าทั้งหมดในคลังให้เหลือไม่เกิน 50 KB ใช่หรือไม่?")) return;
+    if (!confirm("คุณต้องการบีบอัดรูปพรรณไม้เก่าทั้งหมดของน้องพูนและน้องเพลินให้เหลือไม่เกิน 50 KB ใช่หรือไม่?")) return;
 
     let optimizedCount = 0;
-    const library = window.currentUserData.plantLibrary;
+    const children = ['พูน', 'เพลิน'];
 
-    for (let plant of library) {
-        if (plant.image && plant.image.startsWith('data:image')) {
-            await new Promise((resolve) => {
-                const img = new Image();
-                img.onload = async () => {
-                    const compressed = await compressImageToLimit(img, 320, 50);
-                    plant.image = compressed;
-                    optimizedCount++;
-                    resolve();
-                };
-                img.onerror = () => resolve();
-                img.src = plant.image;
-            });
+    for (let child of children) {
+        let childLibrary = [];
+        if (isFirebaseActive) {
+            try {
+                const { ref, get } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                const snapshot = await get(ref(db, `user_plant_library/${child}`));
+                const val = snapshot.val();
+                if (val) {
+                    childLibrary = Array.isArray(val) ? val : Object.values(val);
+                }
+            } catch (e) {
+                console.error(`Error fetching plant library for ${child}:`, e);
+            }
+        } else {
+            const localData = localStorage.getItem(`user_plant_library_${child}`);
+            if (localData) {
+                try { childLibrary = JSON.parse(localData); } catch (e) {}
+            }
+        }
+
+        if (childLibrary && childLibrary.length > 0) {
+            let updated = false;
+            for (let plant of childLibrary) {
+                if (plant.image && plant.image.startsWith('data:image')) {
+                    await new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = async () => {
+                            const compressed = await compressImageToLimit(img, 320, 50);
+                            plant.image = compressed;
+                            optimizedCount++;
+                            updated = true;
+                            resolve();
+                        };
+                        img.onerror = () => resolve();
+                        img.src = plant.image;
+                    });
+                }
+            }
+
+            if (updated) {
+                if (isFirebaseActive) {
+                    const { ref, set } = window.firebaseModules;
+                    const db = window.firebaseModules.getDatabase();
+                    await set(ref(db, `user_plant_library/${child}`), childLibrary);
+                }
+                localStorage.setItem(`user_plant_library_${child}`, JSON.stringify(childLibrary));
+            }
         }
     }
 
-    if (typeof saveUserData === 'function') saveUserData();
-    renderPlantLibrary();
-    alert(`🎉 บีบอัดรูปภาพพรรณไม้เก่าสำเร็จทั้งหมด ${optimizedCount} รูป! ประหยัดพื้นที่จัดเก็บเรียบร้อยแล้ว`);
+    if (typeof loadUserStars === 'function') loadUserStars();
+    alert(`🎉 บีบอัดรูปภาพพรรณไม้เก่าของเด็กๆ สำเร็จทั้งหมด ${optimizedCount} รูป! ประหยัดพื้นที่จัดเก็บเรียบร้อยแล้ว`);
 }
 
 // 1. เปิดกล้องสำหรับสแกนพรรณไม้
@@ -336,7 +365,11 @@ function renderPlantLibrary() {
     const uniqueCount = library.length;
     const progressToStar = uniqueCount % 10;
     if (uniqueCountTag) {
-        uniqueCountTag.innerText = `สะสมได้ ${uniqueCount} ชนิด (${progressToStar}/10 สู่ดาว ⭐ ดอกถัดไป)`;
+        if (isParentUser) {
+            uniqueCountTag.innerText = `คลังรวมเด็กๆ ${uniqueCount} รายการ (พ่อนะ/แม่พัด)`;
+        } else {
+            uniqueCountTag.innerText = `สะสมได้ ${uniqueCount} ชนิด (${progressToStar}/10 สู่ดาว ⭐ ดอกถัดไป)`;
+        }
     }
 
     let filtered = library;
@@ -361,6 +394,7 @@ function renderPlantLibrary() {
                     <div class="flex items-center gap-1.5">
                         <span class="font-extrabold text-slate-800 text-xs truncate font-kids">${item.nameTh}</span>
                         <span class="bg-emerald-100 text-emerald-800 font-black text-[9px] px-1.5 py-0.2 rounded-md">Lv.${item.level || 1}</span>
+                        ${item.owner ? `<span class="bg-indigo-100 text-indigo-800 font-bold text-[9px] px-1.5 py-0.2 rounded-md">ของ: ${item.owner}</span>` : ''}
                     </div>
                     <p class="text-[10px] text-slate-400 italic truncate">${item.nameSci || '-'}</p>
                     <span class="text-[9px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full inline-block mt-0.5">${item.category || 'ไม้ใบ'}</span>
@@ -420,9 +454,34 @@ function closePlantDetailModal() {
 function deletePlantItem(plantId) {
     if (!confirm("คุณต้องการลบพรรณไม้นี้ออกจากคลังหรือไม่?")) return;
 
-    if (window.currentUserData && window.currentUserData.plantLibrary) {
-        window.currentUserData.plantLibrary = window.currentUserData.plantLibrary.filter(p => p.id !== plantId);
-        if (typeof saveUserData === 'function') saveUserData();
-        renderPlantLibrary();
+    if (isParentUser) {
+        const library = (window.currentUserData && window.currentUserData.plantLibrary) ? window.currentUserData.plantLibrary : [];
+        const targetPlant = library.find(p => p.id === plantId);
+        const targetOwner = targetPlant ? targetPlant.owner : null;
+
+        if (targetOwner) {
+            if (isFirebaseActive) {
+                const { ref, get, set } = window.firebaseModules;
+                const db = window.firebaseModules.getDatabase();
+                get(ref(db, `user_plant_library/${targetOwner}`)).then(snapshot => {
+                    let childLib = snapshot.val() || [];
+                    if (!Array.isArray(childLib)) childLib = Object.values(childLib);
+                    childLib = childLib.filter(p => p.id !== plantId);
+                    set(ref(db, `user_plant_library/${targetOwner}`), childLib);
+                    localStorage.setItem(`user_plant_library_${targetOwner}`, JSON.stringify(childLib));
+                });
+            } else {
+                let localLib = JSON.parse(localStorage.getItem(`user_plant_library_${targetOwner}`) || "[]");
+                localLib = localLib.filter(p => p.id !== plantId);
+                localStorage.setItem(`user_plant_library_${targetOwner}`, JSON.stringify(localLib));
+                if (typeof loadUserStars === 'function') loadUserStars();
+            }
+        }
+    } else {
+        if (window.currentUserData && window.currentUserData.plantLibrary) {
+            window.currentUserData.plantLibrary = window.currentUserData.plantLibrary.filter(p => p.id !== plantId);
+            if (typeof saveUserData === 'function') saveUserData();
+            renderPlantLibrary();
+        }
     }
 }

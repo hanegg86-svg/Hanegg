@@ -1,28 +1,28 @@
 // sw.js - Service Worker สำหรับจัดการ Offline Cache และบังคับเคลียร์แคชเวอร์ชันเก่าทันที (Force Clear)
 
-const CACHE_NAME = 'kids-vocab-v5';
+const CACHE_NAME = 'kids-vocab-v6';
 
 // รายการไฟล์ทั้งหมดที่ต้องดึงมาเก็บใน Cache เพื่อใช้งานแบบออฟไลน์
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './manifest.json',
-    './Icon.png?v=4',
+    './Icon.png?v=5',
     './luigi.png',
     './rosalina.png',
     './mario.png',
     './peach.png',
-    './core.js?v=4',
-    './quest-shop.js?v=4',
-    './minigames-main.js?v=4',
-    './game-vocab.js?v=4',
-    './game-math.js?v=4',
-    './game-rpg.js?v=4',
-    './game-story.js?v=4',
-    './game-td.js?v=4',
-    './game-number-dungeon.js?v=4',
+    './core.js?v=5',
+    './quest-shop.js?v=5',
+    './minigames-main.js?v=5',
+    './game-vocab.js?v=5',
+    './game-math.js?v=5',
+    './game-rpg.js?v=5',
+    './game-story.js?v=5',
+    './game-td.js?v=5',
+    './game-number-dungeon.js?v=5',
     './game-build2.js',
-    './game-plant.js?v=4'
+    './game-plant.js?v=5'
 ];
 
 // 1. ขั้นตอน Install: บังคับให้ Service Worker ตัวใหม่เปิดใช้งานทันที (skipWaiting)
@@ -30,7 +30,7 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[Service Worker] Caching all app assets (v5)');
+            console.log('[Service Worker] Caching all app assets (v6)');
             return cache.addAll(ASSETS_TO_CACHE);
         })
     );

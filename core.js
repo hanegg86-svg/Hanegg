@@ -603,13 +603,29 @@ function loadUserStars() {
             updateUserLevelAndAvatarDisplay();
         });
 
-        unsubUserPlantLibrary = onValue(ref(db, `user_plant_library/${currentUser}`), (snapshot) => {
-            const val = snapshot.val();
-            let parsed = [];
-            if (val) { parsed = Array.isArray(val) ? val : Object.values(val); }
-            window.currentUserData.plantLibrary = parsed;
-            if (typeof renderPlantLibrary === 'function') renderPlantLibrary();
-        });
+        if (isParentUser) {
+            unsubUserPlantLibrary = onValue(ref(db, `user_plant_library`), (snapshot) => {
+                const val = snapshot.val() || {};
+                let combined = [];
+                ['พูน', 'เพลิน'].forEach(c => {
+                    const cData = val[c];
+                    if (cData) {
+                        const arr = Array.isArray(cData) ? cData : Object.values(cData);
+                        arr.forEach(item => combined.push({ ...item, owner: c }));
+                    }
+                });
+                window.currentUserData.plantLibrary = combined;
+                if (typeof renderPlantLibrary === 'function') renderPlantLibrary();
+            });
+        } else {
+            unsubUserPlantLibrary = onValue(ref(db, `user_plant_library/${currentUser}`), (snapshot) => {
+                const val = snapshot.val();
+                let parsed = [];
+                if (val) { parsed = Array.isArray(val) ? val : Object.values(val); }
+                window.currentUserData.plantLibrary = parsed;
+                if (typeof renderPlantLibrary === 'function') renderPlantLibrary();
+            });
+        }
 
         const todayStr = getTodayDateString();
         unsubUserDailyRounds = onValue(ref(db, `user_daily_rounds/${currentUser}/${todayStr}`), (snapshot) => {
@@ -657,8 +673,22 @@ function loadUserStars() {
         currentChildEXP = parseInt(localStorage.getItem(`user_exp_${currentUser || 'guest'}`) || "0", 10);
         updateUserLevelAndAvatarDisplay();
 
-        const localPlantData = localStorage.getItem(`user_plant_library_${currentUser || 'guest'}`);
-        window.currentUserData.plantLibrary = localPlantData ? JSON.parse(localPlantData) : [];
+        if (isParentUser) {
+            let combined = [];
+            ['พูน', 'เพลิน'].forEach(c => {
+                const localPlantData = localStorage.getItem(`user_plant_library_${c}`);
+                if (localPlantData) {
+                    try {
+                        const parsed = JSON.parse(localPlantData);
+                        parsed.forEach(item => combined.push({ ...item, owner: c }));
+                    } catch (e) {}
+                }
+            });
+            window.currentUserData.plantLibrary = combined;
+        } else {
+            const localPlantData = localStorage.getItem(`user_plant_library_${currentUser || 'guest'}`);
+            window.currentUserData.plantLibrary = localPlantData ? JSON.parse(localPlantData) : [];
+        }
         if (typeof renderPlantLibrary === 'function') renderPlantLibrary();
 
         const todayStr = getTodayDateString();
