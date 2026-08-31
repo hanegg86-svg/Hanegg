@@ -7,22 +7,22 @@ const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './manifest.json',
-    './Icon.png?v=3',
+    './Icon.png?v=4',
     './luigi.png',
     './rosalina.png',
     './mario.png',
     './peach.png',
-    './core.js?v=3',
-    './quest-shop.js?v=3',
-    './minigames-main.js?v=3',
-    './game-vocab.js?v=3',
-    './game-math.js?v=3',
-    './game-rpg.js?v=3',
-    './game-story.js?v=3',
-    './game-td.js?v=3',
-    './game-number-dungeon.js?v=3',
+    './core.js?v=4',
+    './quest-shop.js?v=4',
+    './minigames-main.js?v=4',
+    './game-vocab.js?v=4',
+    './game-math.js?v=4',
+    './game-rpg.js?v=4',
+    './game-story.js?v=4',
+    './game-td.js?v=4',
+    './game-number-dungeon.js?v=4',
     './game-build2.js',
-    './game-plant.js?v=3'
+    './game-plant.js?v=4'
 ];
 
 // 1. ขั้นตอน Install: ทำการดาวน์โหลดและบันทึกไฟล์ลง Cache
