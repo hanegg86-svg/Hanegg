@@ -335,6 +335,20 @@
                 
                 <!-- Flashcard Section (แสดงหน้าละ 5 คำ) -->
                 <div id="flashcard-section" class="w-full flex flex-col items-center">
+                    
+                    <!-- Fallback Hidden Container ป้องกัน JavaScript Error จาก Cache เก่า -->
+                    <div class="hidden" style="display: none !important;">
+                        <div id="card-inner"></div>
+                        <div id="card-word-main"></div>
+                        <div id="card-word-sub"></div>
+                        <div id="card-phonetic"></div>
+                        <div id="card-emoji"></div>
+                        <img id="card-img" alt="">
+                        <div id="card-emoji-back"></div>
+                        <img id="card-img-back" alt="">
+                        <div id="target-assigned-badge"></div>
+                    </div>
+
                     <!-- Page Header & Control Bar -->
                     <div class="w-full max-w-sm landscape:max-w-xl flex justify-between items-center mb-2.5 px-1">
                         <div class="flex items-center gap-1.5">
@@ -1522,7 +1536,7 @@
     <script src="./core.js?v=5"></script>
     <script src="./quest-shop.js?v=5"></script>
     <script src="./minigames-main.js?v=5"></script>
-    <script src="./game-vocab.js?v=5"></script>
+    <script src="./game-vocab.js?v=7"></script>
     <script src="./game-math.js?v=5"></script>
     <script src="./game-rpg.js?v=5"></script>
     <script src="./game-story.js?v=5"></script>
