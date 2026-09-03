@@ -11,6 +11,7 @@ let dungeonHP = 1;
 let dungeonTargetScore = 150;
 let dungeonMap = [];
 let dungeonCurrentDiff = 'easy';
+let dungeonBossDefeated = false; // ป้องกันการเดินลัดออกประตูโดยไม่ปราบบอส
 
 // ดึงระดับทักษะของผู้เล่นปัจจุบัน
 function getPlayerSkillsDungeon() {
@@ -36,6 +37,7 @@ function initNumberDungeon() {
 
 function startDungeonGame(diff) {
     dungeonCurrentDiff = diff;
+    dungeonBossDefeated = false;
 
     // เช็กโควต้ารอบเล่นประจำวันก่อนเริ่มเกม
     if (typeof isParentUser !== 'undefined' && typeof isDailyLimitEnabled !== 'undefined' && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined') {
@@ -220,6 +222,8 @@ function renderDungeonUI() {
 
             if (isPlayerHere) {
                 btn.innerHTML = `<span style="font-size:14px;">🧙‍♂️</span><span style="font-size:9px; font-weight:800;">${dungeonScore}</span>`;
+            } else if (cell.type === 'exit' && !dungeonBossDefeated) {
+                btn.innerHTML = `<span style="font-size:12px;">🔒🚪</span>`;
             } else {
                 let cellText = cell.text;
                 // บัฟทักษะความรู้ (Knowledge Skill): แสดงคะแนนล่วงหน้าถ้าเดินไปช่องนั้น
@@ -256,6 +260,12 @@ function moveDungeonPlayer(r, c) {
         return;
     }
 
+    // ป้องกันการเดินผ่านประตูหากยังไม่ปราบบอส
+    if (cell.type === 'exit' && !dungeonBossDefeated) {
+        alert("🚪 ประตูทางออกถูกผนึกไว้! ต้องปราบ BOSS 👹 ก่อนจึงจะผ่านออกไปได้ครับ!");
+        return;
+    }
+
     dungeonPlayerX = r;
     dungeonPlayerY = c;
 
@@ -276,6 +286,13 @@ function moveDungeonPlayer(r, c) {
     cell.val = 0;
 
     renderDungeonUI();
+
+    // ตรวจสอบสถานะ Game Over หากคะแนนหมด
+    if (dungeonScore <= 0) {
+        alert("💀 พลังคะแนนหมดแล้ว! น้องพ่ายแพ้ในดันเจี้ยน ลองเริ่มใหม่อีกครั้งนะ!");
+        startDungeonGame(dungeonCurrentDiff);
+        return;
+    }
 
     // ตรวจสอบเมื่อถึงทางออกที่ช่อง (4,4)
     if (r === 4 && c === 4) {
@@ -418,6 +435,7 @@ function handleBossAnswer(selected, correct, r, c) {
     if (selected === correct) {
         alert("🎉 สุดยอดมาก! น้องแก้โจทย์สำเร็จ พิชิตบอสและเปิดทางผ่านประตูทางออกได้แล้ว! 🗝️✨");
         
+        dungeonBossDefeated = true;
         dungeonPlayerX = r;
         dungeonPlayerY = c;
         const cell = dungeonMap[r][c];
@@ -434,6 +452,13 @@ function handleBossAnswer(selected, correct, r, c) {
 
         dungeonScore -= finalPenalty;
         alert(`💥 ตอบผิดนะ! โดนบอสโจมตีหักคะแนน -${finalPenalty} คะแนน (พลังกายช่วยลดความเสียหายแล้ว) ลองใหม่อีกครั้งนะ!`);
+        
+        if (dungeonScore <= 0) {
+            alert("💀 พลังคะแนนหมดแล้ว! น้องพ่ายแพ้ในดันเจี้ยน ลองเริ่มใหม่อีกครั้งนะ!");
+            startDungeonGame(dungeonCurrentDiff);
+            return;
+        }
+
         renderDungeonUI();
     }
 }
@@ -441,8 +466,8 @@ function handleBossAnswer(selected, correct, r, c) {
 function showCompletionModalDungeon() {
     if (typeof totalGoldTrophies !== 'undefined') totalGoldTrophies += 1; else if (typeof totalTrophies !== 'undefined') totalTrophies += 1;
     if (typeof saveUserTrophies === 'function') saveUserTrophies();
-    addEXPToUser(100);
-    incrementTodayRounds(); // บันทึกเพิ่มจำนวนรอบที่เล่นประจำวัน
+    if (typeof addEXPToUser === 'function') addEXPToUser(100);
+    if (typeof incrementTodayRounds === 'function') incrementTodayRounds(); // บันทึกเพิ่มจำนวนรอบที่เล่นประจำวัน
 
     document.getElementById("summary-total-count").innerText = "พิชิต Number Dungeon 5x5!";
     document.getElementById("summary-stars-earned").innerText = "🏆 ถ้วยทอง 1 ใบ";

@@ -823,32 +823,10 @@ function incrementTodayRounds() {
     checkDailyLimitStatus();
 }
 
+// ผสานฟังก์ชัน sendInAppNotification ไปยัง quest-shop.js เพื่อไม่ให้เกิดการนิยามซ้อนทับกัน
 function sendInAppNotification(type, payload) {
-    if (!currentUser) return;
-    try {
-        let messageText = `👦 น้อง${currentUser} ทำกิจกรรมสำเร็จ!`;
-        if (type === 'COMPLETED_BUILD') {
-            messageText = `🏰 น้อง${currentUser} สร้าง Wonder สำเร็จในเกมสร้างเมือง (ใช้เวลา ${formatTime(payload.timeSec)}) 🏛️✨`;
-        }
-
-        const notifyData = {
-            user: currentUser,
-            type: type,
-            text: messageText,
-            timestamp: Date.now()
-        };
-
-        if (isFirebaseActive) {
-            const { ref, push } = window.firebaseModules;
-            const db = window.firebaseModules.getDatabase();
-            push(ref(db, 'kids_notifications'), notifyData);
-        } else {
-            notificationsList.unshift({ id: Date.now().toString(), ...notifyData });
-            localStorage.setItem('kids_notifications_local', JSON.stringify(notificationsList));
-            if (typeof renderNotifications === 'function') renderNotifications();
-        }
-    } catch(e) {
-        console.error("Error sending notification:", e);
+    if (typeof window.sendInAppNotification === 'function' && window.sendInAppNotification !== sendInAppNotification) {
+        window.sendInAppNotification(type, payload);
     }
 }
 

@@ -19,7 +19,7 @@ function compressImageToLimit(imgSource, maxDim = 320, maxKb = 50) {
             }
         } else {
             if (height > maxDim) {
-                width = Math.round((height * maxDim) / height);
+                width = Math.round((width * maxDim) / height);
                 height = maxDim;
             }
         }
@@ -57,7 +57,7 @@ async function batchOptimizeOldPlantImages() {
 
     for (let child of children) {
         let childLibrary = [];
-        if (isFirebaseActive) {
+        if (typeof isFirebaseActive !== 'undefined' && isFirebaseActive) {
             try {
                 const { ref, get } = window.firebaseModules;
                 const db = window.firebaseModules.getDatabase();
@@ -96,7 +96,7 @@ async function batchOptimizeOldPlantImages() {
             }
 
             if (updated) {
-                if (isFirebaseActive) {
+                if (typeof isFirebaseActive !== 'undefined' && isFirebaseActive) {
                     const { ref, set } = window.firebaseModules;
                     const db = window.firebaseModules.getDatabase();
                     await set(ref(db, `user_plant_library/${child}`), childLibrary);
@@ -119,6 +119,7 @@ async function startPlantCamera() {
     const btnCapture = document.getElementById('btn-capture-plant-cam');
 
     try {
+        if (plantStream) stopPlantCamera();
         plantStream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: { ideal: "environment" } }
         });
@@ -134,6 +135,25 @@ async function startPlantCamera() {
     }
 }
 
+// ฟังก์ชันปิดกล้องเมื่อสลับแท็บเกม
+function stopPlantCamera() {
+    if (plantStream) {
+        plantStream.getTracks().forEach(track => track.stop());
+        plantStream = null;
+    }
+    const video = document.getElementById('plant-webcam');
+    if (video) {
+        video.srcObject = null;
+        video.classList.add('hidden');
+    }
+    const placeholder = document.getElementById('plant-cam-placeholder');
+    if (placeholder) placeholder.classList.remove('hidden');
+    const btnStart = document.getElementById('btn-start-plant-cam');
+    if (btnStart) btnStart.classList.remove('hidden');
+    const btnCapture = document.getElementById('btn-capture-plant-cam');
+    if (btnCapture) btnCapture.classList.add('hidden');
+}
+
 // 2. ถ่ายภาพจาก กล้อง WebCam พร้อมบีบอัดภาพให้อยู่ในเกณฑ์ <= 50 KB
 async function capturePlantPhoto() {
     const video = document.getElementById('plant-webcam');
@@ -143,12 +163,8 @@ async function capturePlantPhoto() {
 
     plantCapturedBase64 = await compressImageToLimit(video, 320, 50);
 
-    if (plantStream) {
-        plantStream.getTracks().forEach(track => track.stop());
-        plantStream = null;
-    }
+    stopPlantCamera();
 
-    video.classList.add('hidden');
     previewImg.src = plantCapturedBase64;
     previewImg.classList.remove('hidden');
     btnStart.classList.remove('hidden');
@@ -166,19 +182,16 @@ function handlePlantFileSelect(event) {
         img.onload = async function () {
             plantCapturedBase64 = await compressImageToLimit(img, 320, 50);
 
-            const video = document.getElementById('plant-webcam');
             const placeholder = document.getElementById('plant-cam-placeholder');
             const previewImg = document.getElementById('plant-preview-img');
 
-            if (plantStream) {
-                plantStream.getTracks().forEach(track => track.stop());
-                plantStream = null;
-            }
+            stopPlantCamera();
 
-            video.classList.add('hidden');
-            placeholder.classList.add('hidden');
-            previewImg.src = plantCapturedBase64;
-            previewImg.classList.remove('hidden');
+            if (placeholder) placeholder.classList.add('hidden');
+            if (previewImg) {
+                previewImg.src = plantCapturedBase64;
+                previewImg.classList.remove('hidden');
+            }
         };
         img.src = e.target.result;
     };
@@ -260,7 +273,7 @@ async function analyzePlantWithAI() {
 function savePlantToLibrary() {
     if (!currentPlantResult) return;
 
-    if (!currentUser) {
+    if (typeof currentUser === 'undefined' || !currentUser) {
         const lastUser = localStorage.getItem("last_active_user");
         const lastIsParent = localStorage.getItem("last_is_parent") === "true";
         if (lastUser && typeof setProfile === 'function') {
@@ -271,6 +284,8 @@ function savePlantToLibrary() {
             return;
         }
     }
+
+    const activeChild = currentUser || 'พูน';
 
     const nameTh = (currentPlantResult.nameTh || "").trim();
     if (!nameTh || nameTh === "ไม่ทราบชื่อ" || nameTh === "-" || nameTh.toLowerCase() === "unknown") {
@@ -304,12 +319,14 @@ function savePlantToLibrary() {
         existingPlant.level = (existingPlant.level || 1) + 1;
         existingPlant.lastUpdated = new Date().toISOString();
         existingPlant.image = currentPlantResult.image;
+        existingPlant.owner = existingPlant.owner || activeChild;
 
         alert(`🌿 หนูเคยสะสม [${existingPlant.nameTh}] ไปแล้ว!\n✨ อัปเกรดการ์ดเป็น Lv.${existingPlant.level} (สแกนแล้ว ${existingPlant.count} ครั้ง)\n(ชนิดซ้ำเดิม ไม่ได้รับ EXP เพิ่มเติม)`);
 
     } else {
         const newPlant = {
             id: 'plant_' + Date.now(),
+            owner: activeChild,
             nameTh: currentPlantResult.nameTh,
             nameSci: currentPlantResult.nameSci,
             category: currentPlantResult.category,
@@ -337,6 +354,7 @@ function savePlantToLibrary() {
         }
     }
 
+    localStorage.setItem(`user_plant_library_${activeChild}`, JSON.stringify(library));
     if (typeof saveUserData === 'function') saveUserData();
 
     document.getElementById('plant-result-box').classList.add('hidden');
@@ -351,7 +369,7 @@ function renderPlantLibrary() {
     const parentToolsBox = document.getElementById('parent-plant-tools-box');
 
     if (parentToolsBox) {
-        if (isParentUser) {
+        if (typeof isParentUser !== 'undefined' && isParentUser) {
             parentToolsBox.classList.remove('hidden');
         } else {
             parentToolsBox.classList.add('hidden');
@@ -365,7 +383,7 @@ function renderPlantLibrary() {
     const uniqueCount = library.length;
     const progressToStar = uniqueCount % 10;
     if (uniqueCountTag) {
-        if (isParentUser) {
+        if (typeof isParentUser !== 'undefined' && isParentUser) {
             uniqueCountTag.innerText = `คลังรวมเด็กๆ ${uniqueCount} รายการ (พ่อนะ/แม่พัด)`;
         } else {
             uniqueCountTag.innerText = `สะสมได้ ${uniqueCount} ชนิด (${progressToStar}/10 สู่ดาว ⭐ ดอกถัดไป)`;
@@ -454,13 +472,13 @@ function closePlantDetailModal() {
 function deletePlantItem(plantId) {
     if (!confirm("คุณต้องการลบพรรณไม้นี้ออกจากคลังหรือไม่?")) return;
 
-    if (isParentUser) {
+    if (typeof isParentUser !== 'undefined' && isParentUser) {
         const library = (window.currentUserData && window.currentUserData.plantLibrary) ? window.currentUserData.plantLibrary : [];
         const targetPlant = library.find(p => p.id === plantId);
-        const targetOwner = targetPlant ? targetPlant.owner : null;
+        const targetOwner = targetPlant ? (targetPlant.owner || 'พูน') : 'พูน';
 
         if (targetOwner) {
-            if (isFirebaseActive) {
+            if (typeof isFirebaseActive !== 'undefined' && isFirebaseActive) {
                 const { ref, get, set } = window.firebaseModules;
                 const db = window.firebaseModules.getDatabase();
                 get(ref(db, `user_plant_library/${targetOwner}`)).then(snapshot => {
@@ -480,6 +498,8 @@ function deletePlantItem(plantId) {
     } else {
         if (window.currentUserData && window.currentUserData.plantLibrary) {
             window.currentUserData.plantLibrary = window.currentUserData.plantLibrary.filter(p => p.id !== plantId);
+            const activeChild = currentUser || 'พูน';
+            localStorage.setItem(`user_plant_library_${activeChild}`, JSON.stringify(window.currentUserData.plantLibrary));
             if (typeof saveUserData === 'function') saveUserData();
             renderPlantLibrary();
         }

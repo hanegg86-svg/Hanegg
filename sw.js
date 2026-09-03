@@ -1,12 +1,13 @@
 // sw.js - Service Worker สำหรับจัดการ Offline Cache และบังคับเคลียร์แคชเวอร์ชันเก่าทันที (Force Clear)
 
-const CACHE_NAME = 'kids-vocab-v6';
+const CACHE_NAME = 'kids-vocab-v7';
 
 // รายการไฟล์ทั้งหมดที่ต้องดึงมาเก็บใน Cache เพื่อใช้งานแบบออฟไลน์
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './manifest.json',
+    './Icon.png',
     './Icon.png?v=5',
     './luigi.png',
     './rosalina.png',
@@ -30,7 +31,7 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[Service Worker] Caching all app assets (v6)');
+            console.log('[Service Worker] Caching all app assets (v7)');
             return cache.addAll(ASSETS_TO_CACHE);
         })
     );
@@ -77,7 +78,7 @@ self.addEventListener('fetch', (event) => {
                     return networkResponse;
                 })
                 .catch(() => {
-                    return caches.match('./index.html') || caches.match('./');
+                    return caches.match('./index.html').then((res) => res || caches.match('./'));
                 })
         );
         return;

@@ -385,7 +385,7 @@
                     </div>
                 </div>
 
-                <!-- Bulk Photo Hunt Section (เขียน 5 ข้อลงในกระดาษแผ่นเดียว ถ่ายตรวจทีเดียวจบ) -->
+                <!-- Bulk Photo Hunt Section -->
                 <div id="photo-hunt-section" class="w-full max-w-sm landscape:max-w-xl hidden flex-col items-center">
                     <div id="daily-limit-banner" class="w-full bg-rose-50 border border-rose-200 rounded-2xl p-4 text-center mb-4 hidden shadow-xs">
                         <div class="text-3xl mb-1">🛑</div>
@@ -399,7 +399,6 @@
                             <span id="photo-reward-tag" class="text-[10px] font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full font-kids">⭐ 2 ดาว + 150 EXP</span>
                         </div>
 
-                        <!-- แถบสลับ เซต 1 / เซต 2 และ ปุ่มเปิด Modal จัดเซตสำหรับพ่อแม่ -->
                         <div class="flex items-center gap-2 mb-3 w-full justify-between">
                             <div class="flex gap-1.5">
                                 <button id="btn-photo-set1" onclick="switchBulkPhotoSet(1)" class="px-3 py-1 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-2xs transition">📌 เซตที่ 1</button>
@@ -729,7 +728,7 @@
 
                     <div id="td-stats" class="w-full flex justify-between items-center px-3 py-1.5 bg-white rounded-xl shadow-2xs text-[11px] font-bold text-slate-700 border border-slate-100 mb-1">
                         <div>❤️ HP: <span id="td-hp" class="text-rose-500">10</span></div>
-                        <div>🌊 Wave: <span id="td-wave" class="text-indigo-600">1</span>/13</div>
+                        <div>🌊 Wave: <span id="td-wave" class="text-indigo-600">1</span>/14</div>
                         <div>👾 Kills: <span id="td-kills" class="text-emerald-600">0</span>/10</div>
                         <div>🪙 <span id="td-coins" class="text-amber-500 font-extrabold">0</span></div>
                         <div>Score: <span id="td-score" class="text-slate-500 font-kids">0</span></div>
@@ -891,7 +890,7 @@
                     <!-- Parent Tools Box (สำหรับ พ่อนะ / แม่พัด บีบอัดรูปเก่าย้อนหลัง) -->
                     <div id="parent-plant-tools-box" class="mb-3 bg-indigo-50/70 p-2.5 rounded-2xl border border-indigo-200 hidden">
                         <button onclick="batchOptimizeOldPlantImages()" class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold py-2 rounded-xl text-xs shadow-2xs transition flex items-center justify-center gap-1.5 font-kids">
-                            ✨ บีบอัดรูปพรรณไม้เก่าทั้งหมดให้เหลือ $\le 50\text{ KB}$ (เครื่องมือผู้ปกครอง)
+                            ✨ บีบอัดรูปพรรณไม้เก่าทั้งหมดให้เหลือ &le; 50 KB (เครื่องมือผู้ปกครอง)
                         </button>
                     </div>
 

@@ -6,6 +6,7 @@ let vocabSubMode = 'cards'; // 'cards' | 'photo' | 'match'
 let matchCardsList = [];
 let selectedMatchCards = [];
 let matchedPairsCount = 0;
+let isProcessingMatch = false; // ป้องกันการคลิกซ้อนทำให้เกมจับคู่ค้าง
 
 let tempOcrBase64 = null;
 let ocrExtractedList = [];
@@ -71,7 +72,7 @@ function switchVocabPlayMode(mode) {
 
     const manageSetsBtn = document.getElementById("btn-manage-custom-sets");
     if (manageSetsBtn) {
-        if (isParentUser) manageSetsBtn.classList.remove("hidden");
+        if (typeof isParentUser !== 'undefined' && isParentUser) manageSetsBtn.classList.remove("hidden");
         else manageSetsBtn.classList.add("hidden");
     }
 
@@ -120,14 +121,14 @@ function changeVocabSortMode(val) {
 function filterVocabForUser() {
     let baseList = [...rawVocabList];
 
-    if (isParentUser) {
+    if (typeof isParentUser !== 'undefined' && isParentUser) {
         if (parentViewFilter === 'พูน' || parentViewFilter === 'เพลิน') {
             baseList = baseList.filter(item => {
                 if (!item.assignees || item.assignees.length === 0) return true;
                 return item.assignees.includes(parentViewFilter);
             });
         }
-    } else if (currentUser) {
+    } else if (typeof currentUser !== 'undefined' && currentUser) {
         baseList = baseList.filter(item => {
             if (!item.assignees || item.assignees.length === 0) return true;
             return item.assignees.includes(currentUser);
@@ -146,7 +147,7 @@ function filterVocabForUser() {
 }
 
 function saveToStorage() { 
-    if (isFirebaseActive) {
+    if (typeof isFirebaseActive !== 'undefined' && isFirebaseActive) {
         const { set } = window.firebaseModules;
         const currentDbRef = subjectMode === 'EN' ? dbRefVocabEN : dbRefVocabTH;
         if (currentDbRef) set(currentDbRef, rawVocabList);
@@ -536,7 +537,7 @@ async function verifyPhotoWithGeminiAI() {
     if (!bulkPhotoVocabItems || bulkPhotoVocabItems.length === 0) return;
     if (!capturedPhotoBase64) { alert("กรุณาถ่ายรูปกระดาษคำตอบก่อนครับ!"); return; }
 
-    if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
+    if (typeof isParentUser !== 'undefined' && !isParentUser && typeof isDailyLimitEnabled !== 'undefined' && isDailyLimitEnabled && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined' && todayPlayedRounds >= dailyLimitRounds) {
         alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
         return;
     }
@@ -616,8 +617,8 @@ function renderBulkChecklistResults(evalResult) {
     if (!resultsBox || !resultsList) return;
 
     resultsList.innerHTML = evalResult.results.map(r => {
-        const targetItem = bulkPhotoVocabItems[r.no - 1];
-        const targetWord = subjectMode === 'EN' ? targetItem.en : targetItem.th;
+        const targetItem = (r.no && r.no > 0 && r.no <= bulkPhotoVocabItems.length) ? bulkPhotoVocabItems[r.no - 1] : null;
+        const targetWord = targetItem ? (subjectMode === 'EN' ? targetItem.en : targetItem.th) : (r.written || `ข้อ ${r.no}`);
         const icon = r.correct ? "🟢" : "🔴";
         const statusClass = r.correct ? "text-emerald-700 bg-emerald-50 border-emerald-200" : "text-rose-700 bg-rose-50 border-rose-200";
 
@@ -658,7 +659,9 @@ function triggerPhotoHuntCompletionModal() {
         utterance.lang = 'th-TH';
         window.speechSynthesis.speak(utterance);
     }
-    sendInAppNotification('COMPLETED_SET', { setNum: `ภารกิจสะกดคำ ${modeLabel} เซตที่ ${currentBulkSet} (รับ 2 ดาว)` });
+    if (typeof sendInAppNotification === 'function') {
+        sendInAppNotification('COMPLETED_SET', { setNum: `ภารกิจสะกดคำ ${modeLabel} เซตที่ ${currentBulkSet} (รับ 2 ดาว)` });
+    }
 }
 
 // ------------------------------------------
@@ -673,6 +676,7 @@ function startMatchingGame() {
 
     selectedMatchCards = [];
     matchedPairsCount = 0;
+    isProcessingMatch = false;
 
     const targetPairsCount = Math.min(8, filteredVocabList.length);
     const shuffledList = [...filteredVocabList];
@@ -721,7 +725,9 @@ function renderMatchingCards() {
 }
 
 function handleMatchCardClick(cardId) {
-    if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) {
+    if (isProcessingMatch) return;
+
+    if (typeof isParentUser !== 'undefined' && !isParentUser && typeof isDailyLimitEnabled !== 'undefined' && isDailyLimitEnabled && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined' && todayPlayedRounds >= dailyLimitRounds) {
         alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
         return;
     }
@@ -748,6 +754,7 @@ function handleMatchCardClick(cardId) {
     if (btn) btn.classList.add("selected");
 
     if (selectedMatchCards.length === 2) {
+        isProcessingMatch = true;
         const [card1, card2] = selectedMatchCards;
 
         if (card1.pairId === card2.pairId && card1.type !== card2.type) {
@@ -760,6 +767,7 @@ function handleMatchCardClick(cardId) {
                 if (btn1) btn1.classList.add("matched");
                 if (btn2) btn2.classList.add("matched");
                 selectedMatchCards = [];
+                isProcessingMatch = false;
 
                 const totalPairs = Math.min(8, Math.floor(matchCardsList.length / 2));
                 if (matchedPairsCount >= totalPairs) {
@@ -774,6 +782,7 @@ function handleMatchCardClick(cardId) {
                 if (btn1) btn1.classList.remove("selected");
                 if (btn2) btn2.classList.remove("selected");
                 selectedMatchCards = [];
+                isProcessingMatch = false;
             }, 600);
         }
     }
@@ -833,7 +842,9 @@ function triggerCompletionModal() {
         const utterance = new SpeechSynthesisUtterance(`เก่งมากเลยครับ ${currentUser || ''} รับไปเลย 1 ดาว และ 100 EXP`);
         utterance.lang = 'th-TH'; window.speechSynthesis.speak(utterance);
     }
-    sendInAppNotification('COMPLETED_SET', { setNum: Math.floor(currentIndex / 5) + 1 });
+    if (typeof sendInAppNotification === 'function') {
+        sendInAppNotification('COMPLETED_SET', { setNum: Math.floor(currentIndex / 5) + 1 });
+    }
 }
 
 function openAddModal() {

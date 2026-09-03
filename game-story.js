@@ -45,7 +45,10 @@ function selectStoryPet(pet) {
 }
 
 async function generateAIStory() {
-    if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) { alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วครับ! พักสายตาก่อนแล้วมาเล่นใหม่พรนี้นะครับ 🎈`); return; }
+    if (typeof isParentUser !== 'undefined' && !isParentUser && typeof isDailyLimitEnabled !== 'undefined' && isDailyLimitEnabled && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined' && todayPlayedRounds >= dailyLimitRounds) {
+        alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วครับ! พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ 🎈`);
+        return;
+    }
     const apiKey = localStorage.getItem("gemini_api_key");
     if (!apiKey) { alert("กรุณาให้คุณพ่อคุณแม่ช่วยตั้งค่า Gemini API Key ให้ก่อนสร้างนิทานครับ!"); return; }
 
@@ -126,8 +129,11 @@ function renderStoryPage() {
     const btnPrev = document.getElementById("btn-prev-story"), btnNext = document.getElementById("btn-next-story"), missionBox = document.getElementById("story-item-mission-box");
     btnPrev.disabled = currentStoryPage === 0; btnPrev.style.opacity = currentStoryPage === 0 ? "0.5" : "1";
 
+    const itemTH = pageData.targetItemTH || pageData.targetItemTh || pageData.target_item_th || "";
+    const itemEN = pageData.targetItemEN || pageData.targetItemEn || pageData.target_item_en || "";
+
     if (pageData.isItemHunt && !pageData.isPassed) {
-        document.getElementById("story-item-target-text").innerText = selectedStoryLang === 'EN' ? `Mission Target: ${pageData.targetItemEN}` : `ต้องถ่ายรูป: ${pageData.targetItemTH}`;
+        document.getElementById("story-item-target-text").innerText = selectedStoryLang === 'EN' ? `Mission Target: ${itemEN || itemTH}` : `ต้องถ่ายรูป: ${itemTH || itemEN}`;
         
         // เช็กแสดงปุ่มใช้สกิล Skip ถ่ายรูป
         const btnSkipSkill = document.getElementById("btn-skill-skip-mission");
@@ -154,7 +160,10 @@ function renderStoryPage() {
 
 async function startCameraForStory() {
     const pageData = generatedStoryData.pages[currentStoryPage];
-    document.getElementById("camera-target-name").innerText = selectedStoryLang === 'EN' ? pageData.targetItemEN : pageData.targetItemTH;
+    const itemTH = pageData.targetItemTH || pageData.targetItemTh || pageData.target_item_th || "";
+    const itemEN = pageData.targetItemEN || pageData.targetItemEn || pageData.target_item_en || "";
+
+    document.getElementById("camera-target-name").innerText = selectedStoryLang === 'EN' ? (itemEN || itemTH) : (itemTH || itemEN);
     document.getElementById("story-reader-box").classList.add("hidden");
     document.getElementById("story-camera-box").classList.remove("hidden");
     document.getElementById("story-camera-box").classList.add("flex");
@@ -183,7 +192,9 @@ async function captureAndAnalyzeStoryImage() {
     canvas.width = videoEl.videoWidth || 640; canvas.height = videoEl.videoHeight || 480;
     canvas.getContext("2d").drawImage(videoEl, 0, 0, canvas.width, canvas.height);
     const base64Data = canvas.toDataURL("image/jpeg", 0.75).split(",")[1];
-    const targetItemName = generatedStoryData.pages[currentStoryPage].targetItemTH;
+    
+    const pageData = generatedStoryData.pages[currentStoryPage];
+    const targetItemName = pageData.targetItemTH || pageData.targetItemTh || pageData.target_item_th || pageData.targetItemEN || "";
 
     // เช็กระดับสกิล Hint Vision เพื่อสั่งให้ AI ให้คำใบ้เสริม
     const hintSkillLevel = (typeof getSkillLevel === 'function') ? getSkillLevel('hintVision') : 0;
@@ -195,7 +206,7 @@ async function captureAndAnalyzeStoryImage() {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
 
     try {
-        const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }] }) });
+        const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1 } }) });
         const data = await response.json();
         if (data.error) throw new Error(data.error.message);
         const result = JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim());
@@ -203,7 +214,13 @@ async function captureAndAnalyzeStoryImage() {
         if (result.found) {
             alert(`🎉 ถูกต้องแล้วครับเก่งมากๆ! AI ตรวจเจอ ${result.detected_object} แล้ว!\n\n💬 ${result.comment}`);
             generatedStoryData.pages[currentStoryPage].isPassed = true;
-            closeCameraForStory(); currentStoryPage++; renderStoryPage();
+            closeCameraForStory(); 
+            if (currentStoryPage < generatedStoryData.pages.length - 1) {
+                currentStoryPage++; 
+                renderStoryPage();
+            } else {
+                triggerStoryCompletionModal();
+            }
         } else { 
             let alertMsg = `❌ AI เห็นเป็น "${result.detected_object || 'ยังไม่ชัดเจน'}" ยังไม่ตรงกับ ${targetItemName} ครับ ลองขยับส่องให้ชัดเจนแล้วถ่ายใหม่อีกครั้งนะ!`;
             if (result.hint) alertMsg += `\n\n💡 คำใบ้จากดวงตานักสำรวจ: ${result.hint}`;
@@ -232,7 +249,7 @@ function speakStoryPageText() {
 }
 
 function triggerStoryCompletionModal() {
-    incrementTodayRounds(); 
+    if (typeof incrementTodayRounds === 'function') incrementTodayRounds(); 
 
     // --- คำนวณ RPG Bonus (EXP / Trophies) ---
     const expBoostLevel = (typeof getSkillLevel === 'function') ? getSkillLevel('expBoost') : 0;
@@ -251,7 +268,7 @@ function triggerStoryCompletionModal() {
 
     if (typeof totalGoldTrophies !== 'undefined') totalGoldTrophies += earnedTrophies; else if (typeof totalTrophies !== 'undefined') totalTrophies += earnedTrophies; 
     if (typeof saveUserTrophies === 'function') saveUserTrophies(); 
-    addEXPToUser(totalEarnedEXP);
+    if (typeof addEXPToUser === 'function') addEXPToUser(totalEarnedEXP);
 
     document.getElementById("summary-stars-earned").innerText = `🏆 ถ้วยทอง ${earnedTrophies} ใบ ${doubleTrophyTriggered ? '(🏆 โบนัสถ้วยทอง x2!)' : ''}`;
     document.getElementById("summary-stars-earned").className = "text-sm text-amber-500 font-bold";
@@ -259,7 +276,9 @@ function triggerStoryCompletionModal() {
     document.getElementById("summary-saved-badge").innerText = "✅ บันทึกถ้วยทองสะสมและแจ้งเตือนคุณพ่อคุณแม่เรียบร้อย!";
     document.getElementById("summary-saved-badge").className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-2.5 rounded-xl border border-emerald-200";
 
-    sendInAppNotification('COMPLETED_STORY', { title: generatedStoryData.title, lang: selectedStoryLang });
+    if (typeof sendInAppNotification === 'function') {
+        sendInAppNotification('COMPLETED_STORY', { title: generatedStoryData.title, lang: selectedStoryLang });
+    }
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const msg = selectedStoryLang === 'EN' ? `Awesome job ${currentUser || ''}! You found all items and completed the adventure story!` : `เก่งมากเลยครับ ${currentUser || ''} ถ่ายรูปส่องตามหาไอเทมครบทุกภารกิจ พิชิตเกมนิทานจบ 10 หน้า รับไปเลย ถ้วยทอง ${earnedTrophies} ใบ`;

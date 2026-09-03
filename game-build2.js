@@ -310,7 +310,7 @@ function getWorkerStats() {
             }
         }
     }
-    return { free: totalWorkers - usedWorkers, total: totalWorkers, used: usedWorkers };
+    return { free: Math.max(0, totalWorkers - usedWorkers), total: totalWorkers, used: usedWorkers };
 }
 
 function selectTool(tool) {
@@ -335,10 +335,12 @@ function handleBuildCanvasClick(e) {
 
     if (isBuildGameOver) return;
     const rect = buildCanvas.getBoundingClientRect();
-    let c = Math.floor((e.clientX - rect.left) / TILE_SIZE);
-    let r = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+    const scaleX = buildCanvas.width / rect.width;
+    const scaleY = buildCanvas.height / rect.height;
+    let c = Math.floor(((e.clientX - rect.left) * scaleX) / TILE_SIZE);
+    let r = Math.floor(((e.clientY - rect.top) * scaleY) / TILE_SIZE);
 
-    if (r >= GRID_SIZE || c >= GRID_SIZE) return;
+    if (r >= GRID_SIZE || c >= GRID_SIZE || r < 0 || c < 0) return;
 
     if (grid[r][c] && grid[r][c].type === 'child' && !movingFromTile) {
         const pr = grid[r][c].parentR;
@@ -828,7 +830,14 @@ function expandGrid(newSize) {
 
 function triggerVictory() {
     isBuildGameOver = true;
-    if (buildIntervalId) clearInterval(buildIntervalId);
+    if (buildIntervalId) {
+        clearInterval(buildIntervalId);
+        buildIntervalId = null;
+    }
+    if (buildAnimationId) {
+        cancelAnimationFrame(buildAnimationId);
+        buildAnimationId = null;
+    }
 
     if (typeof totalGoldTrophies !== 'undefined') totalGoldTrophies += 1;
     else if (typeof totalTrophies !== 'undefined') totalTrophies += 1;

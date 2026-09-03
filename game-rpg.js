@@ -3,21 +3,38 @@
 // --- RPG SYSTEM STATE & MANAGEMENT ---
 // ==========================================
 
-let playerRPG = JSON.parse(localStorage.getItem('player_rpg')) || {
-    skills: {
-        hintVision: 0,    // สกิลคำใบ้พิเศษจาก AI เมื่อส่องหาของไม่เจอ
-        timeWarp: 0,      // ข้ามภารกิจถ่ายรูปได้ (ใช้คูลดาวน์)
-        expBoost: 0,      // สกิลเพิ่ม % EXP Bonus
-        doubleTrophy: 0   // โอกาสได้ถ้วยทอง x2 เมื่ออ่านจบเรื่อง
+function getRPGStorageKey() {
+    const user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : 'default';
+    return `player_rpg_${user}`;
+}
+
+function loadPlayerRPG() {
+    try {
+        const key = getRPGStorageKey();
+        const saved = localStorage.getItem(key) || localStorage.getItem('player_rpg');
+        if (saved) return JSON.parse(saved);
+    } catch (e) {
+        console.error("Error loading RPG state:", e);
     }
-};
+    return {
+        skills: {
+            hintVision: 0,    // สกิลคำใบ้พิเศษจาก AI เมื่อส่องหาของไม่เจอ
+            timeWarp: 0,      // ข้ามภารกิจถ่ายรูปได้ (ใช้คูลดาวน์)
+            expBoost: 0,      // สกิลเพิ่ม % EXP Bonus
+            doubleStar: 0     // โอกาสได้ดาวสะสม x2 ตอนอ่านจบ (ตรงกับ Element ID: doubleStar)
+        }
+    };
+}
+
+let playerRPG = loadPlayerRPG();
 
 function saveRPGState() {
-    localStorage.setItem('player_rpg', JSON.stringify(playerRPG));
+    localStorage.setItem(getRPGStorageKey(), JSON.stringify(playerRPG));
 }
 
 function getSkillLevel(skillKey) {
-    return (playerRPG.skills && playerRPG.skills[skillKey]) ? playerRPG.skills[skillKey] : 0;
+    if (!playerRPG.skills) playerRPG.skills = {};
+    return playerRPG.skills[skillKey] ? playerRPG.skills[skillKey] : (playerRPG.skills['doubleTrophy'] && skillKey === 'doubleStar' ? playerRPG.skills['doubleTrophy'] : 0);
 }
 
 function updateRPGUI() {
@@ -27,7 +44,7 @@ function updateRPGUI() {
         getSkillLevel('hintVision') + 
         getSkillLevel('timeWarp') + 
         getSkillLevel('expBoost') + 
-        (getSkillLevel('doubleTrophy') || getSkillLevel('doubleStar'))
+        getSkillLevel('doubleStar')
     ));
 
     // อัปเดต Display บนหน้าอ่านนิทาน
@@ -60,7 +77,7 @@ function updateRPGUI() {
         { key: 'hintVision', max: 3 },
         { key: 'timeWarp', max: 3 },
         { key: 'expBoost', max: 3 },
-        { key: 'doubleTrophy', max: 3 }
+        { key: 'doubleStar', max: 3 }
     ];
 
     skills.forEach(s => {
@@ -93,7 +110,7 @@ function learnSkill(skillKey) {
         getSkillLevel('hintVision') + 
         getSkillLevel('timeWarp') + 
         getSkillLevel('expBoost') + 
-        (getSkillLevel('doubleTrophy') || getSkillLevel('doubleStar'))
+        getSkillLevel('doubleStar')
     ));
 
     if (availableSP <= 0) {
@@ -113,6 +130,7 @@ function learnSkill(skillKey) {
 }
 
 function openSkillTreeModal() {
+    playerRPG = loadPlayerRPG();
     updateRPGUI();
     document.getElementById("rpg-skill-modal").classList.remove("hidden");
 }
@@ -130,11 +148,15 @@ function useSkipMissionSkill() {
 
     if (confirm("✨ ต้องการใช้คาถาข้ามเวลาเพื่อผ่านภารกิจถ่ายรูปนี้เลยไหม?")) {
         alert("🪄 ปิ๊ง! เวทมนตร์ข้ามเวลาทำงาน ผ่านภารกิจถ่ายรูปสำเร็จแล้ว!");
-        if (generatedStoryData && generatedStoryData.pages[currentStoryPage]) {
+        if (generatedStoryData && generatedStoryData.pages && generatedStoryData.pages[currentStoryPage]) {
             generatedStoryData.pages[currentStoryPage].isPassed = true;
             if (typeof closeCameraForStory === 'function') closeCameraForStory();
-            currentStoryPage++;
-            if (typeof renderStoryPage === 'function') renderStoryPage();
+            if (currentStoryPage < generatedStoryData.pages.length - 1) {
+                currentStoryPage++;
+                if (typeof renderStoryPage === 'function') renderStoryPage();
+            } else {
+                if (typeof triggerStoryCompletionModal === 'function') triggerStoryCompletionModal();
+            }
         }
     }
 }

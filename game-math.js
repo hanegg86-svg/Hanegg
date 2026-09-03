@@ -159,7 +159,10 @@ function updateMathFormulaDisplay() {
 }
 
 function executeMathCombination() {
-    if (!isParentUser && isDailyLimitEnabled && todayPlayedRounds >= dailyLimitRounds) { alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`); return; }
+    if (typeof isParentUser !== 'undefined' && !isParentUser && typeof isDailyLimitEnabled !== 'undefined' && isDailyLimitEnabled && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined' && todayPlayedRounds >= dailyLimitRounds) {
+        alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
+        return;
+    }
     if (mathSelectedNum1Idx === null || mathSelectedOp === null || mathSelectedNum2Idx === null) { alert("กรุณาเลือก [ตัวเลขที่ 1] [เครื่องหมาย] และ [ตัวเลขที่ 2] ให้ครบก่อนผสมครับ!"); return; }
 
     let n1 = mathCurrentNumbers[mathSelectedNum1Idx], n2 = mathCurrentNumbers[mathSelectedNum2Idx], result = 0;
@@ -171,7 +174,7 @@ function executeMathCombination() {
 }
 
 function checkMathWinCondition() {
-    if (mathCurrentNumbers[0] === mathTargetNumber) {
+    if (mathCurrentNumbers.includes(mathTargetNumber)) {
         if (mathCurrentNumbers.length === 1) {
             setTimeout(() => {
                 alert("🎉 ถูกต้องแล้วเก่งมากครับ! ใช้ตัวเลขครบทุกตัวและผสมได้เป้าหมายพอดี!");
@@ -188,7 +191,8 @@ function skipMathQuestion() { if (confirm("ต้องการข้ามข�
 function triggerMathCompletionModal() {
     if (typeof totalGoldTrophies !== 'undefined') totalGoldTrophies += 1; else if (typeof totalTrophies !== 'undefined') totalTrophies += 1;
     if (typeof saveUserTrophies === 'function') saveUserTrophies(); 
-    addEXPToUser(100); incrementTodayRounds(); 
+    if (typeof addEXPToUser === 'function') addEXPToUser(100); 
+    if (typeof incrementTodayRounds === 'function') incrementTodayRounds(); 
     mathQuestionIndex = 1; 
     mathBombQuota = 2; // รีเซ็ตโควต้าระเบิดหลังจบเกม
     document.getElementById("summary-total-count").innerText = "5 / 5 ข้อ";
@@ -199,5 +203,7 @@ function triggerMathCompletionModal() {
     document.getElementById("summary-saved-badge").className = "bg-emerald-50 text-emerald-800 text-xs font-bold p-2.5 rounded-xl border border-emerald-200";
     document.getElementById("completion-subtitle").innerText = `🎉 เล่นเกมคิดเลขผสมคำตอบถูกครบ 5 ข้อแล้ว!`;
     document.getElementById("completion-modal").classList.remove("hidden");
-    sendInAppNotification('COMPLETED_MATH', { diff: mathDifficulty, score: 5 });
+    if (typeof sendInAppNotification === 'function') {
+        sendInAppNotification('COMPLETED_MATH', { diff: mathDifficulty, score: 5 });
+    }
 }

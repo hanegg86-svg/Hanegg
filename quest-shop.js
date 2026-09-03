@@ -403,13 +403,22 @@ function sendInAppNotification(type, details) {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
     const dateStr = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-    const newNotify = { type: type, user: currentUser || 'ผู้ปกครอง', subject: subjectMode === 'EN' ? 'ภาษาอังกฤษ 🇬🇧' : 'ภาษาไทย 🇹🇭', details: details, status: 'pending', time: `${dateStr} • ${timeStr}`, timestamp: Date.now() };
+    const newNotify = { 
+        type: type, 
+        user: currentUser || 'ผู้ปกครอง', 
+        subject: subjectMode === 'EN' ? 'ภาษาอังกฤษ 🇬🇧' : 'ภาษาไทย 🇹🇭', 
+        details: details, 
+        status: 'pending', 
+        time: `${dateStr} • ${timeStr}`, 
+        timestamp: Date.now() 
+    };
 
     if (isFirebaseActive && dbRefNotify) {
         const { push } = window.firebaseModules;
         push(dbRefNotify, newNotify);
     } else {
         notificationsList.unshift(newNotify);
+        localStorage.setItem('kids_notifications_local', JSON.stringify(notificationsList));
         renderNotifications();
     }
 }
@@ -474,7 +483,7 @@ function renderNotifications() {
         return;
     }
 
-    const avatars = { 'พ่อนนะ': '👨‍💼', 'แม่พัด': '👩‍💼', 'พูน': '👦', 'เพลิน': '👧' };
+    const avatars = { 'พ่อนะ': '👨‍💼', 'แม่พัด': '👩‍💼', 'พูน': '👦', 'เพลิน': '👧' };
     listEl.innerHTML = notificationsList.map(n => {
         const isPending = n.status === 'pending';
         const itemKey = n.id || n.timestamp;
@@ -504,7 +513,7 @@ function renderNotifications() {
                         <button onclick="approveReward('${itemKey}', '${n.user}', '${n.details.rewardName}', ${n.details.starsUsed}, false)" class="bg-rose-50 text-rose-700 hover:bg-rose-100 active:scale-95 font-bold py-1 px-2.5 rounded-xl text-[11px] border border-rose-200">❌ ปฏิเสธ</button>
                     </div>` : `
                     <div class="flex justify-between items-center text-[10px] font-bold bg-white/80 p-1 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-rose-600' : 'text-indigo-800'}">
-                        <span>Status: ${n.status === 'approved' ? '✅ อนุมัติและย้ายไปกระเป๋าแล้ว' : n.status === 'rejected' ? '❌ คำขอถูกปฏิเสธ' : '⏳ รอพ่อนะ/แม่พัด อนุมัติ'}</span>${deleteBtnHtml}
+                        <span>Status: ${n.status === 'approved' ? '✅ อนุมัติและย้ายไปกระเป๋าแล้ว' : n.status === 'rejected' ? '❌ คำขอถูกปฏิเสธ (คืนแต้มเรียบร้อย)' : '⏳ รอพ่อนะ/แม่พัด อนุมัติ'}</span>${deleteBtnHtml}
                     </div>`}</div>`;
         } else if (n.type === 'SUBMIT_QUEST') {
             let skillText = '';
@@ -525,6 +534,12 @@ function renderNotifications() {
                     <div class="flex justify-between items-center text-[10px] font-bold bg-white/80 p-1 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-rose-600' : 'text-indigo-800'}">
                         <span>Status: ${n.status === 'approved' ? '✅ ตรวจผ่านแล้ว! ได้รับดาวเรียบร้อย' : n.status === 'rejected' ? '❌ ไม่ผ่าน' : '⏳ รอพ่อนะ/แม่พัด ตรวจ'}</span>${deleteBtnHtml}
                     </div>`}</div>`;
+        } else if (n.type === 'COMPLETED_BUILD') {
+            const timeText = (n.details && typeof n.details.timeSec !== 'undefined') ? (typeof formatTime === 'function' ? formatTime(n.details.timeSec) : `${n.details.timeSec}s`) : '';
+            return `<div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 flex items-start gap-2.5 shadow-2xs">
+                <span class="text-2xl bg-white p-1.5 rounded-xl border border-slate-200">${avatars[n.user] || '👦'}</span><div class="flex-1">
+                <div class="flex justify-between items-center mb-0.5"><span class="font-bold text-xs text-amber-950 font-kids">🏰 ${n.user} สร้างเมืองสำเร็จ! Wonder Era</span><span class="text-[9px] font-bold text-slate-400">${n.time}</span></div>
+                <p class="text-[11px] text-slate-700 font-medium">สร้าง Wonder สำเร็จในเวลา <span class="font-bold text-indigo-600">${timeText}</span> 🏛️✨</p></div>${deleteBtnHtml}</div>`;
         } else if (n.type === 'COMPLETED_MATH_TD') {
             return `<div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-start gap-2.5 shadow-2xs">
                 <span class="text-2xl bg-white p-1.5 rounded-xl border border-slate-200">${avatars[n.user] || '👦'}</span><div class="flex-1">
@@ -607,7 +622,30 @@ function approveReward(notifyId, userName, rewardName, starsUsed, isApproved) {
         addRewardToUserInventory(userName, rewardName);
         alert(`อนุมัติรางวัล "${rewardName}" ให้น้อง ${userName} เรียบร้อยแล้ว! (ย้ายเข้ากระเป๋าของน้องแล้ว)`);
     } else { 
-        alert(`ปฏิเสธคำขอเรียบร้อยแล้ว`); 
+        // 🔄 คืนดาวหรือถ้วยทองให้เด็กหากผู้ปกครองกดปฏิเสธ
+        const cType = (notifyItem && notifyItem.details && notifyItem.details.currencyType) ? notifyItem.details.currencyType : 'stars';
+        if (isFirebaseActive) {
+            const { ref, runTransaction } = window.firebaseModules;
+            const db = window.firebaseModules.getDatabase();
+            const refundRef = ref(db, cType === 'trophies' ? `user_trophies/${userName}` : `user_stars/${userName}`);
+            runTransaction(refundRef, (val) => (val || 0) + starsUsed);
+        } else {
+            const localKey = cType === 'trophies' ? `total_trophies_${userName}` : `total_stars_${userName}`;
+            const cur = parseInt(localStorage.getItem(localKey) || "0", 10);
+            localStorage.setItem(localKey, (cur + starsUsed).toString());
+            if (userName === currentUser) {
+                if (cType === 'trophies') {
+                    totalTrophies += starsUsed;
+                    const trophyEl = document.getElementById("score-trophy");
+                    if (trophyEl) trophyEl.innerText = totalTrophies;
+                } else {
+                    totalStars += starsUsed;
+                    const scoreEl = document.getElementById("score");
+                    if (scoreEl) scoreEl.innerText = totalStars;
+                }
+            }
+        }
+        alert(`ปฏิเสธคำขอเรียบร้อยแล้ว และได้คืน ${starsUsed} ${cType === 'trophies' ? 'ถ้วยทอง' : 'ดาว'} ให้น้อง ${userName} แล้วครับ`);
     }
 
     if (isFirebaseActive && dbRefNotify && firebaseKey) {
