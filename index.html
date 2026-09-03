@@ -336,7 +336,8 @@
                 <!-- Flashcard Section (แสดงหน้าละ 5 คำ) -->
                 <div id="flashcard-section" class="w-full flex flex-col items-center">
                     
-                    <!-- Fallback Hidden Container ป้องกัน JavaScript Error จาก Cache เก่า -->
+                    <!-- Fallback Hidden Container ป้องกัน JavaScript Error จาก core.js และ Cache เก่า -->
+                    <div id="parent-controls" class="hidden" style="display: none !important;"></div>
                     <div class="hidden" style="display: none !important;">
                         <div id="card-inner"></div>
                         <div id="card-word-main"></div>
@@ -1280,7 +1281,12 @@
 
     <!-- User Selection Modal -->
     <div id="profile-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl text-center border border-slate-100 max-h-[85vh] overflow-y-auto">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl text-center border border-slate-100 max-h-[85vh] overflow-y-auto relative">
+            <!-- ปุ่มปิดหน้าต่างเลือกโปรไฟล์ฉุกเฉิน -->
+            <button onclick="document.getElementById('profile-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
             <h3 class="text-lg font-bold font-kids text-slate-800 mb-4">ใครกำลังใช้งานอยู่เอ่ย? 🎈</h3>
             <div class="grid grid-cols-2 gap-3 mb-2">
                 <button onclick="selectProfile('พ่อนะ', true)" class="p-3 bg-blue-50/60 border border-blue-200 rounded-2xl flex flex-col items-center hover:bg-blue-100 active:scale-95 transition">
@@ -1536,7 +1542,7 @@
     <script src="./core.js?v=5"></script>
     <script src="./quest-shop.js?v=5"></script>
     <script src="./minigames-main.js?v=5"></script>
-    <script src="./game-vocab.js?v=7"></script>
+    <script src="./game-vocab.js?v=8"></script>
     <script src="./game-math.js?v=5"></script>
     <script src="./game-rpg.js?v=5"></script>
     <script src="./game-story.js?v=5"></script>
