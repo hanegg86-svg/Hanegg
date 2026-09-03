@@ -1,6 +1,6 @@
 // sw.js - Service Worker สำหรับจัดการ Offline Cache และบังคับเคลียร์แคชเวอร์ชันเก่าทันที (Force Clear)
 
-const CACHE_NAME = 'kids-vocab-v7';
+const CACHE_NAME = 'kids-vocab-v8';
 
 // รายการไฟล์ทั้งหมดที่ต้องดึงมาเก็บใน Cache เพื่อใช้งานแบบออฟไลน์
 const ASSETS_TO_CACHE = [
@@ -16,7 +16,7 @@ const ASSETS_TO_CACHE = [
     './core.js?v=5',
     './quest-shop.js?v=5',
     './minigames-main.js?v=5',
-    './game-vocab.js?v=5',
+    './game-vocab.js?v=6',
     './game-math.js?v=5',
     './game-rpg.js?v=5',
     './game-story.js?v=5',
@@ -31,7 +31,7 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[Service Worker] Caching all app assets (v7)');
+            console.log('[Service Worker] Caching all app assets (v8)');
             return cache.addAll(ASSETS_TO_CACHE);
         })
     );

@@ -14,6 +14,10 @@ let ocrExtractedList = [];
 let parentViewFilter = 'all'; // 'all' | 'พูน' | 'เพลิน'
 let vocabSortMode = 'newest'; // 'newest' | 'oldest' | 'random'
 
+// --- 5 WORDS PER PAGE STATE ---
+let vocabCurrentPage = 0;
+let revealedCardIndices = {}; // บันทึกว่าคำไหนถูกแตะเพื่อเปิดคำแปลบ้าง
+
 // --- BULK PHOTO HUNT / HANDWRITING CHECKER STATE ---
 let currentBulkSet = 1; // 1 | 2 (เซตที่ 1 หรือ เซตที่ 2)
 let parentCustomSets = {
@@ -82,6 +86,7 @@ function switchVocabPlayMode(mode) {
         if (flashcardSec) flashcardSec.classList.remove("hidden");
         if (photoSec) photoSec.classList.add("hidden");
         if (matchingSec) matchingSec.classList.add("hidden");
+        updateCard();
     } else if (mode === 'photo') {
         if (photoBtn) photoBtn.className = activeClass;
         if (flashcardSec) flashcardSec.classList.add("hidden");
@@ -103,7 +108,8 @@ function switchVocabPlayMode(mode) {
 function changeParentViewFilter(val) {
     parentViewFilter = val;
     filterVocabForUser();
-    currentIndex = 0;
+    vocabCurrentPage = 0;
+    revealedCardIndices = {};
     updateCard();
     if (vocabSubMode === 'photo') setupBulkPhotoSheet();
     if (vocabSubMode === 'match') startMatchingGame();
@@ -112,7 +118,8 @@ function changeParentViewFilter(val) {
 function changeVocabSortMode(val) {
     vocabSortMode = val;
     filterVocabForUser();
-    currentIndex = 0;
+    vocabCurrentPage = 0;
+    revealedCardIndices = {};
     updateCard();
     if (vocabSubMode === 'photo') setupBulkPhotoSheet();
     if (vocabSubMode === 'match') startMatchingGame();
@@ -164,56 +171,262 @@ function renderSpelledLetters(word) {
     }).join('');
 }
 
+// --------------------------------------------------------
+// --- 5 WORDS PER PAGE RENDERING & PAGINATION ---
+// --------------------------------------------------------
+
 function updateCard() {
+    const container = document.getElementById("vocab-5-cards-container");
+    const indicatorEl = document.getElementById("vocab-page-indicator");
+    const totalCountEl = document.getElementById("vocab-total-count");
+    const btnPrev = document.getElementById("btn-vocab-prev-page");
+    const btnNext = document.getElementById("btn-vocab-next-page");
+
     if (!filteredVocabList || filteredVocabList.length === 0) {
-        document.getElementById("card-word-main").innerHTML = "ไม่มีคำศัพท์";
-        document.getElementById("card-word-sub").innerText = "กรุณาเพิ่มคำศัพท์ใหม่";
+        if (container) {
+            container.innerHTML = `
+                <div class="bg-white border border-slate-200 rounded-3xl p-8 text-center text-slate-400 font-bold shadow-xs">
+                    <span class="text-4xl block mb-2">📭</span>
+                    ไม่มีคำศัพท์ในรายการนี้ กรุณาเพิ่มคำศัพท์ใหม่ครับ
+                </div>
+            `;
+        }
+        if (indicatorEl) indicatorEl.innerText = "หน้า 0 / 0";
+        if (totalCountEl) totalCountEl.innerText = "(ทั้งหมด 0 คำ)";
+        if (btnPrev) btnPrev.disabled = true;
+        if (btnNext) btnNext.disabled = true;
         return;
     }
-    if (currentIndex >= filteredVocabList.length) currentIndex = 0;
-    const item = filteredVocabList[currentIndex];
-    isFlipped = false;
-    document.getElementById("card-inner").classList.remove("card-flipped");
 
-    const emojiEl = document.getElementById("card-emoji");
-    const imgEl = document.getElementById("card-img");
-    const emojiBackEl = document.getElementById("card-emoji-back");
-    const imgBackEl = document.getElementById("card-img-back");
+    const pageSize = 5;
+    const totalPages = Math.ceil(filteredVocabList.length / pageSize);
+    if (vocabCurrentPage >= totalPages) vocabCurrentPage = totalPages - 1;
+    if (vocabCurrentPage < 0) vocabCurrentPage = 0;
 
-    if (item.image) {
-        [emojiEl, emojiBackEl].forEach(el => el.classList.add("hidden"));
-        [imgEl, imgBackEl].forEach(el => { el.classList.remove("hidden"); el.src = item.image; });
-    } else {
-        [imgEl, imgBackEl].forEach(el => el.classList.add("hidden"));
-        [emojiEl, emojiBackEl].forEach(el => { el.classList.remove("hidden"); el.innerText = item.emoji || "💡"; });
-    }
+    const startIndex = vocabCurrentPage * pageSize;
+    const pageItems = filteredVocabList.slice(startIndex, startIndex + pageSize);
 
-    if (subjectMode === 'EN') {
-        document.getElementById("card-word-main").innerHTML = renderSpelledLetters(item.en);
-        document.getElementById("card-word-sub").innerText = item.th;
-        document.getElementById("card-phonetic").innerText = `[ ${item.phonetic || item.th} ]`;
-    } else {
-        document.getElementById("card-word-main").innerHTML = renderSpelledLetters(item.th);
-        document.getElementById("card-word-sub").innerText = item.en !== item.th ? item.en : "คำภาษาไทย";
-        document.getElementById("card-phonetic").innerText = `[ ${item.phonetic || item.th} ]`;
-    }
+    if (indicatorEl) indicatorEl.innerText = `หน้า ${vocabCurrentPage + 1} / ${totalPages}`;
+    if (totalCountEl) totalCountEl.innerText = `(ทั้งหมด ${filteredVocabList.length} คำ)`;
 
-    const badgeEl = document.getElementById("target-assigned-badge");
-    if (badgeEl) {
+    if (btnPrev) btnPrev.disabled = (vocabCurrentPage === 0);
+    if (btnNext) btnNext.disabled = (vocabCurrentPage >= totalPages - 1);
+
+    if (!container) return;
+
+    container.innerHTML = pageItems.map((item, idx) => {
+        const globalIndex = startIndex + idx;
+        const isRevealed = !!revealedCardIndices[globalIndex];
+
+        let visualHtml = item.image 
+            ? `<img src="${item.image}" class="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-2xs">`
+            : `<div class="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-2xl shadow-2xs">${item.emoji || '💡'}</div>`;
+
+        let assigneeBadge = '';
         const assignees = item.assignees || [];
         if (assignees.length === 0 || (assignees.includes("พูน") && assignees.includes("เพลิน"))) {
-            badgeEl.innerText = "🎯 เรียนได้ทุกคน";
-            badgeEl.className = "text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full font-bold border border-indigo-100";
+            assigneeBadge = `<span class="text-[9px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold border border-indigo-100">🎯 ทุกคน</span>`;
         } else if (assignees.includes("พูน")) {
-            badgeEl.innerText = "👦 สำหรับน้องพูน";
-            badgeEl.className = "text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-bold border border-blue-100";
+            assigneeBadge = `<span class="text-[9px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-bold border border-blue-100">👦 พูน</span>`;
         } else if (assignees.includes("เพลิน")) {
-            badgeEl.innerText = "👧 สำหรับน้องเพลิน";
-            badgeEl.className = "text-xs bg-pink-50 text-pink-700 px-2.5 py-1 rounded-full font-bold border border-pink-100";
+            assigneeBadge = `<span class="text-[9px] bg-pink-50 text-pink-700 px-2 py-0.5 rounded-full font-bold border border-pink-100">👧 เพลิน</span>`;
         }
-    }
 
+        const mainWord = subjectMode === 'EN' ? item.en : item.th;
+        const subWord = subjectMode === 'EN' ? item.th : (item.en !== item.th ? item.en : 'คำภาษาไทย');
+        const phoneticText = item.phonetic || item.th;
+
+        let parentActionsHtml = '';
+        if (typeof isParentUser !== 'undefined' && isParentUser) {
+            parentActionsHtml = `
+                <div class="flex items-center gap-1 ml-1">
+                    <button onclick="event.stopPropagation(); editVocabItem(${globalIndex})" class="p-1.5 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded-lg border border-sky-200 transition" title="แก้ไข">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="event.stopPropagation(); deleteVocabItem(${globalIndex})" class="p-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg border border-rose-200 transition" title="ลบ">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        return `
+            <div onclick="toggleVocabWordReveal(${globalIndex})" class="bg-white border-2 ${isRevealed ? 'border-indigo-300 bg-indigo-50/20 shadow-sm' : 'border-slate-200 hover:border-indigo-200 shadow-2xs'} rounded-2xl p-2.5 flex items-center justify-between gap-2.5 cursor-pointer transition active:scale-[0.99]">
+                <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div class="flex items-center justify-center shrink-0">
+                        ${visualHtml}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-base font-black text-indigo-950 font-kids tracking-wide">${mainWord}</span>
+                            ${assigneeBadge}
+                        </div>
+                        <div class="mt-0.5">
+                            ${isRevealed ? `
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-black text-emerald-700 font-kids">${subWord}</span>
+                                    <span class="text-[10px] font-bold text-indigo-500">[ ${phoneticText} ]</span>
+                                </div>
+                            ` : `
+                                <span class="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                                    👆 แตะการ์ดเพื่อเปิดคำแปล
+                                </span>
+                            `}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1 shrink-0">
+                    <button onclick="event.stopPropagation(); speakVocabWord(${globalIndex})" class="p-2 bg-sky-500 hover:bg-sky-600 active:scale-95 text-white rounded-xl shadow-2xs transition flex items-center justify-center" title="ฟังเสียง">
+                        <i data-lucide="volume-2" class="w-4 h-4"></i>
+                    </button>
+                    ${parentActionsHtml}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
+    }
     checkDailyLimitStatus();
+}
+
+function prevVocabPage() {
+    if (vocabCurrentPage > 0) {
+        vocabCurrentPage--;
+        updateCard();
+    }
+}
+
+function nextVocabPage() {
+    const totalPages = Math.ceil(filteredVocabList.length / 5);
+    if (vocabCurrentPage < totalPages - 1) {
+        vocabCurrentPage++;
+        updateCard();
+    }
+}
+
+function toggleVocabWordReveal(globalIndex) {
+    revealedCardIndices[globalIndex] = !revealedCardIndices[globalIndex];
+    updateCard();
+}
+
+function toggleAllVocabReveal() {
+    const pageSize = 5;
+    const startIndex = vocabCurrentPage * pageSize;
+    const pageItems = filteredVocabList.slice(startIndex, startIndex + pageSize);
+    const anyHidden = pageItems.some((_, idx) => !revealedCardIndices[startIndex + idx]);
+    
+    pageItems.forEach((_, idx) => {
+        revealedCardIndices[startIndex + idx] = anyHidden;
+    });
+    updateCard();
+}
+
+function speakVocabWord(globalIndex) {
+    if (!filteredVocabList || !filteredVocabList[globalIndex]) return;
+    const item = filteredVocabList[globalIndex];
+    let rawText = subjectMode === 'EN' ? item.en : item.th;
+    let lang = subjectMode === 'EN' ? 'en-US' : 'th-TH';
+
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(rawText);
+        utterance.lang = lang; 
+        utterance.rate = 0.85; 
+        utterance.pitch = 1.1;
+        window.speechSynthesis.speak(utterance);
+    }
+}
+
+function speakAllPageWords() {
+    if (!filteredVocabList || filteredVocabList.length === 0) return;
+    const pageSize = 5;
+    const startIndex = vocabCurrentPage * pageSize;
+    const pageItems = filteredVocabList.slice(startIndex, startIndex + pageSize);
+    if (pageItems.length === 0 || !('speechSynthesis' in window)) return;
+
+    window.speechSynthesis.cancel();
+    pageItems.forEach((item, idx) => {
+        const rawText = subjectMode === 'EN' ? item.en : item.th;
+        const lang = subjectMode === 'EN' ? 'en-US' : 'th-TH';
+
+        const utteranceIntro = new SpeechSynthesisUtterance(`คำที่ ${idx + 1}`);
+        utteranceIntro.lang = 'th-TH'; 
+        utteranceIntro.rate = 0.9;
+        
+        const utteranceWord = new SpeechSynthesisUtterance(rawText);
+        utteranceWord.lang = lang; 
+        utteranceWord.rate = 0.85;
+
+        window.speechSynthesis.speak(utteranceIntro);
+        window.speechSynthesis.speak(utteranceWord);
+    });
+}
+
+function completePageVocab() {
+    if (!filteredVocabList || filteredVocabList.length === 0) return;
+    triggerCompletionModal();
+}
+
+function editVocabItem(globalIndex) {
+    if (!isParentUser || !filteredVocabList[globalIndex]) return;
+    const item = filteredVocabList[globalIndex];
+    const rawIndex = rawVocabList.findIndex(x => x === item || (x.en === item.en && x.th === item.th));
+    if (rawIndex === -1) return;
+
+    document.getElementById("modal-title").innerText = "แก้ไขคำศัพท์ ✏️";
+    document.getElementById("edit-index").value = rawIndex;
+    document.getElementById("input-en").value = item.en;
+    document.getElementById("input-th").value = item.th;
+    document.getElementById("input-phonetic").value = item.phonetic || item.th;
+    document.getElementById("input-img").value = ""; 
+    const assignees = item.assignees || ["พูน", "เพลิน"];
+    document.getElementById("assign-poon").checked = assignees.includes("พูน");
+    document.getElementById("assign-ploern").checked = assignees.includes("เพลิน");
+
+    if (item.image) {
+        currentResizedBase64 = item.image;
+        document.getElementById("img-preview").src = item.image;
+        document.getElementById("img-preview-container").classList.remove("hidden");
+        document.getElementById("img-size-info").innerText = "รูปภาพเดิม";
+    } else {
+        currentResizedBase64 = null;
+        document.getElementById("img-preview-container").classList.add("hidden");
+    }
+    document.getElementById("add-modal").classList.remove("hidden");
+}
+
+function deleteVocabItem(globalIndex) {
+    if (!isParentUser || !filteredVocabList[globalIndex]) return;
+    const item = filteredVocabList[globalIndex];
+    const rawIndex = rawVocabList.findIndex(x => x === item || (x.en === item.en && x.th === item.th));
+    if (rawIndex === -1) return;
+
+    if (confirm(`คุณต้องการลบคำศัพท์ "${item.en}" (${item.th}) ใช่หรือไม่?`)) {
+        rawVocabList.splice(rawIndex, 1);
+        saveToStorage(); 
+        filterVocabForUser();
+        updateCard();
+        if (vocabSubMode === 'photo') setupBulkPhotoSheet();
+        if (vocabSubMode === 'match') startMatchingGame();
+    }
+}
+
+// ฟังก์ชันจำลองสำหรับความเข้ากันได้ย้อนหลัง (Backward Compatibility)
+function flipCard() { toggleAllVocabReveal(); }
+function nextCard() { nextVocabPage(); }
+function prevCard() { prevVocabPage(); }
+function addStar() { completePageVocab(); }
+function speakCurrentWord() { speakAllPageWords(); }
+function editCurrentCard() {
+    const startIndex = vocabCurrentPage * 5;
+    if (filteredVocabList[startIndex]) editVocabItem(startIndex);
+}
+function deleteCurrentCard() {
+    const startIndex = vocabCurrentPage * 5;
+    if (filteredVocabList[startIndex]) deleteVocabItem(startIndex);
 }
 
 // --------------------------------------------------------
@@ -289,7 +502,7 @@ function setupBulkPhotoSheet() {
     const resultsBox = document.getElementById("bulk-results-box");
     if (resultsBox) resultsBox.classList.add("hidden");
     retakeVocabPhoto();
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
 }
 
 // --------------------------------------------------------
@@ -797,32 +1010,6 @@ function updateMatchProgress() {
     }
 }
 
-function flipCard() { if (filteredVocabList.length === 0) return; isFlipped = !isFlipped; document.getElementById("card-inner").classList.toggle("card-flipped", isFlipped); }
-function nextCard() { if (filteredVocabList.length === 0) return; currentIndex = (currentIndex + 1) % filteredVocabList.length; updateCard(); }
-function prevCard() { if (filteredVocabList.length === 0) return; currentIndex = (currentIndex - 1 + filteredVocabList.length) % filteredVocabList.length; updateCard(); }
-function addStar() { if (filteredVocabList.length === 0) return; nextCard(); }
-
-function speakCurrentWord() {
-    if (filteredVocabList.length === 0) return;
-    const item = filteredVocabList[currentIndex];
-    let rawText, lang;
-
-    if (subjectMode === 'EN') {
-        rawText = isFlipped ? item.th : item.en;
-        lang = isFlipped ? 'th-TH' : 'en-US';
-    } else {
-        rawText = isFlipped ? item.en : item.th;
-        lang = isFlipped ? 'en-US' : 'th-TH';
-    }
-
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(rawText);
-        utterance.lang = lang; utterance.rate = 0.85;
-        window.speechSynthesis.speak(utterance);
-    }
-}
-
 function triggerCompletionModal() {
     totalStars += 1;
     saveUserStars();
@@ -843,7 +1030,7 @@ function triggerCompletionModal() {
         utterance.lang = 'th-TH'; window.speechSynthesis.speak(utterance);
     }
     if (typeof sendInAppNotification === 'function') {
-        sendInAppNotification('COMPLETED_SET', { setNum: Math.floor(currentIndex / 5) + 1 });
+        sendInAppNotification('COMPLETED_SET', { setNum: vocabCurrentPage + 1 });
     }
 }
 
@@ -860,49 +1047,6 @@ function openAddModal() {
     document.getElementById("add-modal").classList.remove("hidden");
 }
 
-function editCurrentCard() {
-    if (!isParentUser || filteredVocabList.length === 0) return;
-    const item = filteredVocabList[currentIndex];
-    const rawIndex = rawVocabList.findIndex(x => x === item || (x.en === item.en && x.th === item.th));
-    if (rawIndex === -1) return;
-    document.getElementById("modal-title").innerText = "แก้ไขคำศัพท์ ✏️";
-    document.getElementById("edit-index").value = rawIndex;
-    document.getElementById("input-en").value = item.en;
-    document.getElementById("input-th").value = item.th;
-    document.getElementById("input-phonetic").value = item.phonetic || item.th;
-    document.getElementById("input-img").value = ""; 
-    const assignees = item.assignees || ["พูน", "เพลิน"];
-    document.getElementById("assign-poon").checked = assignees.includes("พูน");
-    document.getElementById("assign-ploern").checked = assignees.includes("เพลิน");
-
-    if (item.image) {
-        currentResizedBase64 = item.image;
-        document.getElementById("img-preview").src = item.image;
-        document.getElementById("img-preview-container").classList.remove("hidden");
-        document.getElementById("img-size-info").innerText = "รูปภาพเดิม";
-    } else {
-        currentResizedBase64 = null;
-        document.getElementById("img-preview-container").classList.add("hidden");
-    }
-    document.getElementById("add-modal").classList.remove("hidden");
-}
-
-function deleteCurrentCard() {
-    if (!isParentUser || filteredVocabList.length === 0) return;
-    const item = filteredVocabList[currentIndex];
-    const rawIndex = rawVocabList.findIndex(x => x === item || (x.en === item.en && x.th === item.th));
-    if (rawIndex === -1) return;
-
-    if (confirm(`คุณต้องการลบคำศัพท์ "${item.en}" (${item.th}) ใช่หรือไม่?`)) {
-        rawVocabList.splice(rawIndex, 1);
-        saveToStorage(); filterVocabForUser();
-        if (currentIndex >= filteredVocabList.length) currentIndex = Math.max(0, filteredVocabList.length - 1);
-        updateCard();
-        if (vocabSubMode === 'photo') setupBulkPhotoSheet();
-        if (vocabSubMode === 'match') startMatchingGame();
-    }
-}
-
 function closeModal() {
     document.getElementById("add-modal").classList.add("hidden");
     document.getElementById("vocab-form").reset();
@@ -910,8 +1054,12 @@ function closeModal() {
     document.getElementById("img-preview-container").classList.add("hidden");
     currentResizedBase64 = null;
     const btn = document.getElementById("ai-btn");
-    btn.disabled = false; btn.innerHTML = `<i data-lucide="sparkles" class="w-3 h-3"></i> แปล Gemini ✨`; btn.classList.remove('opacity-70');
-    lucide.createIcons();
+    if (btn) {
+        btn.disabled = false; 
+        btn.innerHTML = `<i data-lucide="sparkles" class="w-3 h-3"></i> แปล Gemini ✨`; 
+        btn.classList.remove('opacity-70');
+    }
+    if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
 }
 
 function handleFormSubmit(e) {
@@ -930,9 +1078,15 @@ function handleFormSubmit(e) {
     if (editIndex >= 0 && editIndex < rawVocabList.length) rawVocabList[editIndex] = vocabItem;
     else rawVocabList.push(vocabItem);
 
-    saveToStorage(); filterVocabForUser(); closeModal();
-    currentIndex = filteredVocabList.findIndex(x => x.en === en && x.th === th);
-    if (currentIndex === -1) currentIndex = 0;
+    saveToStorage(); 
+    filterVocabForUser(); 
+    closeModal();
+    
+    // ตั้งหน้าไปที่คำศัพท์ที่เพิ่งเพิ่ม/แก้ไข
+    const foundIndex = filteredVocabList.findIndex(x => x.en === en && x.th === th);
+    if (foundIndex !== -1) {
+        vocabCurrentPage = Math.floor(foundIndex / 5);
+    }
     updateCard();
     if (vocabSubMode === 'photo') setupBulkPhotoSheet();
     if (vocabSubMode === 'match') startMatchingGame();
@@ -963,7 +1117,14 @@ async function askGeminiAI() {
     const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
 
     try {
-        const response = await fetch(textUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1 } }) });
+        const response = await fetch(textUrl, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ 
+                contents: [{ parts: [{ text: prompt }] }], 
+                generationConfig: { temperature: 0.1 } 
+            }) 
+        });
         const data = await response.json();
         if (data.error) throw new Error(data.error.message);
         const result = JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim());
@@ -974,8 +1135,14 @@ async function askGeminiAI() {
             if (result.en) document.getElementById("input-en").value = result.en;
             if (result.phonetic) document.getElementById("input-phonetic").value = result.phonetic;
         }
-    } catch (error) { alert("เกิดข้อผิดพลาดในการเชื่อมต่อ AI: " + (error.message || "กรุณาตรวจสอบ API Key")); } 
-    finally { btn.disabled = false; btn.innerHTML = `<i data-lucide="sparkles" class="w-3 h-3"></i> แปล Gemini ✨`; btn.classList.remove('opacity-70'); lucide.createIcons(); }
+    } catch (error) { 
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ AI: " + (error.message || "กรุณาตรวจสอบ API Key")); 
+    } finally { 
+        btn.disabled = false; 
+        btn.innerHTML = `<i data-lucide="sparkles" class="w-3 h-3"></i> แปล Gemini ✨`; 
+        btn.classList.remove('opacity-70'); 
+        if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons(); 
+    }
 }
 
 function openGeminiForImage() {
@@ -989,7 +1156,9 @@ function openGeminiForImage() {
             alert(`ก๊อปปี้คำสั่งเจนรูป (ธีม Mario 🍄) เรียบร้อย!\n\nกำลังเปิด Gemini... เมื่อถึงหน้าเว็บ ให้กด "วาง (Paste)" เพื่อเจนรูปได้เลยครับ`);
             window.open("https://gemini.google.com/app", "_blank");
         }).catch(() => { window.open("https://gemini.google.com/app", "_blank"); });
-    } else { window.open("https://gemini.google.com/app", "_blank"); }
+    } else { 
+        window.open("https://gemini.google.com/app", "_blank"); 
+    }
 }
 
 // ==========================================
@@ -1119,7 +1288,6 @@ function renderOcrPreviewList() {
 function saveSelectedOcrVocab() {
     let addedCount = 0;
     
-    // อ่านค่าผู้เรียนจาก Checkbox ที่เลือกไว้ใน Modal
     const assignees = [];
     if (document.getElementById("assign-poon") && document.getElementById("assign-poon").checked) {
         assignees.push("พูน");
@@ -1128,7 +1296,6 @@ function saveSelectedOcrVocab() {
         assignees.push("เพลิน");
     }
 
-    // หากไม่ได้เลือกไว้เลย ให้กำหนดค่าเริ่มต้นสำหรับทุกคน
     if (assignees.length === 0) {
         assignees.push("พูน", "เพลิน");
     }
@@ -1158,7 +1325,7 @@ function saveSelectedOcrVocab() {
     if (addedCount > 0) {
         saveToStorage();
         filterVocabForUser();
-        currentIndex = rawVocabList.length - 1;
+        vocabCurrentPage = Math.floor((rawVocabList.length - 1) / 5);
         updateCard();
         if (vocabSubMode === 'photo') setupBulkPhotoSheet();
         if (vocabSubMode === 'match') startMatchingGame();
