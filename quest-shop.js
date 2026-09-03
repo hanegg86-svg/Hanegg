@@ -534,6 +534,26 @@ function renderNotifications() {
                     <div class="flex justify-between items-center text-[10px] font-bold bg-white/80 p-1 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-rose-600' : 'text-indigo-800'}">
                         <span>Status: ${n.status === 'approved' ? '✅ ตรวจผ่านแล้ว! ได้รับดาวเรียบร้อย' : n.status === 'rejected' ? '❌ ไม่ผ่าน' : '⏳ รอพ่อนะ/แม่พัด ตรวจ'}</span>${deleteBtnHtml}
                     </div>`}</div>`;
+        } else if (n.type === 'SUBMIT_VOCAB_REVIEW') {
+            const pageNum = (n.details && n.details.page) ? n.details.page : 1;
+            const wordsCount = (n.details && n.details.wordsCount) ? n.details.wordsCount : 5;
+            const starsReward = (n.details && n.details.starsReward) ? n.details.starsReward : 1;
+            const expReward = (n.details && n.details.expReward) ? n.details.expReward : 100;
+            const subjectText = n.subject || (subjectMode === 'EN' ? 'ภาษาอังกฤษ 🇬🇧' : 'ภาษาไทย 🇹🇭');
+
+            return `<div class="p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 flex flex-col gap-2 shadow-2xs">
+                <div class="flex items-start gap-2.5"><span class="text-2xl bg-white p-1.5 rounded-xl border border-indigo-100">${avatars[n.user] || '👦'}</span><div class="flex-1">
+                    <div class="flex justify-between items-center mb-0.5"><span class="font-bold text-xs text-indigo-950 font-kids">🎴 ขออนุมัติการท่องศัพท์!</span><span class="text-[9px] font-bold text-slate-400">${n.time}</span></div>
+                    <p class="text-[11px] text-slate-700 font-bold">น้อง <span class="text-indigo-700 font-bold">${n.user}</span> ท่องศัพท์ ${subjectText} หน้า ${pageNum} (${wordsCount} คำ) ครบแล้ว ขอรับ ⭐ ${starsReward} ดาว (+${expReward} EXP)</p>
+                </div></div>
+                ${isParentUser && isPending ? `
+                    <div class="flex gap-1.5 mt-1 border-t border-indigo-100 pt-2">
+                        <button onclick="approveVocabReview('${itemKey}', '${n.user}', ${starsReward}, ${expReward}, true)" class="flex-1 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1 rounded-xl text-[11px] shadow-2xs">✅ อนุมัติ (แจก ⭐ ${starsReward} ดาว)</button>
+                        <button onclick="approveVocabReview('${itemKey}', '${n.user}', ${starsReward}, ${expReward}, false)" class="bg-rose-50 text-rose-700 hover:bg-rose-100 active:scale-95 font-bold py-1 px-2.5 rounded-xl text-[11px] border border-rose-200">❌ ปฏิเสธ</button>
+                    </div>` : `
+                    <div class="flex justify-between items-center text-[10px] font-bold bg-white/80 p-1 rounded-lg ${n.status === 'approved' ? 'text-emerald-700' : n.status === 'rejected' ? 'text-rose-600' : 'text-indigo-800'}">
+                        <span>Status: ${n.status === 'approved' ? '✅ อนุมัติการท่องศัพท์แล้ว! ได้รับดาวเรียบร้อย' : n.status === 'rejected' ? '❌ ไม่ผ่าน' : '⏳ รอพ่อนะ/แม่พัด ตรวจสอบ'}</span>${deleteBtnHtml}
+                    </div>`}</div>`;
         } else if (n.type === 'COMPLETED_BUILD') {
             const timeText = (n.details && typeof n.details.timeSec !== 'undefined') ? (typeof formatTime === 'function' ? formatTime(n.details.timeSec) : `${n.details.timeSec}s`) : '';
             return `<div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 flex items-start gap-2.5 shadow-2xs">
@@ -552,6 +572,53 @@ function renderNotifications() {
                 <p class="text-[11px] text-slate-600 font-medium">ได้รับ <span class="font-bold text-amber-500">⭐ 1 ดวง</span></p></div>${deleteBtnHtml}</div>`;
         }
     }).join('');
+}
+
+function approveVocabReview(notifyId, userName, starsReward, expReward, isApproved) {
+    const notifyItem = notificationsList.find(x => x.id === notifyId || (x.timestamp && x.timestamp.toString() === notifyId.toString()));
+    const firebaseKey = notifyItem && notifyItem.id ? notifyItem.id : notifyId;
+
+    if (isApproved) {
+        if (isFirebaseActive) {
+            const { ref, runTransaction } = window.firebaseModules;
+            const db = window.firebaseModules.getDatabase();
+            
+            const userStarRef = ref(db, `user_stars/${userName}`);
+            runTransaction(userStarRef, (currentStars) => {
+                return (currentStars || 0) + starsReward;
+            });
+
+            const userExpRef = ref(db, `user_exp/${userName}`);
+            runTransaction(userExpRef, (currentExp) => {
+                return (currentExp || 0) + expReward;
+            });
+        } else {
+            const localStarKey = `total_stars_${userName}`;
+            localStorage.setItem(localStarKey, (parseInt(localStorage.getItem(localStarKey) || "0", 10) + starsReward).toString());
+            const localExpKey = `user_exp_${userName}`;
+            localStorage.setItem(localExpKey, (parseInt(localStorage.getItem(localExpKey) || "0", 10) + expReward).toString());
+            if (userName === currentUser) {
+                totalStars += starsReward;
+                const scoreEl = document.getElementById("score");
+                if (scoreEl) scoreEl.innerText = totalStars;
+                currentChildEXP += expReward;
+                if (typeof updateUserLevelAndAvatarDisplay === 'function') updateUserLevelAndAvatarDisplay();
+            }
+        }
+
+        alert(`ตรวจผ่านแล้ว! เพิ่ม ⭐ ${starsReward} ดวง และ +${expReward} EXP ให้น้อง ${userName} เรียบร้อยครับ`);
+    } else { 
+        alert(`ปฏิเสธคำขอท่องศัพท์เรียบร้อยแล้ว`); 
+    }
+
+    if (isFirebaseActive && dbRefNotify && firebaseKey) {
+        const { ref, update } = window.firebaseModules;
+        const db = window.firebaseModules.getDatabase();
+        update(ref(db, `kids_notifications/${firebaseKey}`), { status: isApproved ? 'approved' : 'rejected' });
+    } else {
+        if (notifyItem) notifyItem.status = isApproved ? 'approved' : 'rejected';
+        renderNotifications(); 
+    }
 }
 
 function approveParentQuest(notifyId, userName, starsReward, skillType, skillPoints, isApproved) {

@@ -365,9 +365,63 @@ function speakAllPageWords() {
     });
 }
 
+// ระบบส่งขออนุมัติดาวสำหรับการท่องศัพท์ 5 คำ
 function completePageVocab() {
     if (!filteredVocabList || filteredVocabList.length === 0) return;
-    triggerCompletionModal();
+
+    // หากเป็น พ่อนะ หรือ แม่พัด เข้ามา ให้ดาวได้ทันที
+    if (typeof isParentUser !== 'undefined' && isParentUser) {
+        triggerCompletionModal();
+        return;
+    }
+
+    if (typeof isParentUser !== 'undefined' && !isParentUser && typeof isDailyLimitEnabled !== 'undefined' && isDailyLimitEnabled && typeof todayPlayedRounds !== 'undefined' && typeof dailyLimitRounds !== 'undefined' && todayPlayedRounds >= dailyLimitRounds) {
+        alert(`🛑 หนูเล่นครบโควต้ารวม ${dailyLimitRounds} รอบประจำวันแล้วนะ พักสายตาก่อนแล้วมาเล่นใหม่พรุ่งนี้นะครับ!`);
+        return;
+    }
+
+    const pageNum = vocabCurrentPage + 1;
+    if (confirm(`น้อง${currentUser || 'เด็กๆ'} ท่องคำศัพท์ครบ 5 คำในหน้า ${pageNum} แล้ว และต้องการส่งขออนุมัติรับดาว ⭐ 1 ดวง ใช่ไหมครับ?`)) {
+        if (typeof sendInAppNotification === 'function') {
+            sendInAppNotification('SUBMIT_VOCAB_REVIEW', { 
+                page: pageNum, 
+                wordsCount: Math.min(5, filteredVocabList.length - (vocabCurrentPage * 5)),
+                starsReward: 1,
+                expReward: 100
+            });
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(`ส่งคำขอตรวจการท่องศัพท์ให้คุณพ่อคุณแม่เรียบร้อยแล้วครับ`);
+            utterance.lang = 'th-TH';
+            window.speechSynthesis.speak(utterance);
+        }
+
+        const summaryTotal = document.getElementById("summary-total-count");
+        if (summaryTotal) summaryTotal.innerText = `ส่งตรวจท่องศัพท์หน้า ${pageNum}`;
+
+        const summaryStars = document.getElementById("summary-stars-earned");
+        if (summaryStars) {
+            summaryStars.innerText = "⭐ รออนุมัติ 1 ดวง";
+            summaryStars.className = "text-sm text-indigo-600 font-bold";
+        }
+
+        const summaryExp = document.getElementById("summary-exp-earned");
+        if (summaryExp) summaryExp.innerText = "+100 EXP (เมื่ออนุมัติ) ✨";
+
+        const summaryBadge = document.getElementById("summary-saved-badge");
+        if (summaryBadge) {
+            summaryBadge.innerText = "⏳ ส่งคำขอให้คุณพ่อคุณแม่เรียบร้อยแล้ว รอตรวจเพื่อให้ดาวนะครับ!";
+            summaryBadge.className = "bg-amber-50 text-amber-800 text-xs font-bold p-2.5 rounded-xl border border-amber-200";
+        }
+
+        const compSubtitle = document.getElementById("completion-subtitle");
+        if (compSubtitle) compSubtitle.innerText = `🎉 ส่งคำขอเรียบร้อย! รอพ่อนะ/แม่พัด อนุมัติดาวนะ`;
+
+        const compModal = document.getElementById("completion-modal");
+        if (compModal) compModal.classList.remove("hidden");
+    }
 }
 
 function editVocabItem(globalIndex) {
@@ -1010,6 +1064,7 @@ function updateMatchProgress() {
     }
 }
 
+// ฟังก์ชันจบชุดสำหรับโหมดจับคู่ และโหมดอื่นๆ ที่ได้รับดาวทันที
 function triggerCompletionModal() {
     totalStars += 1;
     saveUserStars();
