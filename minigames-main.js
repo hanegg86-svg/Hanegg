@@ -21,6 +21,7 @@ function switchMiniGame(subGame) {
     const btnDungeon = document.getElementById("game-subtab-dungeon");
     const btnBuild = document.getElementById("game-subtab-build");
     const btnPlant = document.getElementById("game-subtab-plant");
+    const btnPet = document.getElementById("game-subtab-pet");
 
     const vocabContainer = document.getElementById("game-vocab-container");
     const mathContainer = document.getElementById("game-math-container");
@@ -29,14 +30,15 @@ function switchMiniGame(subGame) {
     const dungeonContainer = document.getElementById("game-dungeon-container");
     const buildContainer = document.getElementById("game-build-container");
     const plantContainer = document.getElementById("game-plant-container");
+    const petContainer = document.getElementById("game-pet-container");
 
     const langSwitchBox = document.getElementById("lang-switch-box");
 
     const activeClass = "flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-pink-500 text-white shadow-[0_4px_0_0_#be185d] border-2 border-pink-700 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap";
     const inactiveClass = "flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap";
 
-    [btnVocab, btnMath, btnStory, btnTd, btnDungeon, btnBuild, btnPlant].forEach(b => { if (b) b.className = inactiveClass; });
-    [vocabContainer, mathContainer, storyContainer, tdContainer, dungeonContainer, buildContainer, plantContainer].forEach(c => {
+    [btnVocab, btnMath, btnStory, btnTd, btnDungeon, btnBuild, btnPlant, btnPet].forEach(b => { if (b) b.className = inactiveClass; });
+    [vocabContainer, mathContainer, storyContainer, tdContainer, dungeonContainer, buildContainer, plantContainer, petContainer].forEach(c => {
         if (c) { c.classList.add("hidden"); c.classList.remove("flex"); }
     });
 
@@ -74,6 +76,10 @@ function switchMiniGame(subGame) {
         if (plantContainer) { plantContainer.classList.remove("hidden"); plantContainer.classList.add("flex"); }
         if (typeof renderPlantLibrary === "function") renderPlantLibrary();
         if (typeof initPlantGame === "function") initPlantGame();
+    } else if (subGame === 'pet') {
+        if (btnPet) btnPet.className = activeClass;
+        if (petContainer) { petContainer.classList.remove("hidden"); petContainer.classList.add("flex"); }
+        if (typeof initPetGame === "function") initPetGame();
     }
     if (typeof checkDailyLimitStatus === "function") checkDailyLimitStatus();
 }
@@ -101,6 +107,9 @@ function restartSession() {
     else if (currentMiniGame === 'plant') {
         if (typeof renderPlantLibrary === "function") renderPlantLibrary();
         if (typeof initPlantGame === "function") initPlantGame();
+    }
+    else if (currentMiniGame === 'pet') {
+        if (typeof initPetGame === "function") initPetGame();
     }
     else { 
         if (typeof vocabSubMode !== "undefined" && vocabSubMode === 'photo') {

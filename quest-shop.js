@@ -654,6 +654,10 @@ function approveParentQuest(notifyId, userName, starsReward, skillType, skillPoi
 
         if (skillType && skillType !== 'none' && skillPoints > 0) {
             addSkillPointsToUser(userName, skillType, skillPoints);
+            // เชื่อมต่อการแจกไอเทมสัตว์เลี้ยงอัตโนมัติ
+            if (typeof addPetRewardFromSkill === 'function') {
+                addPetRewardFromSkill(userName, skillType, skillPoints);
+            }
         }
 
         if (notifyItem && notifyItem.details && notifyItem.details.questTitle) {
