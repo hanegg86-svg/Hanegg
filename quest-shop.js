@@ -42,7 +42,8 @@ function createNewParentQuest() {
         skillType: skillType,
         skillPoints: skillPoints,
         assignees: assignees, 
-        lastAssignedAt: Date.now() 
+        lastAssignedAt: Date.now(),
+        completedBy: {}
     };
     
     parentQuestsList.push(newQuest);
@@ -55,6 +56,11 @@ function createNewParentQuest() {
 }
 
 function deleteParentQuest(id) {
+    if (!isParentUser) {
+        alert("เฉพาะ พ่อนะ หรือ แม่พัด เท่านั้นที่สามารถลบภารกิจได้ครับ!");
+        return;
+    }
+
     const quest = parentQuestsList.find(q => q.id === id);
     if (!quest) return;
 
@@ -64,7 +70,7 @@ function deleteParentQuest(id) {
             const { ref, remove } = window.firebaseModules;
             const db = window.firebaseModules.getDatabase();
             notificationsList.forEach(n => {
-                if (n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title) {
+                if (n.type === 'SUBMIT_QUEST' && n.details && (n.details.questId === quest.id || n.details.questTitle === quest.title)) {
                     const notifyKey = n.id;
                     if (notifyKey) {
                         remove(ref(db, `kids_notifications/${notifyKey}`));
@@ -72,7 +78,7 @@ function deleteParentQuest(id) {
                 }
             });
         }
-        notificationsList = notificationsList.filter(n => !(n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title));
+        notificationsList = notificationsList.filter(n => !(n.type === 'SUBMIT_QUEST' && n.details && (n.details.questId === quest.id || n.details.questTitle === quest.title)));
         saveParentQuestsToStorage();
     }
 }
@@ -110,7 +116,7 @@ function saveQuestAssignment() {
         const { ref, remove } = window.firebaseModules;
         const db = window.firebaseModules.getDatabase();
         notificationsList.forEach(n => {
-            if (n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title) {
+            if (n.type === 'SUBMIT_QUEST' && n.details && (n.details.questId === quest.id || n.details.questTitle === quest.title)) {
                 const notifyKey = n.id;
                 if (notifyKey) {
                     remove(ref(db, `kids_notifications/${notifyKey}`));
@@ -118,7 +124,7 @@ function saveQuestAssignment() {
             }
         });
     }
-    notificationsList = notificationsList.filter(n => !(n.type === 'SUBMIT_QUEST' && n.details && n.details.questTitle === quest.title));
+    notificationsList = notificationsList.filter(n => !(n.type === 'SUBMIT_QUEST' && n.details && (n.details.questId === quest.id || n.details.questTitle === quest.title)));
     saveParentQuestsToStorage();
     closeAssignModal();
     alert(`แจกภารกิจ "${quest.title}" ให้เด็กๆ เรียบร้อยแล้ว! ✨`);
@@ -138,14 +144,21 @@ function renderParentQuestsList() {
             const completedTime = (q.completedBy && q.completedBy[currentUser]) ? q.completedBy[currentUser] : 0;
             const assignedTime = q.lastAssignedAt || 0;
             
+            // 1. ถ้ามีบันทึกเวลาทำสำเร็จ และเวลาทำสำเร็จเกิดขึ้นหลังหรือเท่ากับเวลามอบหมายล่าสุด ให้ซ่อน
             if (completedTime > 0 && completedTime >= assignedTime) {
                 return false;
             }
 
+            // 2. ถ้ามี completedTime แต่เควสไม่มี lastAssignedAt (เควสเดิม) ให้ถือว่าทำเสร็จแล้วและซ่อน
+            if (completedTime > 0 && !q.lastAssignedAt) {
+                return false;
+            }
+
+            // 3. ป้องกันกรณี notice ยังค้างอนุมัติอยู่ ให้ซ่อนเควสเช่นกัน
             const isApproved = notificationsList.some(n => 
                 n.type === 'SUBMIT_QUEST' && 
                 n.user === currentUser && 
-                n.details && n.details.questTitle === q.title && 
+                n.details && (n.details.questId === q.id || n.details.questTitle === q.title) && 
                 n.status === 'approved'
             );
             if (isApproved) return false;
@@ -170,14 +183,14 @@ function renderParentQuestsList() {
             const existingNotify = notificationsList.find(n => 
                 n.type === 'SUBMIT_QUEST' && 
                 n.user === currentUser && 
-                n.details && n.details.questTitle === q.title && 
+                n.details && (n.details.questId === q.id || n.details.questTitle === q.title) && 
                 n.status === 'pending'
             );
             
             if (existingNotify) {
                 actionButtonHtml = `<span class="bg-amber-100 text-amber-800 font-bold py-1.5 px-2.5 rounded-xl text-[11px] border border-amber-200">⏳ รอพ่อนะ/แม่พัด ตรวจ</span>`;
             } else {
-                actionButtonHtml = `<button onclick="submitParentQuestForCheck('${q.title}', ${q.stars}, '${q.skillType || 'none'}', ${q.skillPoints || 0})" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-2 px-3 rounded-xl text-xs shadow-xs">กดส่งภารกิจ ✨</button>`;
+                actionButtonHtml = `<button onclick="submitParentQuestForCheck('${q.id}', '${q.title}', ${q.stars}, '${q.skillType || 'none'}', ${q.skillPoints || 0})" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-2 px-3 rounded-xl text-xs shadow-xs">กดส่งภารกิจ ✨</button>`;
             }
         }
 
@@ -203,9 +216,10 @@ function renderParentQuestsList() {
     }).join('');
 }
 
-function submitParentQuestForCheck(questTitle, stars, skillType, skillPoints) {
+function submitParentQuestForCheck(questId, questTitle, stars, skillType, skillPoints) {
     if (confirm(`คุณได้ทำภารกิจ "${questTitle}" เรียบร้อยแล้ว และต้องการส่งให้ พ่อนะ / แม่พัด ตรวจใช่ไหมครับ?`)) {
         sendInAppNotification('SUBMIT_QUEST', { 
+            questId: questId,
             questTitle: questTitle, 
             starsReward: stars,
             skillType: skillType || 'none',
@@ -251,6 +265,11 @@ function addNewRewardItem() {
 }
 
 function deleteRewardItem(id) {
+    if (!isParentUser) {
+        alert("เฉพาะ พ่อนะ หรือ แม่พัด เท่านั้นที่สามารถลบของรางวัลได้ครับ!");
+        return;
+    }
+
     if (confirm("คุณต้องการลบของรางวัลนี้ใช่หรือไม่?")) {
         rewardsList = rewardsList.filter(r => r.id !== id);
         saveRewardsToStorage();
@@ -338,6 +357,11 @@ function addRewardToUserInventory(userName, rewardName) {
 }
 
 function deleteInventoryItemDirectly(ownerChild, invId) {
+    if (!isParentUser) {
+        alert("เฉพาะ พ่อนะ หรือ แม่พัด เท่านั้นที่สามารถลบของรางวัลในกระเป๋าได้ครับ!");
+        return;
+    }
+
     const targetItem = userInventoryList.find(x => x.invId === invId);
     const actualOwner = ownerChild || (targetItem ? targetItem.owner : currentUser);
     if (!actualOwner) return;
@@ -424,6 +448,11 @@ function sendInAppNotification(type, details) {
 }
 
 function deleteNotification(notifyId) {
+    if (!isParentUser) {
+        alert("เฉพาะ พ่อนะ หรือ แม่พัด เท่านั้นที่สามารถลบการแจ้งเตือนได้ครับ!");
+        return;
+    }
+
     if (confirm("ต้องการลบการแจ้งเตือนนี้ใช่หรือไม่?")) {
         const notifyItem = notificationsList.find(n => n.id === notifyId || (n.timestamp && n.timestamp.toString() === notifyId.toString()));
         const firebaseKey = notifyItem && notifyItem.id ? notifyItem.id : notifyId;
@@ -439,6 +468,11 @@ function deleteNotification(notifyId) {
 }
 
 function clearAllNotifications() {
+    if (!isParentUser) {
+        alert("เฉพาะ พ่อนะ หรือ แม่พัด เท่านั้นที่สามารถล้างประวัติการแจ้งเตือนได้ครับ!");
+        return;
+    }
+
     if (confirm("คุณต้องการลบประวัติคำขอและการแจ้งเตือนทั้งหมดใช่หรือไม่?")) {
         notificationsList = [];
         renderNotifications();
@@ -487,7 +521,11 @@ function renderNotifications() {
     listEl.innerHTML = notificationsList.map(n => {
         const isPending = n.status === 'pending';
         const itemKey = n.id || n.timestamp;
-        const deleteBtnHtml = `<button onclick="deleteNotification('${itemKey}')" class="text-[10px] bg-rose-50 text-rose-700 hover:bg-rose-100 px-2 py-0.5 rounded-lg font-bold border border-rose-200 ml-auto active:scale-95 transition">🗑️ ลบ</button>`;
+        
+        // อนุญาตให้แสดงปุ่มลบเฉพาะผู้ปกครอง (พ่อนะ / แม่พัด) เท่านั้น
+        const deleteBtnHtml = isParentUser 
+            ? `<button onclick="deleteNotification('${itemKey}')" class="text-[10px] bg-rose-50 text-rose-700 hover:bg-rose-100 px-2 py-0.5 rounded-lg font-bold border border-rose-200 ml-auto active:scale-95 transition">🗑️ ลบ</button>` 
+            : '';
 
         if (n.type === 'MANUAL_STAR_ADJUST') {
             return `<div class="p-3 ${n.details.change > 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'} rounded-2xl border flex items-start gap-2.5 shadow-2xs relative">
@@ -656,8 +694,11 @@ function approveParentQuest(notifyId, userName, starsReward, skillType, skillPoi
             addSkillPointsToUser(userName, skillType, skillPoints);
         }
 
-        if (notifyItem && notifyItem.details && notifyItem.details.questTitle) {
-            const quest = parentQuestsList.find(q => q.title === notifyItem.details.questTitle);
+        // ค้นหาเควสจาก ID หรือ Title เพื่อบันทึกเวลาทำสำเร็จ (completedBy) ถาวร
+        if (notifyItem && notifyItem.details) {
+            const qId = notifyItem.details.questId;
+            const qTitle = notifyItem.details.questTitle;
+            const quest = parentQuestsList.find(q => (qId && q.id === qId) || q.title === qTitle);
             if (quest) {
                 if (!quest.completedBy) quest.completedBy = {};
                 quest.completedBy[userName] = Date.now();
@@ -689,7 +730,7 @@ function approveReward(notifyId, userName, rewardName, starsUsed, isApproved) {
         addRewardToUserInventory(userName, rewardName);
         alert(`อนุมัติรางวัล "${rewardName}" ให้น้อง ${userName} เรียบร้อยแล้ว! (ย้ายเข้ากระเป๋าของน้องแล้ว)`);
     } else { 
-        // 🔄 คืนดาวหรือถ้วยทองให้เด็กหากผู้ปกครองกดปฏิเสธ
+        // คืนดาวหรือถ้วยทองให้เด็กหากผู้ปกครองกดปฏิเสธ
         const cType = (notifyItem && notifyItem.details && notifyItem.details.currencyType) ? notifyItem.details.currencyType : 'stars';
         if (isFirebaseActive) {
             const { ref, runTransaction } = window.firebaseModules;
