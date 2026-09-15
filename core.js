@@ -225,7 +225,6 @@ function initData() {
 }
 
 function switchMainTab(tab) {
-    if(typeof closeCameraForStory === 'function') closeCameraForStory();
     currentMainTab = tab;
 
     const navQuest = document.getElementById("nav-btn-quest");
@@ -834,7 +833,6 @@ function checkDailyLimitStatus() {
     const limitBanner = document.getElementById("daily-limit-banner");
     const checkBtn = document.getElementById("btn-check-answer");
     const mathCombineBtn = document.querySelector("#game-math-container button[onclick='executeMathCombination()']");
-    const storyGenBtn = document.getElementById("btn-generate-story");
     const tdBtns = document.querySelectorAll('.td-choice-btn');
     const tdUltBtn = document.getElementById('td-ultimate-btn');
     const buildCanvas = document.getElementById("townGameCanvas");
@@ -853,7 +851,6 @@ function checkDailyLimitStatus() {
             if (limitBanner) limitBanner.classList.remove("hidden");
             if (checkBtn) { checkBtn.disabled = true; checkBtn.classList.add("opacity-50", "cursor-not-allowed"); }
             if (mathCombineBtn) { mathCombineBtn.disabled = true; mathCombineBtn.classList.add("opacity-50", "cursor-not-allowed"); }
-            if (storyGenBtn) { storyGenBtn.disabled = true; storyGenBtn.classList.add("opacity-50", "cursor-not-allowed"); }
             if (tdBtns) tdBtns.forEach(btn => { btn.disabled = true; btn.classList.add("opacity-50", "cursor-not-allowed"); });
             if (tdUltBtn) { tdUltBtn.disabled = true; tdUltBtn.classList.add("opacity-50", "cursor-not-allowed"); }
             if (buildCanvas) { buildCanvas.style.pointerEvents = "none"; buildCanvas.classList.add("opacity-50"); }
@@ -862,7 +859,6 @@ function checkDailyLimitStatus() {
             if (limitBanner) limitBanner.classList.add("hidden");
             if (checkBtn) { checkBtn.disabled = false; checkBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
             if (mathCombineBtn) { mathCombineBtn.disabled = false; mathCombineBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
-            if (storyGenBtn) { storyGenBtn.disabled = false; storyGenBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
             if (tdBtns) tdBtns.forEach(btn => { btn.disabled = false; btn.classList.remove("opacity-50", "cursor-not-allowed"); });
             if (tdUltBtn) { tdUltBtn.disabled = false; tdUltBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
             if (buildCanvas) { buildCanvas.style.pointerEvents = "auto"; buildCanvas.classList.remove("opacity-50"); }
@@ -873,7 +869,6 @@ function checkDailyLimitStatus() {
         if (quotaText) quotaText.classList.add("hidden");
         if (checkBtn) { checkBtn.disabled = false; checkBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
         if (mathCombineBtn) { mathCombineBtn.disabled = false; mathCombineBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
-        if (storyGenBtn) { storyGenBtn.disabled = false; storyGenBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
         if (tdBtns) tdBtns.forEach(btn => { btn.disabled = false; btn.classList.remove("opacity-50", "cursor-not-allowed"); });
         if (tdUltBtn) { tdUltBtn.disabled = false; tdUltBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
         if (buildCanvas) { buildCanvas.style.pointerEvents = "auto"; buildCanvas.classList.remove("opacity-50"); }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kids Vocab, Math & Story AI - Family Theme</title>
+    <title>Kids Vocab & Math - Family Theme</title>
 
     <!-- PWA Settings & Web App Configuration -->
     <link rel="manifest" href="manifest.json">
@@ -125,7 +125,7 @@
             <img src="Icon.png?v=5" alt="App Cover" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('splash-fallback-icon').classList.remove('hidden');">
             <span id="splash-fallback-icon" class="text-7xl hidden">👑</span>
         </div>
-        <div class="text-white font-kids font-bold text-xl tracking-wider drop-shadow-md">Kids Vocab, Math & Story AI</div>
+        <div class="text-white font-kids font-bold text-xl tracking-wider drop-shadow-md">Kids Vocab & Math</div>
         <div class="text-pink-100 text-xs mt-1 font-bold">กำลังโหลดความสนุก...</div>
     </div>
 
@@ -291,16 +291,14 @@
         <!-- TAB 2: MINI GAMES HUB TAB -->
         <div id="main-game-tab" class="w-full hidden flex-col items-center space-y-4">
             
-            <!-- Mini Games Navigation Bar -->
+            <!-- Mini Games Navigation Bar (ตัดปุ่มนิทาน AI และ สัตว์เลี้ยงคู่หู ออกแล้ว) -->
             <div id="minigames-tab-bar" class="w-full bg-sky-100 p-2.5 rounded-3xl border-4 border-sky-300 shadow-[0_4px_0_0_#7dd3fc] flex gap-2 overflow-x-auto transition-all">
                 <button id="game-subtab-vocab" onclick="switchMiniGame('vocab')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-pink-500 text-white shadow-[0_4px_0_0_#be185d] border-2 border-pink-700 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🎴 คำศัพท์</button>
                 <button id="game-subtab-math" onclick="switchMiniGame('math')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🔢 คิดเลข</button>
-                <button id="game-subtab-story" onclick="switchMiniGame('story')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">📖 นิทาน AI</button>
                 <button id="game-subtab-td" onclick="switchMiniGame('td')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">⚔️ Math TD</button>
                 <button id="game-subtab-dungeon" onclick="switchMiniGame('dungeon')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🏰 Dungeon</button>
                 <button id="game-subtab-build" onclick="switchMiniGame('build')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🏰 สร้างเมือง</button>
                 <button id="game-subtab-plant" onclick="switchMiniGame('plant')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🌿 สำรวจพรรณไม้</button>
-                <button id="game-subtab-pet" onclick="switchMiniGame('pet')" class="flex-1 py-2 px-3 rounded-2xl text-xs font-black bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-300 transition-all active:translate-y-1 active:shadow-none whitespace-nowrap">🐾 สัตว์เลี้ยงคู่หู</button>
             </div>
 
             <!-- Content Mini Games -->
@@ -369,7 +367,6 @@
 
                     <!-- 5 Words Container -->
                     <div id="vocab-5-cards-container" class="w-full max-w-sm landscape:max-w-xl space-y-2 mb-3">
-                        <!-- รายการ 5 คำจะถูก Render ที่นี่ -->
                     </div>
 
                     <!-- Pagination & Complete Bar -->
@@ -537,184 +534,6 @@
                                 ผสมเลขเลย! ✨
                             </button>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Story AI Game -->
-            <div id="game-story-container" class="w-full max-w-sm landscape:max-w-4xl hidden flex-col items-center">
-                <div id="story-creator-box" class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs w-full">
-                    <div class="text-center mb-3">
-                        <h3 class="text-base font-bold text-slate-800 flex items-center justify-center gap-2 font-kids">
-                            📖 นิทานตามล่าหาไอเทม AI 📷
-                        </h3>
-                        <p class="text-xs text-slate-500 font-medium mt-1">ผจญภัย 10 หน้า ตามหาของจริงรอบบ้านแล้วใช้กล้องถ่ายส่องให้ AI ตรวจ!</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 landscape:grid-cols-2 gap-3 mb-3">
-                        <div class="bg-indigo-50/50 p-2.5 rounded-2xl border border-indigo-100">
-                            <label class="block text-xs font-bold text-indigo-900 mb-1.5">🌐 ภาษาของนิทาน (Language)</label>
-                            <div class="flex bg-slate-200/60 p-1 rounded-xl gap-1">
-                                <button onclick="selectStoryLang('TH')" id="story-lang-th" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-xs transition">🇹🇭 ภาษาไทย</button>
-                                <button onclick="selectStoryLang('EN')" id="story-lang-en" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-700 transition">🇬🇧 English</button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">1. ใครเป็นพระเอก/นางเอก?</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                <button onclick="selectStoryHero('พูน')" id="story-hero-poon" class="p-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex flex-col items-center transition">
-                                    <span class="text-2xl">👦🏻</span>
-                                    <span class="text-xs font-bold text-slate-700 mt-1">พี่พูน</span>
-                                </button>
-                                <button onclick="selectStoryHero('เพลิน')" id="story-hero-ploern" class="p-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex flex-col items-center transition">
-                                    <span class="text-2xl">👧🏻</span>
-                                    <span class="text-xs font-bold text-slate-700 mt-1">น้องเพลิน</span>
-                                </button>
-                                <button onclick="selectStoryHero('พูนและเพลิน')" id="story-hero-both" class="p-2.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex flex-col items-center transition">
-                                    <span class="text-2xl">👫</span>
-                                    <span class="text-xs font-bold text-slate-700 mt-1">ทั้งคู่</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">2. เลือกสถานที่ผจญภัย</label>
-                        <div class="grid grid-cols-2 landscape:grid-cols-4 gap-2">
-                            <button onclick="selectStoryTheme('อวกาศ')" id="story-theme-space" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2 text-xs font-bold text-slate-700">
-                                <span class="text-xl">🚀</span> ท่องอวกาศ
-                            </button>
-                            <button onclick="selectStoryTheme('เมืองเวทมนตร์')" id="story-theme-magic" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2 text-xs font-bold text-slate-700">
-                                <span class="text-xl">🏰</span> เมืองเวทมนตร์
-                            </button>
-                            <button onclick="selectStoryTheme('ดินแดนไดโนเสาร์')" id="story-theme-dino" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2 text-xs font-bold text-slate-700">
-                                <span class="text-xl">🦖</span> ดินแดนไดโนเสาร์
-                            </button>
-                            <button onclick="selectStoryTheme('เมืองใต้ทะเล')" id="story-theme-ocean" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-2 text-xs font-bold text-slate-700">
-                                <span class="text-xl">🌊</span> เมืองใต้ทะเล
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">3. เพื่อนร่วมทางสุดพิเศษ</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <button onclick="selectStoryPet('เจ้าหมาน้อย')" id="story-pet-dog" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center text-xs font-bold text-slate-700">
-                                <span class="text-lg">🐶</span> เจ้าโฮ่ง
-                            </button>
-                            <button onclick="selectStoryPet('หุ่นยนต์จิ๋ว')" id="story-pet-robot" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center text-xs font-bold text-slate-700">
-                                <span class="text-lg">🤖</span> หุ่นยนต์
-                            </button>
-                            <button onclick="selectStoryPet('เจ้าแมวเหมียว')" id="story-pet-cat" class="p-2 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center text-xs font-bold text-slate-700">
-                                <span class="text-lg">🐱</span> เจ้าเหมียว
-                            </button>
-                        </div>
-                    </div>
-
-                    <button id="btn-generate-story" onclick="generateAIStory()" class="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-95 active:scale-95 text-white font-bold py-3 rounded-2xl shadow-sm flex items-center justify-center gap-2 text-base transition">
-                        ✨ เนรมิตเกมนิทานถ่ายรูปส่องของ 📸
-                    </button>
-                </div>
-
-                <div id="story-reader-box" class="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs w-full hidden flex-col landscape:flex-row items-center gap-4">
-                    <div class="w-full landscape:w-1/2 flex flex-col items-center">
-                        <div class="w-full flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-purple-50 p-2 rounded-2xl shadow-2xs border border-indigo-100 mb-2">
-                            <div class="bg-indigo-600 text-white font-extrabold px-2 py-0.5 rounded-xl text-xs flex items-center gap-1">
-                                <span>Lv.</span><span id="rpg-level-display">1</span>
-                            </div>
-                            <div class="flex-1">
-                                <div class="flex justify-between text-[10px] font-bold mb-0.5">
-                                    <span class="text-indigo-900 font-kids">EXP</span>
-                                    <span id="rpg-exp-text" class="text-indigo-600 font-kids">0 / 200</span>
-                                </div>
-                                <div class="w-full bg-white h-2 rounded-full overflow-hidden border border-indigo-100">
-                                    <div id="rpg-exp-bar" class="bg-gradient-to-r from-sky-400 to-indigo-600 h-full transition-all duration-500" style="width: 0%"></div>
-                                </div>
-                            </div>
-                            <button onclick="openSkillTreeModal()" class="relative bg-amber-400 hover:bg-amber-500 active:scale-95 text-amber-950 px-2 py-0.5 rounded-xl font-bold text-xs shadow-2xs transition flex items-center gap-1 font-kids">
-                                <span>🛡️ ทักษะ</span>
-                                <span id="rpg-sp-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center animate-ping">1</span>
-                            </button>
-                        </div>
-
-                        <div class="w-full h-40 landscape:h-48 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-center overflow-hidden mb-2 shadow-inner relative">
-                            <span id="story-image-emoji" class="text-7xl bounce-anim">🚀</span>
-                            <img id="story-image-pic" class="w-full h-full object-contain hidden bounce-anim" src="" alt="Story Image">
-                        </div>
-
-                        <button onclick="speakStoryPageText()" class="w-full bg-sky-500 active:bg-sky-600 text-white font-bold py-2 rounded-2xl shadow-xs flex items-center justify-center gap-1.5 text-xs">
-                            <i data-lucide="volume-2" class="w-4 h-4"></i> ฟังเสียงอ่าน 🔊
-                        </button>
-                    </div>
-
-                    <div class="w-full landscape:w-1/2 flex flex-col justify-between h-full">
-                        <div class="w-full flex justify-between items-center mb-2 bg-indigo-50/60 px-3 py-1 rounded-full border border-indigo-100">
-                            <span id="story-title-display" class="text-xs font-bold text-indigo-950 truncate max-w-[180px] font-kids">ชื่อเรื่องนิทาน</span>
-                            <span id="story-page-indicator" class="text-[10px] font-bold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded-full font-kids">หน้า 1 / 10</span>
-                        </div>
-
-                        <div class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-3.5 min-h-[90px] mb-2 flex items-center justify-center text-center">
-                            <p id="story-text-display" class="text-xs sm:text-sm font-medium text-slate-800 leading-relaxed">
-                                เนื้อเรื่องจะแสดงที่นี่...
-                            </p>
-                        </div>
-
-                        <div id="story-item-mission-box" class="w-full bg-indigo-50 border border-indigo-200 p-2.5 rounded-2xl mb-2 flex flex-col items-center text-center hidden">
-                            <span class="text-xs font-bold text-indigo-950 mb-0.5">🔍 ภารกิจถ่ายรูปตามหาไอเทมจริง!</span>
-                            <p id="story-item-target-text" class="text-xs font-extrabold text-emerald-600 mb-1.5 font-kids">เป้าหมาย: ส้ม หรือ ผลไม้สีส้ม</p>
-                            
-                            <div class="w-full flex gap-2">
-                                <button onclick="startCameraForStory()" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 active:scale-95 text-white font-bold py-2 rounded-xl shadow-xs flex items-center justify-center gap-1 text-xs transition">
-                                    📷 เปิดกล้องส่องถ่ายรูป!
-                                </button>
-                                <button id="btn-skill-skip-mission" onclick="useSkipMissionSkill()" class="hidden bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-bold px-3 py-2 rounded-xl shadow-xs text-xs transition whitespace-nowrap">
-                                    🪄 ข้าม
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="w-full flex justify-between gap-2 border-t border-slate-100 pt-2">
-                            <button onclick="prevStoryPage()" id="btn-prev-story" class="bg-slate-100 text-slate-600 font-bold py-2 px-3 rounded-xl text-xs flex items-center gap-1">
-                                ← หน้าก่อน
-                            </button>
-                            <button onclick="openStoryCreator()" class="bg-indigo-50 text-indigo-700 font-bold py-2 px-3 rounded-xl text-xs">
-                                🔄 แต่งใหม่
-                            </button>
-                            <button onclick="nextStoryPage()" id="btn-next-story" class="bg-indigo-600 text-white font-bold py-2 px-3 rounded-xl text-xs shadow-xs flex items-center gap-1">
-                                ถัดไป →
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="story-camera-box" class="w-full bg-white border border-slate-100 rounded-3xl p-5 shadow-xs flex-col items-center hidden">
-                    <div class="text-center mb-2">
-                        <h3 class="text-base font-bold text-slate-800 flex items-center justify-center gap-1 font-kids">
-                            📷 ส่องถ่ายรูปหาไอเทมให้ AI ตรวจ!
-                        </h3>
-                        <p class="text-xs text-slate-500 font-bold">เป้าหมาย: <span id="camera-target-name" class="text-emerald-600 font-bold text-sm">ส้ม</span></p>
-                    </div>
-
-                    <div class="w-full h-64 landscape:h-48 bg-black rounded-2xl overflow-hidden relative border border-slate-200 shadow-inner">
-                        <video id="camera-stream" autoplay playsinline class="w-full h-full object-cover"></video>
-                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div class="w-44 h-44 landscape:w-36 landscape:h-36 border-4 border-dashed border-indigo-400 opacity-80 rounded-3xl animate-pulse"></div>
-                        </div>
-                    </div>
-
-                    <div class="w-full flex gap-2 mt-3">
-                        <button onclick="closeCameraForStory()" class="bg-slate-100 text-slate-600 font-bold py-2.5 px-4 rounded-2xl text-xs">
-                            ยกเลิก ✖️
-                        </button>
-                        <button id="btn-take-photo" onclick="captureAndAnalyzeStoryImage()" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 active:scale-95 text-white font-bold py-2.5 rounded-2xl shadow-xs flex items-center justify-center gap-2 text-xs">
-                            ✨ ถ่ายรูปให้ AI วิเคราะห์! 📸
-                        </button>
-                    </div>
-
-                    <div id="camera-loading" class="mt-2 text-center hidden">
-                        <span class="spinner"></span>
-                        <p class="text-xs text-indigo-700 font-bold mt-1">Gemini AI กำลังดูรูป...</p>
                     </div>
                 </div>
             </div>
@@ -969,111 +788,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Mini Game: Habit Pet Companion -->
-            <div id="game-pet-container" class="w-full max-w-sm landscape:max-w-3xl hidden flex-col items-center space-y-3">
-                <div class="bg-white border border-slate-100 rounded-3xl p-4 shadow-xs w-full flex flex-col items-center">
-                    
-                    <!-- Header Banner -->
-                    <div class="w-full flex justify-between items-center mb-3 bg-purple-50 px-3 py-2 rounded-2xl border border-purple-100">
-                        <div class="flex items-center gap-1.5">
-                            <span id="pet-name-badge" class="text-xs font-black text-purple-950 font-kids">🐾 สัตว์เลี้ยงคู่หู</span>
-                            <span id="pet-stage-badge" class="text-[10px] bg-purple-200 text-purple-900 font-bold px-2 py-0.5 rounded-full font-kids">เบบี้ดรอป</span>
-                        </div>
-                        <span id="pet-level-badge" class="text-xs font-black text-amber-600 bg-amber-100 px-2.5 py-0.5 rounded-full font-kids border border-amber-200">Lv. 1</span>
-                    </div>
-
-                    <!-- Dialogue Box -->
-                    <div id="pet-dialogue-text" class="w-full bg-slate-50 border-2 border-indigo-100 rounded-2xl p-2.5 text-center text-xs font-bold text-indigo-900 mb-3 min-h-[44px] flex items-center justify-center">
-                        สวัสดีครับเจ้านาย! มาเลี้ยงหนูด้วยการทำภารกิจฝึกนิสัยกันเถอะ ✨
-                    </div>
-
-                    <!-- Interactive Avatar SVG -->
-                    <div class="relative w-36 h-36 flex items-center justify-center cursor-pointer mb-2" onclick="touchPet()">
-                        <svg id="pet-avatar-svg" viewBox="0 0 100 100" class="w-full h-full transition-transform duration-200 active:scale-95 animate-pulse">
-                            <!-- Wings for Warrior/Guardian -->
-                            <g id="pet-svg-wings" class="hidden">
-                                <path d="M 20 45 Q 5 25 15 65 Z" fill="#6ee7b7" opacity="0.8"/>
-                                <path d="M 80 45 Q 95 25 85 65 Z" fill="#6ee7b7" opacity="0.8"/>
-                            </g>
-                            <!-- Body -->
-                            <circle id="pet-svg-body" cx="50" cy="52" r="36" fill="#f472b6"/>
-                            <!-- Crown for Sage/Royal/Guardian -->
-                            <path id="pet-svg-crown" d="M 50 16 L 54 24 L 62 24 L 56 29 L 58 37 L 50 32 L 42 37 L 44 29 L 38 24 L 46 24 Z" fill="#fbbf24" class="hidden"/>
-                            <!-- Eyes -->
-                            <circle cx="38" cy="48" r="4.5" fill="#1e1b4b"/>
-                            <circle cx="62" cy="48" r="4.5" fill="#1e1b4b"/>
-                            <circle cx="39.5" cy="46.5" r="1.5" fill="#ffffff"/>
-                            <circle cx="63.5" cy="46.5" r="1.5" fill="#ffffff"/>
-                            <!-- Cheeks -->
-                            <circle cx="32" cy="56" r="4" fill="#fb7185" opacity="0.6"/>
-                            <circle cx="68" cy="56" r="4" fill="#fb7185" opacity="0.6"/>
-                            <!-- Mouth -->
-                            <path d="M 45 56 Q 50 61 55 56" stroke="#1e1b4b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <p class="text-[10px] text-slate-400 font-bold mb-3">แตะตัวสัตว์เลี้ยงเพื่อเล่นด้วยกัน ✨</p>
-
-                    <!-- Pet EXP Bar -->
-                    <div class="w-full bg-slate-50 p-2 rounded-2xl border border-slate-200 mb-3">
-                        <div class="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
-                            <span>EXP การเติบโต</span>
-                            <span id="pet-exp-val">0 / 100 EXP</span>
-                        </div>
-                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                            <div id="pet-exp-fill" class="bg-gradient-to-r from-purple-500 to-pink-500 h-full w-0 transition-all duration-300"></div>
-                        </div>
-                    </div>
-
-                    <!-- 3 Meters Grid -->
-                    <div class="grid grid-cols-3 gap-2 w-full mb-3">
-                        <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 flex flex-col items-center">
-                            <span class="text-[10px] font-bold text-slate-600 mb-1">💪 พลังกาย</span>
-                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                                <div id="pet-meter-energy" class="bg-emerald-500 h-full w-0 transition-all duration-300"></div>
-                            </div>
-                        </div>
-                        <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 flex flex-col items-center">
-                            <span class="text-[10px] font-bold text-slate-600 mb-1">🧠 สมาธิ/ปัญญา</span>
-                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                                <div id="pet-meter-mind" class="bg-indigo-500 h-full w-0 transition-all duration-300"></div>
-                            </div>
-                        </div>
-                        <div class="bg-slate-50 p-2 rounded-xl border border-slate-100 flex flex-col items-center">
-                            <span class="text-[10px] font-bold text-slate-600 mb-1">🪙 ความสุข/วินัย</span>
-                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                                <div id="pet-meter-happiness" class="bg-amber-500 h-full w-0 transition-all duration-300"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Feeding Actions with Skill Rewards -->
-                    <div class="w-full border-t border-slate-100 pt-3">
-                        <h4 class="text-xs font-bold text-slate-700 mb-2 font-kids flex items-center justify-between">
-                            <span>🎒 ไอเทมทักษะจากภารกิจ</span>
-                            <span class="text-[10px] text-indigo-600">แตะเพื่อให้อาหาร</span>
-                        </h4>
-                        <div class="grid grid-cols-3 gap-2">
-                            <button onclick="feedPet('fitness')" class="p-2 bg-emerald-50 hover:bg-emerald-100 active:scale-95 border border-emerald-200 rounded-2xl flex flex-col items-center transition shadow-2xs">
-                                <span class="text-2xl mb-0.5">🍎</span>
-                                <span class="text-[10px] font-bold text-emerald-950">ผลไม้พลัง</span>
-                                <span id="pet-item-count-fitness" class="text-xs font-extrabold text-emerald-600 font-kids">x0</span>
-                            </button>
-                            <button onclick="feedPet('knowledge')" class="p-2 bg-indigo-50 hover:bg-indigo-100 active:scale-95 border border-indigo-200 rounded-2xl flex flex-col items-center transition shadow-2xs">
-                                <span class="text-2xl mb-0.5">🔮</span>
-                                <span class="text-[10px] font-bold text-indigo-950">ผลึกปัญญา</span>
-                                <span id="pet-item-count-knowledge" class="text-xs font-extrabold text-indigo-600 font-kids">x0</span>
-                            </button>
-                            <button onclick="feedPet('wealth')" class="p-2 bg-amber-50 hover:bg-amber-100 active:scale-95 border border-amber-200 rounded-2xl flex flex-col items-center transition shadow-2xs">
-                                <span class="text-2xl mb-0.5">🍯</span>
-                                <span class="text-[10px] font-bold text-amber-950">น้ำทิพย์มั่งคั่ง</span>
-                                <span id="pet-item-count-wealth" class="text-xs font-extrabold text-amber-600 font-kids">x0</span>
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
         </div>
 
         <!-- TAB 3: REWARDS SHOP & INVENTORY TAB -->
@@ -1229,79 +943,6 @@
         </div>
     </div>
 
-    <!-- Modal RPG Skill Tree -->
-    <div id="rpg-skill-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl relative border border-slate-100 max-h-[85vh] flex flex-col">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="text-base font-bold font-kids text-indigo-950 flex items-center gap-1.5">
-                    🛡️ ต้นไม้ทักษะเวทมนตร์ (Skill Tree)
-                </h3>
-                <button onclick="closeSkillTreeModal()" class="text-slate-400 hover:text-slate-600 p-1">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-
-            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 mb-3 flex justify-between items-center">
-                <span class="text-xs font-bold text-amber-900 font-kids">พอยต์สกิลคงเหลือ (SP):</span>
-                <span id="rpg-modal-sp-count" class="text-lg font-extrabold text-amber-600 font-kids">0</span>
-            </div>
-
-            <div class="space-y-2.5 overflow-y-auto flex-1 pr-1">
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center shadow-2xs">
-                    <div>
-                        <div class="font-bold text-xs text-slate-800 font-kids flex items-center gap-1">
-                            <span>👁️ ดวงตานักสำรวจ</span>
-                            <span id="skill-lvl-hintVision" class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md">Lv. 0 / 3</span>
-                        </div>
-                        <p class="text-[10px] text-slate-500 mt-0.5">AI ช่วยใบ้ตำแหน่งไอเทมในบ้าน เมื่อส่องหาไม่เจอ</p>
-                    </div>
-                    <button id="btn-upgrade-hintVision" onclick="learnSkill('hintVision')" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-2xs active:scale-95 transition whitespace-nowrap">
-                        อัปเกรด
-                    </button>
-                </div>
-
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center shadow-2xs">
-                    <div>
-                        <div class="font-bold text-xs text-slate-800 font-kids flex items-center gap-1">
-                            <span>🪄 คาถาข้ามเวลา</span>
-                            <span id="skill-lvl-timeWarp" class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md">Lv. 0 / 3</span>
-                        </div>
-                        <p class="text-[10px] text-slate-500 mt-0.5">กดใช้เวทมนตร์ข้ามภารกิจถ่ายรูปที่หาของไม่เจอได้</p>
-                    </div>
-                    <button id="btn-upgrade-timeWarp" onclick="learnSkill('timeWarp')" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-2xs active:scale-95 transition whitespace-nowrap">
-                        อัปเกรด
-                    </button>
-                </div>
-
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center shadow-2xs">
-                    <div>
-                        <div class="font-bold text-xs text-slate-800 font-kids flex items-center gap-1">
-                            <span>✨ พรของอัศวิน</span>
-                            <span id="skill-lvl-expBoost" class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md">Lv. 0 / 3</span>
-                        </div>
-                        <p class="text-[10px] text-slate-500 mt-0.5">รับโบนัสค่า EXP พิเศษ +15% ทุกๆ ระดับสกิล</p>
-                    </div>
-                    <button id="btn-upgrade-expBoost" onclick="learnSkill('expBoost')" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-2xs active:scale-95 transition whitespace-nowrap">
-                        อัปเกรด
-                    </button>
-                </div>
-
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center shadow-2xs">
-                    <div>
-                        <div class="font-bold text-xs text-slate-800 font-kids flex items-center gap-1">
-                            <span>🌟 นักล่าดาว</span>
-                            <span id="skill-lvl-doubleStar" class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md">Lv. 0 / 3</span>
-                        </div>
-                        <p class="text-[10px] text-slate-500 mt-0.5">มีโอกาส 25% ต่อระดับ สุ่มรับดาว ⭐ x2 ตอนอ่านจบ</p>
-                    </div>
-                    <button id="btn-upgrade-doubleStar" onclick="learnSkill('doubleStar')" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-2xs active:scale-95 transition whitespace-nowrap">
-                        อัปเกรด
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal Assign Quest -->
     <div id="assign-quest-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white w-full max-w-xs rounded-3xl p-5 shadow-xl relative border border-slate-100 max-h-[85vh] overflow-y-auto">
@@ -1388,7 +1029,6 @@
     <!-- User Selection Modal -->
     <div id="profile-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-xl text-center border border-slate-100 max-h-[85vh] overflow-y-auto relative">
-            <!-- ปุ่มปิดหน้าต่างเลือกโปรไฟล์ฉุกเฉิน -->
             <button onclick="document.getElementById('profile-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
@@ -1598,7 +1238,6 @@
                     <span>🎮</span> ตั้งค่า Level & รูปตัวละคร (พูน/เพลิน)
                 </button>
 
-                <!-- ปุ่มล้างแคชแอป -->
                 <button onclick="clearAppCacheAndReload()" class="w-full bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 font-bold p-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-2xs">
                     <span>🗑️</span> ล้างแคชแอปทั้งหมดและรีเฟรชใหม่
                 </button>
@@ -1644,19 +1283,16 @@
         </div>
     </div>
 
-    <!-- External Script Files -->
+    <!-- External Script Files (ตัด game-rpg.js, game-story.js, game-pet.js ออกแล้ว) -->
     <script src="./core.js?v=5"></script>
     <script src="./quest-shop.js?v=6"></script>
     <script src="./minigames-main.js?v=5"></script>
     <script src="./game-vocab.js?v=9"></script>
     <script src="./game-math.js?v=5"></script>
-    <script src="./game-rpg.js?v=5"></script>
-    <script src="./game-story.js?v=5"></script>
     <script src="./game-td.js?v=5"></script>
     <script src="./game-number-dungeon.js?v=5"></script>
     <script src="./game-build2.js"></script>
     <script src="./game-plant.js?v=5"></script>
-    <script src="./game-pet.js"></script>
 
     <script>
         lucide.createIcons();
