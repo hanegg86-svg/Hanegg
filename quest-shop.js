@@ -83,13 +83,46 @@ function deleteParentQuest(id) {
     }
 }
 
+// ฟังก์ชันสำหรับพ่อนะ/แม่พัด ใช้กดดึงเควสกลับ/ยกเลิกมอบหมายได้ทันทีโดยไม่ต้องเข้าหน้าต่างโมดอล
+function unassignParentQuestDirectly(id) {
+    if (!isParentUser) {
+        alert("เฉพาะ พ่อนะ หรือ แม่พัด เท่านั้นที่สามารถพักภารกิจได้ครับ!");
+        return;
+    }
+
+    const quest = parentQuestsList.find(q => q.id === id);
+    if (!quest) return;
+
+    if (confirm(`คุณต้องการยกเลิกการมอบหมายภารกิจ "${quest.title}" ใช่หรือไม่?\n(เควสจะถูกพักไว้ในคลัง ไม่หายไป และเด็กๆ จะมองไม่เห็นภารกิจนี้)`)) {
+        quest.assignees = [];
+        quest.lastAssignedAt = Date.now();
+
+        // ล้างคำขอส่งตรวจที่ลูกๆ เคยส่งค้างไว้สำหรับเควสนี้ (ถ้ามี)
+        if (isFirebaseActive && dbRefNotify) {
+            const { ref, remove } = window.firebaseModules;
+            const db = window.firebaseModules.getDatabase();
+            notificationsList.forEach(n => {
+                if (n.type === 'SUBMIT_QUEST' && n.details && (n.details.questId === quest.id || n.details.questTitle === quest.title)) {
+                    const notifyKey = n.id;
+                    if (notifyKey) {
+                        remove(ref(db, `kids_notifications/${notifyKey}`));
+                    }
+                }
+            });
+        }
+        notificationsList = notificationsList.filter(n => !(n.type === 'SUBMIT_QUEST' && n.details && (n.details.questId === quest.id || n.details.questTitle === quest.title)));
+        saveParentQuestsToStorage();
+        alert(`พักภารกิจ "${quest.title}" เรียบร้อยแล้ว! ⏸️\n(เมื่อต้องการแจกใหม่ สามารถกดปุ่ม 🎯 Assign ได้ตลอดเวลา)`);
+    }
+}
+
 function openAssignModal(questId) {
     const quest = parentQuestsList.find(q => q.id === questId);
     if (!quest) return;
     document.getElementById("assign-quest-id").value = quest.id;
     document.getElementById("assign-quest-title").innerText = quest.title;
 
-    const assignees = quest.assignees || ["พูน", "เพลิน"];
+    const assignees = quest.assignees || [];
     document.getElementById("reassign-poon").checked = assignees.includes("พูน");
     document.getElementById("reassign-ploern").checked = assignees.includes("เพลิน");
     document.getElementById("assign-quest-modal").classList.remove("hidden");
@@ -127,7 +160,11 @@ function saveQuestAssignment() {
     notificationsList = notificationsList.filter(n => !(n.type === 'SUBMIT_QUEST' && n.details && (n.details.questId === quest.id || n.details.questTitle === quest.title)));
     saveParentQuestsToStorage();
     closeAssignModal();
-    alert(`แจกภารกิจ "${quest.title}" ให้เด็กๆ เรียบร้อยแล้ว! ✨`);
+    if (newAssignees.length === 0) {
+        alert(`พักภารกิจ "${quest.title}" เรียบร้อยแล้ว (ภารกิจถูกถอนออกจากหน้าของลูกๆ) ⏸️`);
+    } else {
+        alert(`แจกภารกิจ "${quest.title}" ให้เด็กๆ เรียบร้อยแล้ว! ✨`);
+    }
 }
 
 function renderParentQuestsList() {
@@ -137,7 +174,7 @@ function renderParentQuestsList() {
     let filteredQuests = parentQuestsList;
     if (!isParentUser && currentUser) {
         filteredQuests = parentQuestsList.filter(q => {
-            const assignees = q.assignees || ["พูน", "เพลิน"];
+            const assignees = q.assignees || [];
             const isForUser = assignees.includes(currentUser);
             if (!isForUser) return false;
 
@@ -175,8 +212,10 @@ function renderParentQuestsList() {
     container.innerHTML = filteredQuests.map(q => {
         let actionButtonHtml = '';
         if (isParentUser) {
+            const isAssigned = q.assignees && q.assignees.length > 0;
             actionButtonHtml = `
                 <button onclick="openAssignModal('${q.id}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-2 rounded-xl text-xs font-bold border border-indigo-200 flex items-center gap-1">🎯 Assign</button>
+                ${isAssigned ? `<button onclick="unassignParentQuestDirectly('${q.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-xl text-xs font-bold border border-amber-200 flex items-center gap-1" title="ดึงเควสกลับ/พักเควส">⏸️ พักเควส</button>` : ''}
                 <button onclick="deleteParentQuest('${q.id}')" class="bg-rose-50 text-rose-700 hover:bg-rose-100 p-2 rounded-xl text-xs font-bold border border-rose-200">🗑️ ลบ</button>
             `;
         } else {
@@ -199,6 +238,11 @@ function renderParentQuestsList() {
             skillTagHtml = `<span class="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-bold ml-1">${skillNamesMap[q.skillType] || ''} +${q.skillPoints}</span>`;
         }
 
+        const hasAssignees = q.assignees && q.assignees.length > 0;
+        const assigneeBadge = hasAssignees 
+            ? `<span class="text-[10px] text-slate-500 font-bold">🎯 ${q.assignees.join(', ')}</span>`
+            : `<span class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold">⏸️ พักเควส (ยังไม่มอบหมาย)</span>`;
+
         return `
             <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex justify-between items-center shadow-2xs">
                 <div>
@@ -208,7 +252,7 @@ function renderParentQuestsList() {
                     </div>
                     <div class="flex items-center gap-1.5">
                         <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">รางวัล ⭐ ${q.stars} ดวง</span>
-                        <span class="text-[10px] text-slate-400 font-bold">🎯 ${q.assignees && q.assignees.length > 0 ? q.assignees.join(', ') : 'ทุกคน'}</span>
+                        ${assigneeBadge}
                     </div>
                 </div>
                 <div class="flex items-center gap-1.5">${actionButtonHtml}</div>
