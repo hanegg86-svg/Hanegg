@@ -1,6 +1,6 @@
 // sw.js - Service Worker สำหรับจัดการ Offline Cache และบังคับเคลียร์แคชเวอร์ชันเก่าทันที (Force Clear)
 
-const CACHE_NAME = 'kids-vocab-v13';
+const CACHE_NAME = 'kids-vocab-v14';
 
 // รายการไฟล์ทั้งหมดที่ต้องดึงมาเก็บใน Cache เพื่อใช้งานแบบออฟไลน์
 const ASSETS_TO_CACHE = [
@@ -21,7 +21,8 @@ const ASSETS_TO_CACHE = [
     './game-td.js?v=5',
     './game-number-dungeon.js?v=5',
     './game-build2.js',
-    './game-plant.js?v=5'
+    './game-plant.js?v=5',
+    './game-farm.js'
 ];
 
 // 1. ขั้นตอน Install: บังคับให้ Service Worker ตัวใหม่เปิดใช้งานทันที (skipWaiting)
@@ -29,7 +30,7 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[Service Worker] Caching all app assets (v13)');
+            console.log('[Service Worker] Caching all app assets (v14)');
             return cache.addAll(ASSETS_TO_CACHE);
         })
     );
