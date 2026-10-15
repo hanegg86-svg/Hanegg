@@ -286,7 +286,8 @@ function createInitialFarmState() {
         lastTickTimestamp: Date.now(),
         stormState: 'calm',
         nextStormTimestamp: Date.now() + (180 + Math.random() * 120) * 1000,
-        stormWarningStartedAt: null
+        stormWarningStartedAt: null,
+        dailyExchange: { date: '', count: 0 } // ระบบโควต้าแลกดาวประจำวัน
     };
 }
 
@@ -330,16 +331,41 @@ function formatFarmTimeRemaining(seconds) {
     return `${m}m ${s > 0 ? s + 's' : ''}`;
 }
 
-// 🌟 ฟังก์ชันแลก 20,000 ทอง = 1 ดาว
+// อัปเดตข้อความปุ่มแลกดาวให้แสดงโควต้าคงเหลือในแต่ละวัน
+function updateFarmExchangeButtonUI() {
+    const todayStr = typeof getTodayDateString === 'function' ? getTodayDateString() : new Date().toISOString().slice(0, 10);
+    if (!farmState.dailyExchange || farmState.dailyExchange.date !== todayStr) {
+        farmState.dailyExchange = { date: todayStr, count: 0 };
+    }
+    const quotaTextEl = document.getElementById('farm-star-quota-text');
+    if (quotaTextEl) {
+        quotaTextEl.innerText = `(วันนี้ ${farmState.dailyExchange.count}/4 ดาว)`;
+    }
+}
+
+// 🌟 ฟังก์ชันแลก 20,000 ทอง = 1 ดาว (จำกัดไม่เกิน 4 ดาวต่อวัน)
 function exchangeFarmGoldToStar() {
+    const todayStr = typeof getTodayDateString === 'function' ? getTodayDateString() : new Date().toISOString().slice(0, 10);
+    if (!farmState.dailyExchange || farmState.dailyExchange.date !== todayStr) {
+        farmState.dailyExchange = { date: todayStr, count: 0 };
+    }
+
+    if (farmState.dailyExchange.count >= 4) {
+        alert('วันนี้หนูแลกดาวจากฟาร์มครบโควต้าสูงสุด 4 ดาวแล้วครับ! ⭐\nพรุ่งนี้ค่อยนำผลผลิตมาแลกใหม่นะครับ 🎈');
+        return;
+    }
+
     if (farmState.gold < 20000) {
         alert('เหรียญทองในฟาร์มไม่เพียงพอครับ! ต้องการ 🪙 20,000 เหรียญ เพื่อแลก 1 ดาว ⭐');
         return;
     }
 
-    if (confirm('คุณต้องการใช้ 🪙 20,000 เหรียญทองในฟาร์ม เพื่อแลก ⭐ 1 ดาว (+100 EXP) ใช่ไหมครับ?')) {
+    const currentUsed = farmState.dailyExchange.count;
+    if (confirm(`คุณต้องการใช้ 🪙 20,000 เหรียญทองในฟาร์ม เพื่อแลก ⭐ 1 ดาว (+100 EXP) ใช่ไหมครับ?\n(แลกแล้ว ${currentUsed}/4 ดาวในวันนี้)`)) {
         farmState.gold -= 20000;
+        farmState.dailyExchange.count += 1;
         updateFarmGoldDisplay();
+        updateFarmExchangeButtonUI();
         triggerFarmAutoSave();
 
         // เพิ่มดาวและบันทึกลงระบบหลัก
@@ -351,11 +377,11 @@ function exchangeFarmGoldToStar() {
         sendInAppNotification('MANUAL_STAR_ADJUST', {
             childName: currentUser || 'เด็กๆ',
             change: 1,
-            reason: 'แลกจากผลผลิตฟาร์มสุขใจ (ใช้ 20,000 เหรียญทอง 🪙)'
+            reason: `แลกจากผลผลิตฟาร์มสุขใจ (ใช้ 20,000 เหรียญทอง 🪙 | วันนี้แลกแล้ว ${farmState.dailyExchange.count}/4 ดาว)`
         });
 
         farmSound.playHarvest();
-        alert('แลกรางวัลสำเร็จ! ได้รับ ⭐ 1 ดาว และ +100 EXP เรียบร้อยแล้วครับ 🎉');
+        alert(`แลกรางวัลสำเร็จ! ได้รับ ⭐ 1 ดาว และ +100 EXP เรียบร้อยแล้วครับ 🎉\n(โควต้าฟาร์มวันนี้: ${farmState.dailyExchange.count}/4 ดาว)`);
         renderFarmInventoryUI();
     }
 }
@@ -1015,6 +1041,7 @@ function confirmFarmReset() {
     farmState = createInitialFarmState();
     triggerFarmAutoSave();
     updateFarmGoldDisplay();
+    updateFarmExchangeButtonUI();
     updateFarmToolButtonsUI();
     renderFarmSeedsPills();
     renderFarmPlotsUI();
@@ -1032,7 +1059,8 @@ async function initFarmGame() {
         farmState = {
             ...createInitialFarmState(),
             ...saved,
-            inventorySupplies: { ...createInitialFarmState().inventorySupplies, ...(saved.inventorySupplies || {}) }
+            inventorySupplies: { ...createInitialFarmState().inventorySupplies, ...(saved.inventorySupplies || {}) },
+            dailyExchange: { ...createInitialFarmState().dailyExchange, ...(saved.dailyExchange || {}) }
         };
         const now = Date.now();
         const offlineSec = Math.max(0, (now - (farmState.lastTickTimestamp || now)) / 1000);
@@ -1096,6 +1124,7 @@ async function initFarmGame() {
     }
 
     updateFarmGoldDisplay();
+    updateFarmExchangeButtonUI();
     updateFarmToolButtonsUI();
     renderFarmSeedsPills();
     renderFarmPlotsUI();

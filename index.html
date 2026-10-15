@@ -874,10 +874,11 @@
                             </div>
                         </div>
 
-                        <!-- 🌟 ปุ่มแลกดาว 20,000 ทอง = 1 ดาว -->
+                        <!-- 🌟 ปุ่มแลกดาว 20,000 ทอง = 1 ดาว (จำกัด 4 ดาว/วัน) -->
                         <button onclick="exchangeFarmGoldToStar()" class="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-600 hover:to-yellow-500 active:scale-95 text-slate-950 font-black px-3 py-1.5 rounded-2xl shadow-sm border-2 border-amber-300 text-xs flex items-center gap-1.5 transition font-kids">
                             <span>⭐ แลกดาว</span>
                             <span class="bg-white/80 px-1.5 py-0.5 rounded-lg text-[10px] font-extrabold text-amber-900 border border-amber-200">20,000 🪙 = 1 ดาว</span>
+                            <span id="farm-star-quota-text" class="text-[10px] font-extrabold text-amber-950 bg-amber-200/90 px-1.5 py-0.5 rounded-lg">(วันนี้ 0/4 ดาว)</span>
                         </button>
 
                         <div id="farm-windmill-hud" class="flex items-center gap-1.5 bg-sky-50 border-2 border-sky-300 px-2.5 py-1 rounded-2xl shadow-inner cursor-pointer hover:bg-sky-100 transition" title="คลิกดูรายละเอียดกังหันน้ำ">
@@ -1534,7 +1535,7 @@
     <script src="./game-number-dungeon.js?v=5"></script>
     <script src="./game-build2.js"></script>
     <script src="./game-plant.js?v=5"></script>
-    <script src="./game-farm.js?v=2"></script>
+    <script src="./game-farm.js?v=3"></script>
 
     <script>
         lucide.createIcons();
