@@ -155,27 +155,27 @@ class FarmSoundSynth {
 const farmSound = new FarmSoundSynth();
 
 const FARM_CROPS_CONFIG = {
-    lettuce: { id: 'lettuce', name: '', tierLabel: 'Tier 1', tierColor: 'bg-emerald-100 text-emerald-800', emoji: '', seedCost: 10, sellPrice: 24, durationSec: 30 },
-    carrot: { id: 'carrot', name: '', tierLabel: 'Tier 1', tierColor: 'bg-emerald-100 text-emerald-800', emoji: '', seedCost: 25, sellPrice: 65, durationSec: 75 },
-    tomato: { id: 'tomato', name: '', tierLabel: 'Tier 2', tierColor: 'bg-sky-100 text-sky-800', emoji: '', seedCost: 60, sellPrice: 165, durationSec: 180 },
-    strawberry: { id: 'strawberry', name: '', tierLabel: 'Tier 2', tierColor: 'bg-sky-100 text-sky-800', emoji: '', seedCost: 120, sellPrice: 340, durationSec: 360 },
-    watermelon: { id: 'watermelon', name: '', tierLabel: 'Tier 3', tierColor: 'bg-purple-100 text-purple-800', emoji: '', seedCost: 300, sellPrice: 920, durationSec: 900 },
-    durian: { id: 'durian', name: '', tierLabel: 'Tier 4', tierColor: 'bg-amber-100 text-amber-900 border border-amber-300', emoji: '', seedCost: 800, sellPrice: 2800, durationSec: 1800 },
-    golden_apple: { id: 'golden_apple', name: '', tierLabel: 'Tier 4', tierColor: 'bg-yellow-100 text-yellow-900 font-bold border border-yellow-400', emoji: '', seedCost: 2000, sellPrice: 7500, durationSec: 3600 }
+    lettuce: { id: 'lettuce', name: 'ผักกาดหอม', tierLabel: 'Tier 1', tierColor: 'bg-emerald-100 text-emerald-800', emoji: '🥬', seedCost: 10, sellPrice: 24, durationSec: 30 },
+    carrot: { id: 'carrot', name: 'แครอทส้ม', tierLabel: 'Tier 1', tierColor: 'bg-emerald-100 text-emerald-800', emoji: '🥕', seedCost: 25, sellPrice: 65, durationSec: 75 },
+    tomato: { id: 'tomato', name: 'มะเขือเทศฉ่ำ', tierLabel: 'Tier 2', tierColor: 'bg-sky-100 text-sky-800', emoji: '🍅', seedCost: 60, sellPrice: 165, durationSec: 180 },
+    strawberry: { id: 'strawberry', name: 'สตรอว์เบอร์รี', tierLabel: 'Tier 2', tierColor: 'bg-sky-100 text-sky-800', emoji: '🍓', seedCost: 120, sellPrice: 340, durationSec: 360 },
+    watermelon: { id: 'watermelon', name: 'แตงโมยักษ์', tierLabel: 'Tier 3', tierColor: 'bg-purple-100 text-purple-800', emoji: '🍉', seedCost: 300, sellPrice: 920, durationSec: 900 },
+    durian: { id: 'durian', name: 'ทุเรียนหมอนทอง', tierLabel: 'Tier 4', tierColor: 'bg-amber-100 text-amber-900 border border-amber-300', emoji: '🍈', seedCost: 800, sellPrice: 2800, durationSec: 1800 },
+    golden_apple: { id: 'golden_apple', name: 'แอปเปิลทองคำ', tierLabel: 'Tier 4', tierColor: 'bg-yellow-100 text-yellow-900 font-bold border border-yellow-400', emoji: '🍎✨', seedCost: 2000, sellPrice: 7500, durationSec: 3600 }
 };
 
 const FARM_SUPPLIES_CONFIG = {
-    growth_fertilizer: { id: 'growth_fertilizer', name: ' ', emoji: '', cost: 45, type: 'consumable', desc: ' 50% ' },
-    golden_fertilizer: { id: 'golden_fertilizer', name: ' ', emoji: '', cost: 150, type: 'consumable', desc: ' 2  (x2 Gold)' },
-    pest_spray: { id: 'pest_spray', name: ' ', emoji: '', cost: 40, type: 'consumable', desc: ' 10 ' },
-    storm_shield: { id: 'storm_shield', name: ' ', emoji: '', cost: 350, type: 'plot_upgrade', desc: '  100%' }
+    growth_fertilizer: { id: 'growth_fertilizer', name: 'ปุ๋ยเร่งโต ⚡', emoji: '🧪', cost: 45, type: 'consumable', desc: 'เร่งเวลาเติบโตที่เหลือลง 50% ทันที' },
+    golden_fertilizer: { id: 'golden_fertilizer', name: 'ปุ๋ยทองคำนำโชค 🌟', emoji: '✨', cost: 150, type: 'consumable', desc: 'ผลผลิตในแปลงขายได้เป็น 2 เท่า (x2 Gold)' },
+    pest_spray: { id: 'pest_spray', name: 'สเปรย์ไล่แมลง 🧴', emoji: '🧴', cost: 40, type: 'consumable', desc: 'กำจัดศัตรูพืชและคุ้มกันแมลง 10 นาที' },
+    storm_shield: { id: 'storm_shield', name: 'ตาข่ายกันพายุ 🛡️', emoji: '🛡️', cost: 350, type: 'plot_upgrade', desc: 'ติดตั้งถาวรประจำแปลง ป้องกันพายุ 100%' }
 };
 
 const FARM_WINDMILL_CONFIG = [
-    { level: 0, name: '', desc: '', cost: 200, intervalSec: 0, emoji: '' },
-    { level: 1, name: ' (Lv.1)', desc: ' 30 ', cost: 650, intervalSec: 30, emoji: '' },
-    { level: 2, name: ' (Lv.2)', desc: ' 10 ', cost: 1800, intervalSec: 10, emoji: '' },
-    { level: 3, name: ' (Lv.3 )', desc: ' !', cost: 0, intervalSec: 1, emoji: '' }
+    { level: 0, name: 'ยังไม่ได้สร้างกังหัน', desc: 'ต้องรดน้ำแปลงด้วยบัวรดน้ำเอง', cost: 200, intervalSec: 0, emoji: '🪓' },
+    { level: 1, name: 'กังหันวิดน้ำ (Lv.1)', desc: 'รดน้ำแปลงที่ปลูกทุก 30 วินาที', cost: 650, intervalSec: 30, emoji: '💨' },
+    { level: 2, name: 'กังหันไฮดรอลิก (Lv.2)', desc: 'รดน้ำแปลงที่ปลูกทุก 10 วินาที', cost: 1800, intervalSec: 10, emoji: '🌀' },
+    { level: 3, name: 'สปริงเกลอร์ (Lv.3 สูงสุด)', desc: 'ดินชุ่มชื้นตลอดเวลา ไม่แห้งเลย!', cost: 0, intervalSec: 1, emoji: '⛲✨' }
 ];
 
 const FARM_PLOT_UNLOCK_COSTS = [
@@ -322,7 +322,7 @@ function createFarmFloatingText(elem, text, colorClass = 'text-amber-300') {
 }
 
 function formatFarmTimeRemaining(seconds) {
-    if (seconds <= 0) return '! ';
+    if (seconds <= 0) return 'สุกแล้ว! ✨';
     const sec = Math.ceil(seconds);
     if (sec < 60) return `${sec}s`;
     const m = Math.floor(sec / 60);
@@ -330,32 +330,32 @@ function formatFarmTimeRemaining(seconds) {
     return `${m}m ${s > 0 ? s + 's' : ''}`;
 }
 
-//   20,000  = 1 
+// 🌟 ฟังก์ชันแลก 20,000 ทอง = 1 ดาว
 function exchangeFarmGoldToStar() {
     if (farmState.gold < 20000) {
-        alert('!   20,000   1  ');
+        alert('เหรียญทองในฟาร์มไม่เพียงพอครับ! ต้องการ 🪙 20,000 เหรียญ เพื่อแลก 1 ดาว ⭐');
         return;
     }
 
-    if (confirm('  20,000    1  (+100 EXP) ?')) {
+    if (confirm('คุณต้องการใช้ 🪙 20,000 เหรียญทองในฟาร์ม เพื่อแลก ⭐ 1 ดาว (+100 EXP) ใช่ไหมครับ?')) {
         farmState.gold -= 20000;
         updateFarmGoldDisplay();
         triggerFarmAutoSave();
 
-        // 
+        // เพิ่มดาวและบันทึกลงระบบหลัก
         totalStars += 1;
         saveUserStars();
         addEXPToUser(100);
 
-        // 
+        // ส่งแจ้งเตือนไปยังผู้ปกครอง
         sendInAppNotification('MANUAL_STAR_ADJUST', {
-            childName: currentUser || '',
+            childName: currentUser || 'เด็กๆ',
             change: 1,
-            reason: ' ( 20,000  )'
+            reason: 'แลกจากผลผลิตฟาร์มสุขใจ (ใช้ 20,000 เหรียญทอง 🪙)'
         });
 
         farmSound.playHarvest();
-        alert('!   1   +100 EXP  ');
+        alert('แลกรางวัลสำเร็จ! ได้รับ ⭐ 1 ดาว และ +100 EXP เรียบร้อยแล้วครับ 🎉');
         renderFarmInventoryUI();
     }
 }
@@ -372,7 +372,7 @@ function checkFarmPestSpawns() {
         }
     });
     if (newPestCount > 0) {
-        showFarmToast(`  ${newPestCount} !`, 'error');
+        showFarmToast(`🐛 ศัตรูพืชเข้ากัดกินในแปลง ${newPestCount} จุด!`, 'error');
         farmSound.playSquash();
     }
 }
@@ -389,11 +389,11 @@ function updateFarmStormCycle() {
         if (timeToStorm <= 40) {
             farmState.stormState = 'warning';
             farmState.stormWarningStartedAt = now;
-            showFarmToast(' ! ', 'error');
+            showFarmToast('⛈️ เมฆดำทะมึนกำลังรวมตัว! ตรวจสอบพายุจะพัดถล่มในอีกไม่ช้า', 'error');
             farmSound.playThunder();
         }
         if (weatherBadge) {
-            weatherBadge.innerHTML = ' ';
+            weatherBadge.innerHTML = '☀️ ท้องฟ้าแจ่มใส';
             weatherBadge.className = 'bg-black/30 backdrop-blur px-2.5 py-0.5 rounded-full border border-white/10 text-amber-200';
         }
         if (banner) banner.classList.add('hidden');
@@ -405,7 +405,7 @@ function updateFarmStormCycle() {
         if (banner) banner.classList.remove('hidden');
         if (timerCount) timerCount.innerText = `00:${String(Math.ceil(remainingSec)).padStart(2, '0')}`;
         if (weatherBadge) {
-            weatherBadge.innerHTML = ' ';
+            weatherBadge.innerHTML = '⚠️ ลมพายุกรรโชกแรง';
             weatherBadge.className = 'bg-purple-900/80 backdrop-blur px-2.5 py-0.5 rounded-full border border-purple-400 text-amber-300 animate-pulse';
         }
         if (skyOverlay) skyOverlay.style.opacity = '0.35';
@@ -423,7 +423,7 @@ function executeFarmStormStrike() {
     if (banner) banner.classList.add('hidden');
     if (skyOverlay) skyOverlay.style.opacity = '0.75';
     if (weatherBadge) {
-        weatherBadge.innerHTML = ' !';
+        weatherBadge.innerHTML = '⛈️ พายุพัดถล่ม!';
         weatherBadge.className = 'bg-rose-950/90 text-rose-300 px-2.5 py-0.5 rounded-full border border-rose-500 animate-bounce';
     }
 
@@ -455,11 +455,11 @@ function executeFarmStormStrike() {
 
     setTimeout(() => {
         if (destroyedPlots > 0) {
-            showFarmToast(` !  ${destroyedPlots}  ( ${protectedPlots} )`, 'error');
+            showFarmToast(`🌪️ พายุพัดถล่มฟาร์ม! เสียหาย ${destroyedPlots} แปลง (ป้องกันได้ ${protectedPlots} แปลง)`, 'error');
         } else if (protectedPlots > 0) {
-            showFarmToast(`  100%!`, 'success');
+            showFarmToast(`🛡️ ตาข่ายกันพายุคุ้มกันผลผลิตปลอดภัย 100%!`, 'success');
         } else {
-            showFarmToast(` `, 'info');
+            showFarmToast(`⛈️ พายุพัดผ่านฟาร์มไปแล้วอย่างปลอดภัย`, 'info');
         }
 
         farmState.stormState = 'calm';
@@ -523,7 +523,7 @@ function updateFarmRealTimeGrowth() {
     if (pestBadge) {
         if (activePests > 0) {
             pestBadge.classList.remove('hidden');
-            pestBadge.innerText = ` : ${activePests} !`;
+            pestBadge.innerText = `🐛 ศัตรูพืช: ${activePests} แปลง!`;
         } else {
             pestBadge.classList.add('hidden');
         }
@@ -548,16 +548,16 @@ function renderFarmPlotsUI() {
             const canAfford = farmState.gold >= unlockCost;
             plotCard.className += ' bg-amber-950/80 border-2 border-dashed border-amber-600/70 justify-center gap-1';
             plotCard.innerHTML = `
-                <div class="text-xl opacity-75"></div>
-                <div class="text-[10px] font-bold text-amber-200"> ${plot.id + 1}</div>
+                <div class="text-xl opacity-75">🔒</div>
+                <div class="text-[10px] font-bold text-amber-200">แปลงที่ ${plot.id + 1}</div>
                 <button class="px-2 py-0.5 rounded-lg text-[9px] font-black ${canAfford ? 'bg-amber-400 text-amber-950 animate-pulse' : 'bg-stone-700 text-stone-400'} shadow border border-amber-200">
-                     ${unlockCost} 
+                    🪙 ${unlockCost} ขยาย
                 </button>
             `;
             plotCard.onclick = (e) => {
                 e.stopPropagation();
                 if (farmState.gold < unlockCost) {
-                    showFarmToast(`  ${unlockCost} `, 'error');
+                    showFarmToast(`ต้องการ 🪙 ${unlockCost} เหรียญ`, 'error');
                     return;
                 }
                 farmState.gold -= unlockCost;
@@ -572,24 +572,24 @@ function renderFarmPlotsUI() {
         }
 
         let soilClass = 'soil-untilled border-2 border-[#543820]';
-        let soilStateBadge = '';
+        let soilStateBadge = 'รอพรวน';
         let badgeColor = 'bg-stone-800/70 text-stone-300';
 
         if (plot.isTilled) {
             if (plot.isWatered) {
                 soilClass = 'soil-tilled-wet';
-                soilStateBadge = ' ';
+                soilStateBadge = 'ชุ่มชื้น 💧';
                 badgeColor = 'bg-sky-950/80 text-sky-200 border border-sky-400/40';
             } else {
                 soilClass = 'soil-tilled-dry';
-                soilStateBadge = ' ';
+                soilStateBadge = 'ดินแห้ง ☀️';
                 badgeColor = 'bg-amber-950/80 text-amber-200 border border-amber-600/40';
             }
         }
 
         plotCard.className += ` ${soilClass}`;
-        const shieldBadgeHtml = plot.hasShield ? `<span class="bg-blue-600 text-white text-[8px] px-1 py-0.2 rounded-full shadow border border-blue-300"></span>` : '';
-        const goldenBadgeHtml = plot.isGoldenBonus ? `<span class="bg-amber-400 text-amber-950 text-[8px] px-1 py-0.2 rounded-full font-bold">x2</span>` : '';
+        const shieldBadgeHtml = plot.hasShield ? `<span class="bg-blue-600 text-white text-[8px] px-1 py-0.2 rounded-full shadow border border-blue-300">🛡️</span>` : '';
+        const goldenBadgeHtml = plot.isGoldenBonus ? `<span class="bg-amber-400 text-amber-950 text-[8px] px-1 py-0.2 rounded-full font-bold">🌟x2</span>` : '';
 
         if (!plot.cropId) {
             plotCard.innerHTML = `
@@ -597,8 +597,8 @@ function renderFarmPlotsUI() {
                     <span class="text-stone-300 flex items-center gap-0.5">#${plot.id + 1} ${shieldBadgeHtml}</span>
                     <span class="px-1 py-0.2 rounded-full ${badgeColor}">${soilStateBadge}</span>
                 </div>
-                <div class="text-2xl opacity-40 my-auto">${plot.isTilled ? (plot.isWatered ? '' : '') : ''}</div>
-                <div class="text-[9px] font-bold text-white/90 bg-black/40 px-1.5 py-0.2 rounded">${plot.isTilled ? (plot.isWatered ? ' ' : ' ') : ' '}</div>
+                <div class="text-2xl opacity-40 my-auto">${plot.isTilled ? (plot.isWatered ? '🕳️' : '🟤') : '🌿'}</div>
+                <div class="text-[9px] font-bold text-white/90 bg-black/40 px-1.5 py-0.2 rounded">${plot.isTilled ? (plot.isWatered ? '🌱 หยอดเมล็ด' : '💧 รดน้ำ') : '⛏️ พรวนดิน'}</div>
             `;
         } else {
             const crop = FARM_CROPS_CONFIG[plot.cropId];
@@ -606,12 +606,12 @@ function renderFarmPlotsUI() {
             const isReady = plot.growthProgressSec >= crop.durationSec;
             const timeLeftSec = Math.max(0, crop.durationSec - plot.growthProgressSec);
 
-            let cropIcon = progressPercent >= 100 ? crop.emoji : (progressPercent >= 50 ? '' : '');
+            let cropIcon = progressPercent >= 100 ? crop.emoji : (progressPercent >= 50 ? '🌿' : '🌱');
 
             const pestOverlayHtml = plot.hasPest ? `
                 <div class="absolute inset-0 bg-rose-950/60 backdrop-blur-xs flex flex-col items-center justify-center p-1 z-20 animate-pulse">
-                    <span class="text-2xl pest-active"></span>
-                    <span class="text-[8px] font-black text-rose-300 bg-rose-900 px-1 rounded mt-0.5">!</span>
+                    <span class="text-2xl pest-active">🐛</span>
+                    <span class="text-[8px] font-black text-rose-300 bg-rose-900 px-1 rounded mt-0.5">แตะไล่แมลง!</span>
                 </div>
             ` : '';
 
@@ -619,16 +619,16 @@ function renderFarmPlotsUI() {
                 ${pestOverlayHtml}
                 <div class="w-full flex justify-between items-center text-[8px] font-bold">
                     <span class="text-white drop-shadow flex items-center gap-0.5">#${plot.id + 1} ${crop.name} ${shieldBadgeHtml} ${goldenBadgeHtml}</span>
-                    <span class="px-1 py-0.2 rounded-full ${badgeColor}">${plot.isWatered ? '' : '!'}</span>
+                    <span class="px-1 py-0.2 rounded-full ${badgeColor}">${plot.isWatered ? 'ชุ่มชื้น' : 'ขาดน้ำ!'}</span>
                 </div>
                 <div class="my-auto flex flex-col items-center">
                     <div class="text-2xl sm:text-3xl filter drop-shadow ${isReady ? 'ripe-bounce' : ''}">${cropIcon}</div>
-                    ${isReady ? `<span class="mt-0.5 bg-amber-400 text-amber-950 font-black text-[8px] px-1.5 py-0.2 rounded-full shadow animate-bounce"> </span>` : ''}
+                    ${isReady ? `<span class="mt-0.5 bg-amber-400 text-amber-950 font-black text-[8px] px-1.5 py-0.2 rounded-full shadow animate-bounce">🧺 เก็บเกี่ยว</span>` : ''}
                 </div>
                 <div class="w-full">
                     <div class="flex justify-between items-center text-[8px] font-bold text-white mb-0.5 drop-shadow">
                         <span>${Math.floor(progressPercent)}%</span>
-                        <span>${plot.isWatered ? formatFarmTimeRemaining(timeLeftSec) : ' '}</span>
+                        <span>${plot.isWatered ? formatFarmTimeRemaining(timeLeftSec) : '💧 ขาดน้ำ'}</span>
                     </div>
                     <div class="w-full bg-black/60 rounded-full h-1.5 overflow-hidden p-0.5">
                         <div class="h-full rounded-full ${isReady ? 'bg-amber-400' : (plot.isWatered ? 'bg-emerald-400' : 'bg-rose-400')}" style="width: ${progressPercent}%"></div>
@@ -649,7 +649,7 @@ function handleFarmPlotClick(plot, plotElem) {
     if (plot.hasPest) {
         plot.hasPest = false;
         farmSound.playSquash();
-        createFarmFloatingText(plotElem, '! ', 'text-rose-300');
+        createFarmFloatingText(plotElem, 'ไล่แมลงแล้ว! 🥾', 'text-rose-300');
         triggerFarmAutoSave();
         renderFarmPlotsUI();
         return;
@@ -661,7 +661,7 @@ function handleFarmPlotClick(plot, plotElem) {
         if (!plot.cropId) return;
         const crop = FARM_CROPS_CONFIG[plot.cropId];
         if (plot.growthProgressSec < crop.durationSec) {
-            showFarmToast(`${crop.name} !`, 'warn');
+            showFarmToast(`ต้น${crop.name} ยังไม่สุกเต็มที่!`, 'warn');
             return;
         }
 
@@ -687,30 +687,30 @@ function handleFarmPlotClick(plot, plotElem) {
         if (plot.isTilled) return;
         plot.isTilled = true;
         farmSound.playTill();
-        createFarmFloatingText(plotElem, ' ', 'text-amber-200');
+        createFarmFloatingText(plotElem, 'พรวนดิน ⛏️', 'text-amber-200');
         triggerFarmAutoSave();
         renderFarmPlotsUI();
         return;
     }
 
     if (tool === 'water') {
-        if (!plot.isTilled) { showFarmToast('', 'warn'); return; }
+        if (!plot.isTilled) { showFarmToast('พรวนดินก่อนรดน้ำครับ', 'warn'); return; }
         if (plot.isWatered) return;
         plot.isWatered = true;
         farmSound.playWater();
-        createFarmFloatingText(plotElem, ' ', 'text-sky-300');
+        createFarmFloatingText(plotElem, 'รดน้ำ 💧', 'text-sky-300');
         triggerFarmAutoSave();
         renderFarmPlotsUI();
         return;
     }
 
     if (tool === 'plant') {
-        if (!plot.isTilled) { showFarmToast('!', 'warn'); return; }
+        if (!plot.isTilled) { showFarmToast('พรวนดินก่อนหยอดเมล็ด!', 'warn'); return; }
         if (plot.cropId) return;
 
         const cropKey = farmState.selectedSeed;
         if ((farmState.seeds[cropKey] || 0) <= 0) {
-            showFarmToast(` ${FARM_CROPS_CONFIG[cropKey].name} !`, 'error');
+            showFarmToast(`เมล็ดพันธุ์ ${FARM_CROPS_CONFIG[cropKey].name} หมด!`, 'error');
             return;
         }
 
@@ -721,7 +721,7 @@ function handleFarmPlotClick(plot, plotElem) {
         plot.hasPest = false;
 
         farmSound.playPlant();
-        createFarmFloatingText(plotElem, ' ', 'text-emerald-300');
+        createFarmFloatingText(plotElem, 'ปลูก 🌱', 'text-emerald-300');
         triggerFarmAutoSave();
         renderFarmPlotsUI();
         renderFarmSeedsPills();
@@ -750,14 +750,14 @@ function renderFarmSuppliesShopUI() {
             </div>
             <div class="flex flex-col items-end gap-1">
                 <button class="buy-sup-btn px-2.5 py-1 rounded-xl font-black text-[10px] shadow ${canAfford ? 'bg-amber-400 text-amber-950 active:scale-95' : 'bg-stone-200 text-stone-400 cursor-not-allowed'}">
-                     ${item.cost}
+                    🪙 ${item.cost}
                 </button>
-                ${item.type === 'consumable' && currentQty > 0 ? `<button class="use-sup-btn px-2 py-0.5 rounded-lg text-[9px] font-bold bg-emerald-600 text-white active:scale-95"> (${currentQty})</button>` : ''}
+                ${item.type === 'consumable' && currentQty > 0 ? `<button class="use-sup-btn px-2 py-0.5 rounded-lg text-[9px] font-bold bg-emerald-600 text-white active:scale-95">ใช้ (${currentQty})</button>` : ''}
             </div>
         `;
 
         card.querySelector('.buy-sup-btn').onclick = () => {
-            if (farmState.gold < item.cost) { showFarmToast('', 'error'); return; }
+            if (farmState.gold < item.cost) { showFarmToast('เหรียญทองไม่พอ', 'error'); return; }
             if (item.id === 'storm_shield') { openFarmItemApplyModal(item); return; }
             farmState.gold -= item.cost;
             farmState.inventorySupplies[item.id] = (farmState.inventorySupplies[item.id] || 0) + 1;
@@ -784,7 +784,7 @@ function openFarmItemApplyModal(item) {
         if (!plot.isUnlocked) return;
         const btn = document.createElement('button');
         btn.className = 'p-1.5 rounded-xl border flex flex-col items-center justify-center text-[10px] font-bold active:scale-95 bg-emerald-50 border-emerald-300';
-        btn.innerText = ` #${plot.id + 1}`;
+        btn.innerText = `แปลง #${plot.id + 1}`;
         btn.onclick = () => {
             modal.classList.add('hidden');
             if (item.id === 'storm_shield') {
@@ -832,8 +832,8 @@ function renderFarmWindmillPanel() {
     const actInd = document.getElementById('farm-windmill-active-indicator');
 
     if (hudIcon) hudIcon.innerText = currentConfig.emoji;
-    if (hudLvl) hudLvl.innerText = currentLevel > 0 ? `Lv.${currentLevel}` : '';
-    if (actInd) actInd.innerText = currentLevel > 0 ? `  Lv.${currentLevel}` : ' : ';
+    if (hudLvl) hudLvl.innerText = currentLevel > 0 ? `Lv.${currentLevel}` : 'ไม่มีกังหัน';
+    if (actInd) actInd.innerText = currentLevel > 0 ? `💨 กังหัน Lv.${currentLevel}` : '⚙️ กังหัน: ปิดใช้งาน';
 
     container.innerHTML = `
         <div class="bg-sky-50 border border-sky-300 rounded-2xl p-2.5 flex items-center gap-2">
@@ -845,9 +845,9 @@ function renderFarmWindmillPanel() {
         </div>
         ${nextConfig ? `
             <button id="farm-upgrade-windmill-btn" class="w-full py-2 rounded-xl font-black text-xs text-white shadow transition active:scale-95 ${farmState.gold >= nextConfig.cost ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-stone-300 text-stone-500 cursor-not-allowed'}">
-                 ${nextConfig.name} ( ${nextConfig.cost})
+                อัปเกรดเป็น ${nextConfig.name} (🪙 ${nextConfig.cost})
             </button>
-        ` : `<div class="text-[10px] text-center font-bold text-amber-700 bg-amber-50 p-2 rounded-xl">! </div>`}
+        ` : `<div class="text-[10px] text-center font-bold text-amber-700 bg-amber-50 p-2 rounded-xl">กังหันน้ำอัปเกรดเต็มระดับสูงสุดแล้ว! 🏆</div>`}
     `;
 
     const upBtn = document.getElementById('farm-upgrade-windmill-btn');
@@ -881,11 +881,11 @@ function renderFarmShopUI() {
                 <div class="text-2xl p-1 bg-white rounded-xl border border-stone-200">${crop.emoji}</div>
                 <div>
                     <div class="font-extrabold text-stone-800 text-xs">${crop.name} <span class="text-[8px] px-1 rounded ${crop.tierColor}">${crop.tierLabel}</span></div>
-                    <div class="text-[10px] text-stone-500"> ${formatFarmTimeRemaining(crop.durationSec)} |  ${crop.sellPrice} | : ${userSeeds}</div>
+                    <div class="text-[10px] text-stone-500">⏱️ ${formatFarmTimeRemaining(crop.durationSec)} | 💰 ${crop.sellPrice} | มี: ${userSeeds}</div>
                 </div>
             </div>
             <button class="buy-crop-btn px-2.5 py-1 rounded-xl font-black text-[10px] shadow active:scale-95 ${canAfford ? 'bg-amber-400 text-amber-950' : 'bg-stone-200 text-stone-400 cursor-not-allowed'}">
-                 ${crop.seedCost}
+                🪙 ${crop.seedCost}
             </button>
         `;
 
@@ -923,12 +923,12 @@ function renderFarmInventoryUI() {
             <div class="flex items-center gap-2">
                 <span class="text-2xl">${crop.emoji}</span>
                 <div>
-                    <div class="font-extrabold text-xs text-stone-800">${crop.name} ( ${count} )</div>
-                    <div class="text-[10px] text-stone-500">:  ${crop.sellPrice}</div>
+                    <div class="font-extrabold text-xs text-stone-800">${crop.name} (มี ${count} ชิ้น)</div>
+                    <div class="text-[10px] text-stone-500">ราคาชิ้นละ: 🪙 ${crop.sellPrice}</div>
                 </div>
             </div>
             <button class="sell-crop-btn px-2.5 py-1 rounded-xl font-bold text-[10px] ${count > 0 ? 'bg-emerald-600 text-white active:scale-95' : 'bg-stone-200 text-stone-400'}" ${count <= 0 ? 'disabled' : ''}>
-                 (+ ${crop.sellPrice})
+                ขาย (+🪙 ${crop.sellPrice})
             </button>
         `;
 
@@ -949,7 +949,7 @@ function renderFarmInventoryUI() {
     const sellAllBtn = document.getElementById('farm-sell-all-btn');
     if (sellAllBtn) {
         sellAllBtn.disabled = totalItems === 0;
-        sellAllBtn.innerText = `  (+ ${totalValue})`;
+        sellAllBtn.innerText = `💰 ขายหมด (+🪙 ${totalValue})`;
         sellAllBtn.onclick = () => {
             if (totalItems === 0) return;
             farmState.gold += totalValue;
@@ -1004,7 +1004,7 @@ function triggerFarmAutoSave() {
     clearTimeout(farmSaveTimeout);
     farmSaveTimeout = setTimeout(async () => {
         const statusEl = document.getElementById('farm-save-status');
-        if (statusEl) statusEl.innerText = '... ';
+        if (statusEl) statusEl.innerText = 'บันทึก... 💾';
         await saveFarmStateToDB(farmState);
         if (statusEl) statusEl.innerText = 'IndexedDB';
     }, 500);
