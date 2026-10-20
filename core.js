@@ -130,9 +130,9 @@ function attachVocabListener() {
             rawVocabList = subjectMode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH];
             set(currentDbRef, rawVocabList);
         }
-        if(typeof filterVocabForUser === 'function') filterVocabForUser();
-        if(typeof updateCard === 'function') updateCard();
-        if(typeof vocabSubMode !== 'undefined' && vocabSubMode === 'match' && typeof startMatchingGame === 'function') startMatchingGame();
+        if (typeof filterVocabForUser === 'function') filterVocabForUser();
+        if (typeof updateCard === 'function') updateCard();
+        if (typeof vocabSubMode !== 'undefined' && vocabSubMode === 'match' && typeof startMatchingGame === 'function') startMatchingGame();
     });
 }
 
@@ -160,9 +160,9 @@ function switchSubjectMode(mode) {
     } else {
         const localData = localStorage.getItem(`kids_vocab_${subjectMode.toLowerCase()}_data`);
         rawVocabList = localData ? JSON.parse(localData) : (subjectMode === 'EN' ? [...defaultVocabEN] : [...defaultVocabTH]);
-        if(typeof filterVocabForUser === 'function') filterVocabForUser();
-        if(typeof updateCard === 'function') updateCard();
-        if(typeof vocabSubMode !== 'undefined' && vocabSubMode === 'match' && typeof startMatchingGame === 'function') startMatchingGame();
+        if (typeof filterVocabForUser === 'function') filterVocabForUser();
+        if (typeof updateCard === 'function') updateCard();
+        if (typeof vocabSubMode !== 'undefined' && vocabSubMode === 'match' && typeof startMatchingGame === 'function') startMatchingGame();
     }
 }
 
@@ -188,37 +188,47 @@ function calculateSkillLevel(points) {
 
 function initData() {
     const savedKey = localStorage.getItem("gemini_api_key");
-    if (savedKey) document.getElementById("input-api-key").value = savedKey;
+    const keyInput = document.getElementById("input-api-key");
+    if (keyInput && savedKey) keyInput.value = savedKey;
 
     const savedPin = localStorage.getItem("parent_pin") || "1234";
-    document.getElementById("input-parent-pin").value = savedPin;
+    const pinInput = document.getElementById("input-parent-pin");
+    if (pinInput) pinInput.value = savedPin;
 
     const fbConfigStr = localStorage.getItem("firebase_config");
-    if (fbConfigStr) {
-        document.getElementById("input-firebase-config").value = fbConfigStr;
-    } else if (embeddedFirebaseConfig && embeddedFirebaseConfig.apiKey) {
-        document.getElementById("input-firebase-config").value = JSON.stringify(embeddedFirebaseConfig, null, 2);
+    const fbInput = document.getElementById("input-firebase-config");
+    if (fbInput) {
+        if (fbConfigStr) {
+            fbInput.value = fbConfigStr;
+        } else if (embeddedFirebaseConfig && embeddedFirebaseConfig.apiKey) {
+            fbInput.value = JSON.stringify(embeddedFirebaseConfig, null, 2);
+        }
     }
 
     isDailyLimitEnabled = localStorage.getItem("enable_daily_limit") !== "false";
     dailyLimitRounds = parseInt(localStorage.getItem("daily_limit_rounds") || "3", 10);
     maxLevel = parseInt(localStorage.getItem("max_level") || "20", 10);
-    document.getElementById("input-max-level").value = maxLevel;
+    
+    const maxLvlInput = document.getElementById("input-max-level");
+    if (maxLvlInput) maxLvlInput.value = maxLevel;
 
     const savedAvatars = localStorage.getItem("level_avatars_config");
     if (savedAvatars) levelAvatarsConfig = JSON.parse(savedAvatars);
     
-    document.getElementById("input-enable-daily-limit").checked = isDailyLimitEnabled;
-    document.getElementById("input-daily-limit-rounds").value = dailyLimitRounds;
+    const dailyLimitCheck = document.getElementById("input-enable-daily-limit");
+    if (dailyLimitCheck) dailyLimitCheck.checked = isDailyLimitEnabled;
+
+    const dailyLimitInput = document.getElementById("input-daily-limit-rounds");
+    if (dailyLimitInput) dailyLimitInput.value = dailyLimitRounds;
 
     setTimeout(initFirebase, 300);
 
-    // Auto-restore profile หากเคยล็อกอินไว้แล้ว
     const lastUser = localStorage.getItem("last_active_user");
     const lastIsParent = localStorage.getItem("last_is_parent") === "true";
     if (lastUser) {
         setProfile(lastUser, lastIsParent);
-        document.getElementById("profile-modal").classList.add("hidden");
+        const pModal = document.getElementById("profile-modal");
+        if (pModal) pModal.classList.add("hidden");
     } else {
         openProfileModal();
     }
@@ -239,22 +249,22 @@ function switchMainTab(tab) {
         if (n) { n.classList.remove("text-indigo-600"); n.classList.add("text-slate-400"); }
     });
 
-    questSec.classList.add("hidden"); questSec.classList.remove("flex");
-    gameSec.classList.add("hidden"); gameSec.classList.remove("flex");
-    shopSec.classList.add("hidden"); shopSec.classList.remove("flex");
-    langSwitchBox.classList.add("hidden");
+    if (questSec) { questSec.classList.add("hidden"); questSec.classList.remove("flex"); }
+    if (gameSec) { gameSec.classList.add("hidden"); gameSec.classList.remove("flex"); }
+    if (shopSec) { shopSec.classList.add("hidden"); shopSec.classList.remove("flex"); }
+    if (langSwitchBox) langSwitchBox.classList.add("hidden");
 
     if (tab === 'quest') {
         if (navQuest) { navQuest.classList.remove("text-slate-400"); navQuest.classList.add("text-indigo-600"); }
-        questSec.classList.remove("hidden"); questSec.classList.add("flex");
-        if(typeof renderParentQuestsList === 'function') renderParentQuestsList();
+        if (questSec) { questSec.classList.remove("hidden"); questSec.classList.add("flex"); }
+        if (typeof renderParentQuestsList === 'function') renderParentQuestsList();
     } else if (tab === 'game') {
         if (navGame) { navGame.classList.remove("text-slate-400"); navGame.classList.add("text-indigo-600"); }
-        gameSec.classList.remove("hidden"); gameSec.classList.add("flex");
-        if(typeof switchMiniGame === 'function') switchMiniGame(currentMiniGame);
+        if (gameSec) { gameSec.classList.remove("hidden"); gameSec.classList.add("flex"); }
+        if (typeof switchMiniGame === 'function') switchMiniGame(currentMiniGame);
     } else if (tab === 'shop') {
         if (navShop) { navShop.classList.remove("text-slate-400"); navShop.classList.add("text-indigo-600"); }
-        shopSec.classList.remove("hidden"); shopSec.classList.add("flex");
+        if (shopSec) { shopSec.classList.remove("hidden"); shopSec.classList.add("flex"); }
         
         const qStarsEl = document.getElementById("quest-user-stars");
         if (qStarsEl) qStarsEl.innerText = `⭐ ${totalStars}`;
@@ -263,13 +273,15 @@ function switchMainTab(tab) {
         if (qTrophiesEl) qTrophiesEl.innerText = `🏆 ${totalTrophies}`;
         
         const parentAddSec = document.getElementById("parent-add-reward-section");
-        if (isParentUser) {
-            parentAddSec.classList.remove("hidden");
-        } else {
-            parentAddSec.classList.add("hidden");
+        if (parentAddSec) {
+            if (isParentUser) {
+                parentAddSec.classList.remove("hidden");
+            } else {
+                parentAddSec.classList.add("hidden");
+            }
         }
-        if(typeof switchRewardTab === 'function') switchRewardTab('shop');
-        if(typeof renderRewardsList === 'function') renderRewardsList();
+        if (typeof switchRewardTab === 'function') switchRewardTab('shop');
+        if (typeof renderRewardsList === 'function') renderRewardsList();
     }
     checkDailyLimitStatus();
 }
@@ -280,7 +292,7 @@ function initFirebase() {
 
     if (configStr) {
         try { firebaseConfig = JSON.parse(configStr); } 
-        catch(e) { console.error("Local config parse error, using embedded config", e); }
+        catch (e) { console.error("Local config parse error, using embedded config", e); }
     }
 
     if (!firebaseConfig || !firebaseConfig.apiKey) {
@@ -296,10 +308,10 @@ function initFirebase() {
         const localSkills = localStorage.getItem("kids_user_skills");
         if (localSkills) userSkillsList = JSON.parse(localSkills);
 
-        if(typeof filterVocabForUser === 'function') filterVocabForUser();
-        if(typeof updateCard === 'function') updateCard();
-        if(typeof renderRewardsList === 'function') renderRewardsList();
-        if(typeof renderParentQuestsList === 'function') renderParentQuestsList();
+        if (typeof filterVocabForUser === 'function') filterVocabForUser();
+        if (typeof updateCard === 'function') updateCard();
+        if (typeof renderRewardsList === 'function') renderRewardsList();
+        if (typeof renderParentQuestsList === 'function') renderParentQuestsList();
         renderUserSkillsUI();
         return;
     }
@@ -323,8 +335,10 @@ function initFirebase() {
             if (data) {
                 isDailyLimitEnabled = data.enabled;
                 dailyLimitRounds = data.rounds;
-                document.getElementById("input-enable-daily-limit").checked = isDailyLimitEnabled;
-                document.getElementById("input-daily-limit-rounds").value = dailyLimitRounds;
+                const checkEl = document.getElementById("input-enable-daily-limit");
+                if (checkEl) checkEl.checked = isDailyLimitEnabled;
+                const roundsEl = document.getElementById("input-daily-limit-rounds");
+                if (roundsEl) roundsEl.value = dailyLimitRounds;
                 checkDailyLimitStatus();
             }
         });
@@ -334,7 +348,8 @@ function initFirebase() {
             if (data) {
                 maxLevel = data.maxLevel || 20;
                 levelAvatarsConfig = data.levelAvatars || { 'พูน': {}, 'เพลิน': {} };
-                document.getElementById("input-max-level").value = maxLevel;
+                const maxLvlInput = document.getElementById("input-max-level");
+                if (maxLvlInput) maxLvlInput.value = maxLevel;
                 updateUserLevelAndAvatarDisplay();
             }
         });
@@ -356,7 +371,7 @@ function initFirebase() {
             if (data) { parsedRewards = Array.isArray(data) ? data : Object.values(data); }
             if (parsedRewards.length > 0) { rewardsList = parsedRewards; } 
             else { rewardsList = [...defaultRewards]; set(dbRefRewards, rewardsList); }
-            if(typeof renderRewardsList === 'function') renderRewardsList();
+            if (typeof renderRewardsList === 'function') renderRewardsList();
         });
 
         onValue(dbRefParentQuests, (snapshot) => {
@@ -365,7 +380,7 @@ function initFirebase() {
             if (data) { parsedQuests = Array.isArray(data) ? data : Object.values(data); }
             if (parsedQuests.length > 0) { parentQuestsList = parsedQuests; } 
             else { parentQuestsList = [...defaultParentQuests]; set(dbRefParentQuests, parentQuestsList); }
-            if(typeof renderParentQuestsList === 'function') renderParentQuestsList();
+            if (typeof renderParentQuestsList === 'function') renderParentQuestsList();
         });
 
         onValue(dbRefNotify, (snapshot) => {
@@ -374,11 +389,13 @@ function initFirebase() {
             if (data) {
                 Object.keys(data).forEach(key => { notificationsList.push({ id: key, ...data[key] }); });
                 notificationsList.sort((a, b) => b.timestamp - a.timestamp);
-                document.getElementById("notify-badge").classList.remove("hidden");
-                document.getElementById("notify-dot").classList.remove("hidden");
+                const badge = document.getElementById("notify-badge");
+                if (badge) badge.classList.remove("hidden");
+                const dot = document.getElementById("notify-dot");
+                if (dot) dot.classList.remove("hidden");
             }
-            if(typeof renderNotifications === 'function') renderNotifications();
-            if(typeof renderParentQuestsList === 'function') renderParentQuestsList();
+            if (typeof renderNotifications === 'function') renderNotifications();
+            if (typeof renderParentQuestsList === 'function') renderParentQuestsList();
         });
 
         if (currentUser) loadUserStars();
@@ -388,35 +405,44 @@ function initFirebase() {
     }
 }
 
-function openProfileModal() { document.getElementById("profile-modal").classList.remove("hidden"); }
+function openProfileModal() { 
+    const pModal = document.getElementById("profile-modal");
+    if (pModal) pModal.classList.remove("hidden"); 
+}
 
 function selectProfile(name, requiresPin) {
     if (requiresPin) {
         pendingProfile = name;
-        document.getElementById("pin-target-name").innerText = `เข้าสู่ระบบสำหรับ ${name}`;
-        document.getElementById("pin-input").value = "";
-        document.getElementById("pin-modal").classList.remove("hidden");
+        const targetName = document.getElementById("pin-target-name");
+        if (targetName) targetName.innerText = `เข้าสู่ระบบสำหรับ ${name}`;
+        const pinInput = document.getElementById("pin-input");
+        if (pinInput) pinInput.value = "";
+        const pinModal = document.getElementById("pin-modal");
+        if (pinModal) pinModal.classList.remove("hidden");
     } else {
         setProfile(name, false);
-        document.getElementById("profile-modal").classList.add("hidden");
+        const pModal = document.getElementById("profile-modal");
+        if (pModal) pModal.classList.add("hidden");
     }
 }
 
 function verifyPin() {
-    const pin = document.getElementById("pin-input").value.trim();
+    const pin = (document.getElementById("pin-input")?.value || "").trim();
     const currentSavedPin = localStorage.getItem("parent_pin") || "1234";
 
     if (pin === currentSavedPin) {
         setProfile(pendingProfile, true);
         closePinModal();
-        document.getElementById("profile-modal").classList.add("hidden");
+        const pModal = document.getElementById("profile-modal");
+        if (pModal) pModal.classList.add("hidden");
     } else {
         alert(`รหัสผ่านไม่ถูกต้อง!`);
     }
 }
 
 function closePinModal() {
-    document.getElementById("pin-modal").classList.add("hidden");
+    const pinModal = document.getElementById("pin-modal");
+    if (pinModal) pinModal.classList.add("hidden");
     pendingProfile = null;
 }
 
@@ -424,11 +450,11 @@ function setProfile(name, isParent) {
     currentUser = name;
     isParentUser = isParent;
 
-    // เซฟการจำค่าผู้ใช้ลง LocalStorage
     localStorage.setItem("last_active_user", name);
     localStorage.setItem("last_is_parent", isParent ? "true" : "false");
 
-    document.getElementById("user-name").innerText = name;
+    const userNameEl = document.getElementById("user-name");
+    if (userNameEl) userNameEl.innerText = name;
     
     const avatarImages = { 
         'พ่อนะ': 'luigi.png', 
@@ -440,14 +466,16 @@ function setProfile(name, isParent) {
     const avatarImgEl = document.getElementById("user-avatar-img");
     const avatarEmojiEl = document.getElementById("user-avatar");
 
-    if (avatarImages[name]) {
-        avatarImgEl.src = avatarImages[name];
-        avatarImgEl.classList.remove("hidden");
-        avatarEmojiEl.classList.add("hidden");
-    } else {
-        avatarEmojiEl.innerText = '👤';
-        avatarEmojiEl.classList.remove("hidden");
-        avatarImgEl.classList.add("hidden");
+    if (avatarImgEl && avatarEmojiEl) {
+        if (avatarImages[name]) {
+            avatarImgEl.src = avatarImages[name];
+            avatarImgEl.classList.remove("hidden");
+            avatarEmojiEl.classList.add("hidden");
+        } else {
+            avatarEmojiEl.innerText = '👤';
+            avatarEmojiEl.classList.remove("hidden");
+            avatarImgEl.classList.add("hidden");
+        }
     }
 
     const addBtn = document.getElementById("btn-add-vocab");
@@ -458,32 +486,32 @@ function setProfile(name, isParent) {
     const parentFilterBox = document.getElementById("parent-filter-box");
 
     if (isParent) {
-        addBtn.classList.remove("hidden"); addBtn.classList.add("flex");
-        btnKey.classList.remove("hidden"); btnKey.classList.add("flex");
-        parentControls.classList.remove("hidden");
+        if (addBtn) { addBtn.classList.remove("hidden"); addBtn.classList.add("flex"); }
+        if (btnKey) { btnKey.classList.remove("hidden"); btnKey.classList.add("flex"); }
+        if (parentControls) parentControls.classList.remove("hidden");
         if (parentCreateQuestBox) parentCreateQuestBox.classList.remove("hidden");
         if (parentManageStarsBox) parentManageStarsBox.classList.remove("hidden");
         if (parentFilterBox) parentFilterBox.classList.remove("hidden");
     } else {
-        addBtn.classList.add("hidden"); addBtn.classList.remove("flex");
-        btnKey.classList.add("hidden"); btnKey.classList.remove("flex");
-        parentControls.classList.add("hidden");
+        if (addBtn) { addBtn.classList.add("hidden"); addBtn.classList.remove("flex"); }
+        if (btnKey) { btnKey.classList.add("hidden"); btnKey.classList.remove("flex"); }
+        if (parentControls) parentControls.classList.add("hidden");
         if (parentCreateQuestBox) parentCreateQuestBox.classList.add("hidden");
         if (parentManageStarsBox) parentManageStarsBox.classList.add("hidden");
         if (parentFilterBox) parentFilterBox.classList.add("hidden");
     }
 
     if (typeof switchVocabPlayMode === 'function') switchVocabPlayMode('cards');
-
-    if(typeof filterVocabForUser === 'function') filterVocabForUser();
+    if (typeof filterVocabForUser === 'function') filterVocabForUser();
+    
     currentIndex = 0;
     setCorrectAnswers = 0;
     loadUserStars();
     renderUserSkillsUI();
-    if(typeof updateCard === 'function') updateCard();
-    if(typeof renderParentQuestsList === 'function') renderParentQuestsList();
-    if(typeof renderNotifications === 'function') renderNotifications();
-    if(typeof renderPlantLibrary === 'function') renderPlantLibrary();
+    if (typeof updateCard === 'function') updateCard();
+    if (typeof renderParentQuestsList === 'function') renderParentQuestsList();
+    if (typeof renderNotifications === 'function') renderNotifications();
+    if (typeof renderPlantLibrary === 'function') renderPlantLibrary();
 }
 
 function saveUserData() {
@@ -644,7 +672,7 @@ function loadUserStars() {
                         });
                     });
                 }
-                if(typeof renderUserInventory === 'function') renderUserInventory();
+                if (typeof renderUserInventory === 'function') renderUserInventory();
             });
         } else {
             unsubUserInventory = onValue(ref(db, `user_inventory/${currentUser}`), (snapshot) => {
@@ -653,7 +681,7 @@ function loadUserStars() {
                 if (val) {
                     Object.keys(val).forEach(k => userInventoryList.push({ owner: currentUser, ...val[k], originalInvId: val[k].invId, invId: k }));
                 }
-                if(typeof renderUserInventory === 'function') renderUserInventory();
+                if (typeof renderUserInventory === 'function') renderUserInventory();
             });
         }
     } else {
@@ -706,7 +734,7 @@ function loadUserStars() {
             const localInv = localStorage.getItem(`user_inventory_${currentUser}`);
             userInventoryList = localInv ? JSON.parse(localInv).map(i => ({ ...i, owner: currentUser })) : [];
         }
-        if(typeof renderUserInventory === 'function') renderUserInventory();
+        if (typeof renderUserInventory === 'function') renderUserInventory();
         checkDailyLimitStatus();
     }
 }
@@ -715,18 +743,28 @@ function updateUserLevelAndAvatarDisplay() {
     const lvlData = calculateLevelFromEXP(currentChildEXP);
     currentChildLevel = lvlData.level;
 
+    const expBarContainer = document.getElementById("exp-bar-container");
+    const userLevelTag = document.getElementById("user-level-tag");
+
     if (isParentUser || !currentUser) {
-        document.getElementById("exp-bar-container").classList.add("hidden");
-        document.getElementById("user-level-tag").classList.add("hidden");
+        if (expBarContainer) expBarContainer.classList.add("hidden");
+        if (userLevelTag) userLevelTag.classList.add("hidden");
     } else {
-        document.getElementById("user-level-tag").innerText = `Lv.${currentChildLevel}`;
-        document.getElementById("user-level-tag").classList.remove("hidden");
-        document.getElementById("exp-bar-container").classList.remove("hidden");
-        document.getElementById("exp-level-text").innerText = `Lv.${currentChildLevel}`;
-        
-        const pct = Math.min(100, Math.round((lvlData.currentLevelEXP / lvlData.nextLevelReqEXP) * 100));
-        document.getElementById("exp-progress").style.width = `${pct}%`;
-        document.getElementById("exp-val-text").innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
+        if (userLevelTag) {
+            userLevelTag.innerText = `Lv.${currentChildLevel}`;
+            userLevelTag.classList.remove("hidden");
+        }
+        if (expBarContainer) {
+            expBarContainer.classList.remove("hidden");
+            const expLvlText = document.getElementById("exp-level-text");
+            if (expLvlText) expLvlText.innerText = `Lv.${currentChildLevel}`;
+            
+            const pct = Math.min(100, Math.round((lvlData.currentLevelEXP / lvlData.nextLevelReqEXP) * 100));
+            const expProg = document.getElementById("exp-progress");
+            if (expProg) expProg.style.width = `${pct}%`;
+            const expValText = document.getElementById("exp-val-text");
+            if (expValText) expValText.innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
+        }
     }
 
     const heroNameEl = document.getElementById("hero-user-name");
@@ -735,34 +773,41 @@ function updateUserLevelAndAvatarDisplay() {
     const heroLvlBadgeEl = document.getElementById("hero-level-badge");
     const heroExpBar = document.getElementById("hero-exp-progress");
     const heroExpText = document.getElementById("hero-exp-text");
+    const heroExpContainer = document.getElementById("hero-exp-container");
 
     if (heroNameEl) {
         if (isParentUser) {
             heroNameEl.innerText = `${currentUser || 'ผู้ปกครอง'} (โหมดผู้ปกครอง)`;
-            heroLvlBadgeEl.innerText = `พ่อนะ / แม่พัด`;
-            heroImgEl.classList.add("hidden");
-            heroEmojiEl.classList.remove("hidden");
-            heroEmojiEl.innerText = currentUser === 'แม่พัด' ? '👩‍💼' : '👨‍💼';
-            document.getElementById("hero-exp-container").classList.add("hidden");
+            if (heroLvlBadgeEl) heroLvlBadgeEl.innerText = `พ่อนะ / แม่พัด`;
+            if (heroImgEl) heroImgEl.classList.add("hidden");
+            if (heroEmojiEl) {
+                heroEmojiEl.classList.remove("hidden");
+                heroEmojiEl.innerText = currentUser === 'แม่พัด' ? '👩‍💼' : '👨‍💼';
+            }
+            if (heroExpContainer) heroExpContainer.classList.add("hidden");
         } else {
             heroNameEl.innerText = `น้อง${currentUser || 'เด็กๆ'}`;
-            heroLvlBadgeEl.innerText = `Lv.${currentChildLevel}`;
-            document.getElementById("hero-exp-container").classList.remove("hidden");
+            if (heroLvlBadgeEl) heroLvlBadgeEl.innerText = `Lv.${currentChildLevel}`;
+            if (heroExpContainer) heroExpContainer.classList.remove("hidden");
             const pct = Math.min(100, Math.round((lvlData.currentLevelEXP / lvlData.nextLevelReqEXP) * 100));
-            heroExpBar.style.width = `${pct}%`;
-            heroExpText.innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
+            if (heroExpBar) heroExpBar.style.width = `${pct}%`;
+            if (heroExpText) heroExpText.innerText = `${lvlData.currentLevelEXP}/${lvlData.nextLevelReqEXP} EXP`;
 
             const childAvatars = levelAvatarsConfig[currentUser] || {};
             const customAvatarUrl = childAvatars[currentChildLevel];
 
             if (customAvatarUrl) {
-                heroImgEl.src = customAvatarUrl;
-                heroImgEl.classList.remove("hidden");
-                heroEmojiEl.classList.add("hidden");
+                if (heroImgEl) {
+                    heroImgEl.src = customAvatarUrl;
+                    heroImgEl.classList.remove("hidden");
+                }
+                if (heroEmojiEl) heroEmojiEl.classList.add("hidden");
             } else {
-                heroImgEl.classList.add("hidden");
-                heroEmojiEl.classList.remove("hidden");
-                heroEmojiEl.innerText = currentUser === 'เพลิน' ? '👧' : '👦';
+                if (heroImgEl) heroImgEl.classList.add("hidden");
+                if (heroEmojiEl) {
+                    heroEmojiEl.classList.remove("hidden");
+                    heroEmojiEl.innerText = currentUser === 'เพลิน' ? '👧' : '👦';
+                }
             }
         }
     }
@@ -822,21 +867,28 @@ function incrementTodayRounds() {
     checkDailyLimitStatus();
 }
 
-// ผสานฟังก์ชัน sendInAppNotification ไปยัง quest-shop.js เพื่อไม่ให้เกิดการนิยามซ้อนทับกัน
 function sendInAppNotification(type, payload) {
-    if (typeof window.sendInAppNotification === 'function' && window.sendInAppNotification !== sendInAppNotification) {
-        window.sendInAppNotification(type, payload);
+    if (isFirebaseActive && window.firebaseModules) {
+        const { ref, push, set } = window.firebaseModules;
+        const db = window.firebaseModules.getDatabase();
+        const notifyRef = ref(db, 'kids_notifications');
+        const newNotif = push(notifyRef);
+        set(newNotif, {
+            type,
+            payload,
+            timestamp: Date.now(),
+            read: false
+        }).catch(err => console.error("Notification push error:", err));
     }
 }
 
+// อัปเดต checkDailyLimitStatus() โดยตัด canvas และปุ่ม Town Builder ออก
 function checkDailyLimitStatus() {
     const limitBanner = document.getElementById("daily-limit-banner");
     const checkBtn = document.getElementById("btn-check-answer");
     const mathCombineBtn = document.querySelector("#game-math-container button[onclick='executeMathCombination()']");
     const tdBtns = document.querySelectorAll('.td-choice-btn');
     const tdUltBtn = document.getElementById('td-ultimate-btn');
-    const buildCanvas = document.getElementById("townGameCanvas");
-    const buildBtns = document.querySelectorAll('#controls button');
     const quotaText = document.getElementById("daily-quota-text");
     const limitRoundsText = document.getElementById("limit-rounds-text");
 
@@ -853,16 +905,12 @@ function checkDailyLimitStatus() {
             if (mathCombineBtn) { mathCombineBtn.disabled = true; mathCombineBtn.classList.add("opacity-50", "cursor-not-allowed"); }
             if (tdBtns) tdBtns.forEach(btn => { btn.disabled = true; btn.classList.add("opacity-50", "cursor-not-allowed"); });
             if (tdUltBtn) { tdUltBtn.disabled = true; tdUltBtn.classList.add("opacity-50", "cursor-not-allowed"); }
-            if (buildCanvas) { buildCanvas.style.pointerEvents = "none"; buildCanvas.classList.add("opacity-50"); }
-            if (buildBtns) buildBtns.forEach(btn => { btn.disabled = true; btn.classList.add("opacity-50", "cursor-not-allowed"); });
         } else {
             if (limitBanner) limitBanner.classList.add("hidden");
             if (checkBtn) { checkBtn.disabled = false; checkBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
             if (mathCombineBtn) { mathCombineBtn.disabled = false; mathCombineBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
             if (tdBtns) tdBtns.forEach(btn => { btn.disabled = false; btn.classList.remove("opacity-50", "cursor-not-allowed"); });
             if (tdUltBtn) { tdUltBtn.disabled = false; tdUltBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
-            if (buildCanvas) { buildCanvas.style.pointerEvents = "auto"; buildCanvas.classList.remove("opacity-50"); }
-            if (buildBtns) buildBtns.forEach(btn => { btn.disabled = false; btn.classList.remove("opacity-50", "cursor-not-allowed"); });
         }
     } else {
         if (limitBanner) limitBanner.classList.add("hidden");
@@ -871,8 +919,6 @@ function checkDailyLimitStatus() {
         if (mathCombineBtn) { mathCombineBtn.disabled = false; mathCombineBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
         if (tdBtns) tdBtns.forEach(btn => { btn.disabled = false; btn.classList.remove("opacity-50", "cursor-not-allowed"); });
         if (tdUltBtn) { tdUltBtn.disabled = false; tdUltBtn.classList.remove("opacity-50", "cursor-not-allowed"); }
-        if (buildCanvas) { buildCanvas.style.pointerEvents = "auto"; buildCanvas.classList.remove("opacity-50"); }
-        if (buildBtns) buildBtns.forEach(btn => { btn.disabled = false; btn.classList.remove("opacity-50", "cursor-not-allowed"); });
     }
 }
 
@@ -901,19 +947,27 @@ function updateStorageProgressBar() {
 function openKeyModal() { 
     if (!isParentUser) { alert("เข้าใช้งานได้เฉพาะพ่อนะ และ แม่พัด เท่านั้นครับ!"); return; }
     updateStorageProgressBar();
-    document.getElementById("key-modal").classList.remove("hidden"); 
+    const kModal = document.getElementById("key-modal");
+    if (kModal) kModal.classList.remove("hidden"); 
 }
-function closeKeyModal() { document.getElementById("key-modal").classList.add("hidden"); }
+function closeKeyModal() { 
+    const kModal = document.getElementById("key-modal");
+    if (kModal) kModal.classList.add("hidden"); 
+}
 
 function saveApiKey() {
     if (!isParentUser) return;
 
-    const key = document.getElementById("input-api-key").value.trim();
-    const newPin = document.getElementById("input-parent-pin").value.trim();
-    const fbConfig = document.getElementById("input-firebase-config").value.trim();
+    const key = (document.getElementById("input-api-key")?.value || "").trim();
+    const newPin = (document.getElementById("input-parent-pin")?.value || "").trim();
+    const fbConfig = (document.getElementById("input-firebase-config")?.value || "").trim();
 
-    isDailyLimitEnabled = document.getElementById("input-enable-daily-limit").checked;
-    dailyLimitRounds = parseInt(document.getElementById("input-daily-limit-rounds").value || "3", 10);
+    const limitCheck = document.getElementById("input-enable-daily-limit");
+    if (limitCheck) isDailyLimitEnabled = limitCheck.checked;
+    
+    const limitRoundsInput = document.getElementById("input-daily-limit-rounds");
+    if (limitRoundsInput) dailyLimitRounds = parseInt(limitRoundsInput.value || "3", 10);
+
     localStorage.setItem("enable_daily_limit", isDailyLimitEnabled ? "true" : "false");
     localStorage.setItem("daily_limit_rounds", dailyLimitRounds.toString());
 
@@ -942,18 +996,24 @@ function saveApiKey() {
 function openLevelAvatarModal() {
     if (!isParentUser) return;
     closeKeyModal();
-    if(typeof renderLevelAvatarList === 'function') renderLevelAvatarList();
-    document.getElementById("level-avatar-modal").classList.remove("hidden");
+    if (typeof renderLevelAvatarList === 'function') renderLevelAvatarList();
+    const lvlModal = document.getElementById("level-avatar-modal");
+    if (lvlModal) lvlModal.classList.remove("hidden");
 }
-function closeLevelAvatarModal() { document.getElementById("level-avatar-modal").classList.add("hidden"); }
+function closeLevelAvatarModal() { 
+    const lvlModal = document.getElementById("level-avatar-modal");
+    if (lvlModal) lvlModal.classList.add("hidden"); 
+}
 
 function updateMaxLevelSetting() {
     if (!isParentUser) return;
-    const val = parseInt(document.getElementById("input-max-level").value, 10);
+    const inputEl = document.getElementById("input-max-level");
+    if (!inputEl) return;
+    const val = parseInt(inputEl.value, 10);
     if (!isNaN(val) && val >= 1 && val <= 50) {
         maxLevel = val;
         saveLevelConfigToStorage();
-        if(typeof renderLevelAvatarList === 'function') renderLevelAvatarList();
+        if (typeof renderLevelAvatarList === 'function') renderLevelAvatarList();
     }
 }
 
@@ -973,18 +1033,21 @@ function switchLevelConfigChild(child) {
     const btnPoon = document.getElementById("lvl-btn-poon");
     const btnPloern = document.getElementById("lvl-btn-ploern");
 
-    if (child === 'พูน') {
-        btnPoon.className = "flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs";
-        btnPloern.className = "flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600";
-    } else {
-        btnPloern.className = "flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs";
-        btnPoon.className = "flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600";
+    if (btnPoon && btnPloern) {
+        if (child === 'พูน') {
+            btnPoon.className = "flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs";
+            btnPloern.className = "flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600";
+        } else {
+            btnPloern.className = "flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs";
+            btnPoon.className = "flex-1 py-1.5 rounded-xl text-xs font-bold text-slate-600";
+        }
     }
-    if(typeof renderLevelAvatarList === 'function') renderLevelAvatarList();
+    if (typeof renderLevelAvatarList === 'function') renderLevelAvatarList();
 }
 
 function renderLevelAvatarList() {
     const container = document.getElementById("level-avatar-list");
+    if (!container) return;
     const childAvatars = levelAvatarsConfig[selectedLvlConfigChild] || {};
     let html = '';
     for (let i = 1; i <= maxLevel; i++) {
@@ -1053,7 +1116,6 @@ function deleteLevelAvatar(child, lvl) {
     }
 }
 
-// ฟังก์ชันล้าง Cache ของ Service Worker ทั้งหมดและรีเฟรชหน้าเว็บใหม่
 async function clearAppCacheAndReload() {
     if (!isParentUser) {
         alert("เฉพาะ พ่อนะ หรือ แม่พัด เท่านั้นที่สามารถล้างแคชระบบได้ครับ!");

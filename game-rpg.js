@@ -98,7 +98,6 @@ function updateRPGUI() {
             } else {
                 btnEl.disabled = false;
                 btnEl.innerText = "อัปเกรด (+1 SP)";
-                // --- ปุ่มสีส้มทองขอบหนาสไตล์มาริโอ้ ---
                 btnEl.className = "px-3 py-1.5 bg-amber-400 hover:bg-amber-500 text-amber-950 border-2 border-amber-600 font-black text-xs rounded-xl shadow-[0_4px_0_0_#b45309] active:scale-95 active:translate-y-1 active:shadow-none transition-all";
             }
         }
@@ -148,14 +147,19 @@ function useSkipMissionSkill() {
 
     if (confirm("✨ ต้องการใช้คาถาข้ามเวลาเพื่อผ่านภารกิจถ่ายรูปนี้เลยไหม?")) {
         alert("🪄 ปิ๊ง! เวทมนตร์ข้ามเวลาทำงาน ผ่านภารกิจถ่ายรูปสำเร็จแล้ว!");
-        if (generatedStoryData && generatedStoryData.pages && generatedStoryData.pages[currentStoryPage]) {
-            generatedStoryData.pages[currentStoryPage].isPassed = true;
-            if (typeof closeCameraForStory === 'function') closeCameraForStory();
-            if (currentStoryPage < generatedStoryData.pages.length - 1) {
-                currentStoryPage++;
-                if (typeof renderStoryPage === 'function') renderStoryPage();
-            } else {
-                if (typeof triggerStoryCompletionModal === 'function') triggerStoryCompletionModal();
+        if (typeof generatedStoryData !== 'undefined' && generatedStoryData && generatedStoryData.pages) {
+            const pageIdx = typeof currentStoryPage !== 'undefined' ? currentStoryPage : 0;
+            if (generatedStoryData.pages[pageIdx]) {
+                generatedStoryData.pages[pageIdx].isPassed = true;
+                if (typeof closeCameraForStory === 'function') closeCameraForStory();
+                if (typeof currentStoryPage !== 'undefined') {
+                    if (currentStoryPage < generatedStoryData.pages.length - 1) {
+                        currentStoryPage++;
+                        if (typeof renderStoryPage === 'function') renderStoryPage();
+                    } else {
+                        if (typeof triggerStoryCompletionModal === 'function') triggerStoryCompletionModal();
+                    }
+                }
             }
         }
     }

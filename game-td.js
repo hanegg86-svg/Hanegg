@@ -25,7 +25,7 @@ let tdWaveNoticeTimer = 120, tdWaveNoticeText = "WAVE 1", tdAnimationRequestId =
 
 let tdBossWaveStage = 0; 
 let tdMinionsSpawnedCount = 0;
-let tdBossDefeated = false; // 
+let tdBossDefeated = false; 
 
 let tdDifficulty = 'easy';
 
@@ -57,7 +57,7 @@ function applyUserSkillBuffs() {
 
     if (kLvl > 0) {
         tdSkillBuffs.speedReduce = kLvl * 0.05;
-        tdSkillBuffs.textList.push(`  Lv.${kLvl}:  -${kLvl * 5}%`);
+        tdSkillBuffs.textList.push(`ความรู้ Lv.${kLvl}: ลดความเร็วศัตรู -${kLvl * 5}%`);
     }
 
     if (fLvl > 0) {
@@ -67,14 +67,14 @@ function applyUserSkillBuffs() {
         else if (fLvl >= 3) ultBonus = 1;
         tdSkillBuffs.bonusUlt = ultBonus;
 
-        let ultText = ultBonus > 0 ? ` |  +${ultBonus}` : '';
-        tdSkillBuffs.textList.push(`  Lv.${fLvl}: Max HP +${fLvl}${ultText}`);
+        let ultText = ultBonus > 0 ? ` | ไม้ตาย +${ultBonus}` : '';
+        tdSkillBuffs.textList.push(`พลังกาย Lv.${fLvl}: Max HP +${fLvl}${ultText}`);
     }
 
     if (wLvl > 0) {
         tdSkillBuffs.bonusCoins = wLvl * 50;
         tdSkillBuffs.shopDiscount = wLvl * 0.05;
-        tdSkillBuffs.textList.push(`  Lv.${wLvl}:  +${wLvl * 50} |  ${wLvl * 5}%`);
+        tdSkillBuffs.textList.push(`ความร่ำรวย Lv.${wLvl}: เหรียญเริ่มต้น +${wLvl * 50} | ส่วนลดร้านค้า ${wLvl * 5}%`);
     }
 }
 
@@ -91,9 +91,7 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.lineTo(x + width - radius, y);
     ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
     ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + height);
-    ctx.lineTo(x + radius, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
     ctx.lineTo(x + radius, y + height);
     ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
     ctx.lineTo(x, y + radius);
@@ -180,8 +178,8 @@ class TDEnemy {
             if (currentWave >= 2) availableOps.push('-');
         } else {
             if (currentWave >= 3) availableOps.push('-');
-            if (currentWave >= 6) availableOps.push('');
-            if (currentWave >= 8) availableOps.push('');
+            if (currentWave >= 6) availableOps.push('*');
+            if (currentWave >= 8) availableOps.push('/');
             if (currentWave >= 13) availableOps.push('^');
         }
 
@@ -192,27 +190,29 @@ class TDEnemy {
             const max = 10 + currentWave * 3;
             num1 = Math.floor(Math.random() * max) + 1;
             num2 = Math.floor(Math.random() * max) + 1;
-            question = `${num1} + ${num2}`; answer = num1 + num2;
+            question = `${num1} + ${num2}`; 
+            answer = num1 + num2;
         } else if (op === '-') {
             const max = 15 + currentWave * 3;
             num1 = Math.floor(Math.random() * max) + 5;
             num2 = Math.floor(Math.random() * (num1 - 1)) + 1;
-            question = `${num1} - ${num2}`; answer = num1 - num2;
-        } else if (op === '') {
+            question = `${num1} - ${num2}`; 
+            answer = num1 - num2;
+        } else if (op === '*') {
             num1 = Math.floor(Math.random() * 10) + 2;
             num2 = Math.floor(Math.random() * 10) + 2;
-            question = `${num1}  ${num2}`; answer = num1 * num2;
-        } else if (op === '') {
+            question = `${num1} × ${num2}`; 
+            answer = num1 * num2;
+        } else if (op === '/') {
             num2 = Math.floor(Math.random() * 9) + 2;
             answer = Math.floor(Math.random() * 10) + 2;
             num1 = num2 * answer;
-            question = `${num1}  ${num2}`;
+            question = `${num1} ÷ ${num2}`;
         } else if (op === '^') {
             num1 = Math.floor(Math.random() * 5) + 1;
             num2 = Math.floor(Math.random() * 2) + 2;
             answer = Math.pow(num1, num2);
-            
-            const superscriptMap = { '2': '', '3': '' };
+            const superscriptMap = { '2': '²', '3': '³' };
             question = `${num1}${superscriptMap[num2] || '^' + num2}`;
         }
         return { question, answer };
@@ -411,13 +411,13 @@ function updateTDCoinsUI() {
     const pTurret = getShopPrice(400);
 
     const freezeText = document.getElementById('td-buy-freeze-text');
-    if (freezeText) freezeText.innerText = ` ${pFreeze}`;
+    if (freezeText) freezeText.innerText = `🪙 ${pFreeze}`;
 
     const heartText = document.getElementById('td-buy-heart-text');
-    if (heartText) heartText.innerText = ` ${pHeart}`;
+    if (heartText) heartText.innerText = `🪙 ${pHeart}`;
 
     const ultText = document.getElementById('td-buy-ult-text');
-    if (ultText) ultText.innerText = ` ${pUlt}`;
+    if (ultText) ultText.innerText = `🪙 ${pUlt}`;
 
     const bowBtn = document.getElementById('td-buy-bow-btn');
     const bowText = document.getElementById('td-buy-bow-text');
@@ -426,7 +426,7 @@ function updateTDCoinsUI() {
             bowText.innerText = "MAX";
             bowBtn.classList.add("opacity-50");
         } else {
-            bowText.innerText = ` ${pBow}`;
+            bowText.innerText = `🪙 ${pBow}`;
             bowBtn.classList.remove("opacity-50");
         }
     }
@@ -438,7 +438,7 @@ function updateTDCoinsUI() {
             turretText.innerText = "MAX";
             turretBtn.classList.add("opacity-50");
         } else {
-            turretText.innerText = ` ${pTurret}`;
+            turretText.innerText = `🪙 ${pTurret}`;
             turretBtn.classList.remove("opacity-50");
         }
     }
@@ -446,7 +446,7 @@ function updateTDCoinsUI() {
 
 function buyTDFreeze() {
     const price = getShopPrice(100);
-    if (tdCoins < price) { alert(`! ( ${price} )`); return; }
+    if (tdCoins < price) { alert(`เหรียญทองไม่พอ! (ต้องการ ${price} เหรียญ)`); return; }
     tdCoins -= price;
     tdFreezeTimer = 300; 
     updateTDCoinsUI();
@@ -454,7 +454,7 @@ function buyTDFreeze() {
 
 function buyTDHeart() {
     const price = getShopPrice(200);
-    if (tdCoins < price) { alert(`! ( ${price} )`); return; }
+    if (tdCoins < price) { alert(`เหรียญทองไม่พอ! (ต้องการ ${price} เหรียญ)`); return; }
     tdCoins -= price;
     tdHp += 3;
     const hpEl = document.getElementById('td-hp'); if (hpEl) hpEl.innerText = tdHp;
@@ -463,7 +463,7 @@ function buyTDHeart() {
 
 function buyTDUltimate() {
     const price = getShopPrice(300);
-    if (tdCoins < price) { alert(`! ( ${price} )`); return; }
+    if (tdCoins < price) { alert(`เหรียญทองไม่พอ! (ต้องการ ${price} เหรียญ)`); return; }
     tdCoins -= price;
     tdUltimateCount += 1;
     updateTDUltUI();
@@ -471,23 +471,23 @@ function buyTDUltimate() {
 }
 
 function buyTDUpgradeTower() {
-    if (tdMultiShotUnlocked) { alert(" 2 !"); return; }
+    if (tdMultiShotUnlocked) { alert("อัปเกรดโจมตี 2 เป้าหมายระดับสูงสุดแล้ว!"); return; }
     const price = getShopPrice(400);
-    if (tdCoins < price) { alert(`! ( ${price} )`); return; }
+    if (tdCoins < price) { alert(`เหรียญทองไม่พอ! (ต้องการ ${price} เหรียญ)`); return; }
     tdCoins -= price;
     tdMultiShotUnlocked = true;
     updateTDCoinsUI();
-    alert("!  2 !");
+    alert("อัปเกรดสำเร็จ! การโจมตีธรรมดาจะโดน 2 เป้าหมายพร้อมกัน!");
 }
 
 function buyTDAutoTurret() {
-    if (tdAutoTurretUnlocked) { alert("!"); return; }
+    if (tdAutoTurretUnlocked) { alert("ติดตั้งป้อมปืนกลอัตโนมัติแล้ว!"); return; }
     const price = getShopPrice(400);
-    if (tdCoins < price) { alert(`! ( ${price} )`); return; }
+    if (tdCoins < price) { alert(`เหรียญทองไม่พอ! (ต้องการ ${price} เหรียญ)`); return; }
     tdCoins -= price;
     tdAutoTurretUnlocked = true;
     updateTDCoinsUI();
-    alert("!  2 !");
+    alert("ติดตั้งสำเร็จ! ป้อมปืนกลจะช่วยยิงเป้าหมายที่ 2 ทุกๆ การตอบ 2 ครั้ง!");
 }
 
 function drawTDHero() {
@@ -582,7 +582,7 @@ function checkGameEndState() {
 
 function useTDUltimate() {
     if (tdUltimateCount <= 0) {
-        alert("!");
+        alert("พลังท่าไม้ตายหมดแล้ว!");
         return;
     }
 
@@ -647,7 +647,7 @@ function updateTDUltUI() {
 function updateTDTargetAndChoices() {
     if (tdEnemies.length === 0) {
         tdCurrentTarget = null;
-        if (tdQuestionDisplay) tdQuestionDisplay.innerText = tdIsGameCleared ? "!" : (tdHp <= 0 ? "" : "...");
+        if (tdQuestionDisplay) tdQuestionDisplay.innerText = tdIsGameCleared ? "ผ่านด่านสำเร็จ!" : (tdHp <= 0 ? "พ่ายแพ้ในเวฟนี้" : "รอศัตรูปรากฏตัว...");
         if (tdChoiceBtns) tdChoiceBtns.forEach(btn => btn.innerText = "-");
         return;
     }
@@ -656,7 +656,7 @@ function updateTDTargetAndChoices() {
     if (!isCurrentTargetAlive) {
         const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
         tdCurrentTarget = sortedEnemies[0];
-        if (tdQuestionDisplay) tdQuestionDisplay.innerText = `: ${tdCurrentTarget.question} = ?`;
+        if (tdQuestionDisplay) tdQuestionDisplay.innerText = `เป้าหมายหลัก: ${tdCurrentTarget.question} = ?`;
         generateTDChoices(tdCurrentTarget.answer);
     }
 }
@@ -694,7 +694,7 @@ function selectTDChoice(index) {
         createTDSlashWave(tdHero.x, tdHero.y, targetEnemy.x, targetEnemy.y);
         createTDExplosion(targetEnemy.x, targetEnemy.y);
 
-        targetEnemy.hp -= 1; //  = 1
+        targetEnemy.hp -= 1;
 
         if (targetEnemy.hp <= 0) {
             targetEnemy.dead = true;
@@ -707,7 +707,6 @@ function selectTDChoice(index) {
             targetEnemy.resetQuestion();
         }
 
-        //  2  Multi-shot ()
         if (tdMultiShotUnlocked && tdEnemies.length > 0) {
             const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
             const secondTarget = sortedEnemies.find(e => e.id !== targetEnemy.id && !e.dead);
@@ -755,7 +754,6 @@ function selectTDChoice(index) {
 
     if (tdAutoTurretUnlocked && tdTotalAnswersCount % 2 === 0 && tdEnemies.length > 0) {
         const sortedEnemies = [...tdEnemies].sort((a, b) => b.progress - a.progress);
-        
         let turretTarget = (sortedEnemies.length > 1) ? sortedEnemies[1] : sortedEnemies[0];
 
         if (turretTarget) {
@@ -792,7 +790,7 @@ function nextTDWave() {
         tdBossWaveStage = 0;
         tdMinionsSpawnedCount = 0;
         tdBossDefeated = false;
-        tdWaveNoticeText = " FINAL BOSS WAVE! ";
+        tdWaveNoticeText = "👑 FINAL BOSS WAVE! 👑";
     } else {
         tdWaveNoticeText = `WAVE ${tdWave} CLEAR!`;
     }
@@ -831,10 +829,19 @@ function triggerTDCompletionModal(finalScore) {
         if (typeof addEXPToUser === 'function') addEXPToUser(trophiesEarned * 50);
         if (typeof incrementTodayRounds === 'function') incrementTodayRounds();
 
-        const countEl = document.getElementById("summary-total-count"); if (countEl) countEl.innerText = `${finalScore}  (Math TD - ${tdDifficulty.toUpperCase()})`;
-        const starsEl = document.getElementById("summary-stars-earned"); if (starsEl) { starsEl.innerText = ` ${trophiesEarned} `; starsEl.className = "text-sm text-amber-500 font-bold"; }
-        const expEl = document.getElementById("summary-exp-earned"); if (expEl) expEl.innerText = `+${trophiesEarned * 50} EXP`;
-        const modal = document.getElementById("completion-modal"); if (modal) modal.classList.remove("hidden");
+        const countEl = document.getElementById("summary-total-count"); 
+        if (countEl) countEl.innerText = `${finalScore} คะแนน (Math TD - ${tdDifficulty.toUpperCase()})`;
+        
+        const starsEl = document.getElementById("summary-stars-earned"); 
+        if (starsEl) { 
+            starsEl.innerText = `🏆 ถ้วยทอง ${trophiesEarned} ใบ`; 
+            starsEl.className = "text-sm text-amber-500 font-bold"; 
+        }
+        const expEl = document.getElementById("summary-exp-earned"); 
+        if (expEl) expEl.innerText = `+${trophiesEarned * 50} EXP`;
+        
+        const modal = document.getElementById("completion-modal"); 
+        if (modal) modal.classList.remove("hidden");
     }
 }
 
@@ -945,7 +952,7 @@ function tdGameLoop() {
             tdCtx.fillStyle = '#4F46E5';
             tdCtx.font = 'bold 20px "Anuphan", "Fredoka", sans-serif';
             tdCtx.textAlign = 'center';
-            tdCtx.fillText(`  ${currentUser || ''} `, tdCanvas.width / 2, boxY + 30);
+            tdCtx.fillText(`บัฟพิเศษประจำตัวน้อง ${currentUser || ''} ✨`, tdCanvas.width / 2, boxY + 30);
 
             tdCtx.font = 'bold 13px "Anuphan", "Fredoka", sans-serif';
             tdCtx.fillStyle = '#1F2937';
@@ -975,10 +982,10 @@ function tdGameLoop() {
         tdCtx.fillStyle = '#FF70A6';
         tdCtx.font = 'bold 44px "Anuphan", "Fredoka", sans-serif';
         tdCtx.textAlign = 'center';
-        tdCtx.fillText(' VICTORY! ', tdCanvas.width / 2, tdCanvas.height / 2 - 20);
+        tdCtx.fillText('🎉 VICTORY! 🎉', tdCanvas.width / 2, tdCanvas.height / 2 - 20);
         tdCtx.fillStyle = '#4A5568';
         tdCtx.font = '20px "Anuphan", "Fredoka", sans-serif';
-        tdCtx.fillText('!', tdCanvas.width / 2, tdCanvas.height / 2 + 20);
+        tdCtx.fillText('คุณสามารถพิชิตทุกเวฟได้สำเร็จ!', tdCanvas.width / 2, tdCanvas.height / 2 + 20);
         tdCtx.fillText(`Final Score: ${tdScore}`, tdCanvas.width / 2, tdCanvas.height / 2 + 55);
 
         if (tdAnimationRequestId) cancelAnimationFrame(tdAnimationRequestId);
