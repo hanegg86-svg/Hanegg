@@ -1,42 +1,43 @@
-// sw.js - Service Worker สำหรับจัดการ Offline Cache และบังคับเคลียร์แคชเวอร์ชันเก่าทันที (Force Clear)
+// sw.js - Service Worker for Han Vocab & Learning Games
+const CACHE_NAME = 'han-vocab-cache-v2';
 
-const CACHE_NAME = 'kids-vocab-v18';
-
-// รายการไฟล์ทั้งหมดที่ต้องดึงมาเก็บใน Cache เพื่อใช้งานแบบออฟไลน์
+// รายการไฟล์ที่ต้องการทำ Pre-cache (ตัด Asset ของ Town Builder ออกทั้งหมดแล้ว)
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './manifest.json',
-    './Icon.png',
-    './Icon.png?v=5',
-    './luigi.png',
-    './rosalina.png',
+    './core.js',
+    './game-vocab.js',
+    './game-math.js',
+    './game-td.js',
+    './game-plant.js',
+    './game-rpg.js',
+    './game-farm.js',
     './mario.png',
+    './luigi.png',
     './peach.png',
-    './core.js?v=5',
-    './quest-shop.js?v=8',
-    './minigames-main.js?v=5',
-    './game-vocab.js?v=9',
-    './game-math.js?v=5',
-    './game-td.js?v=5',
-    './game-number-dungeon.js?v=5',
-    './game-build2.js',
-    './game-plant.js?v=5',
-    './game-farm.js?v=5'
+    './rosalina.png',
+    './mushroom.png',
+    './turtle.png',
+    './boss.png'
 ];
 
-// 1. ขั้นตอน Install: บังคับให้ Service Worker ตัวใหม่เปิดใช้งานทันที (skipWaiting)
+// 1. ติดตั้ง Service Worker และบันทึกไฟล์แคชใหม่
 self.addEventListener('install', (event) => {
+    // บังคับให้ Service Worker ตัวใหม่ทำงานทันที ไม่ต้องรอปิดแท็บเก่า
     self.skipWaiting();
+    
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[Service Worker] Caching all app assets (v18)');
+            console.log('[Service Worker] Caching app shell & active minigames');
             return cache.addAll(ASSETS_TO_CACHE);
+        }).catch((err) => {
+            console.warn('[Service Worker] Pre-cache failed for some assets:', err);
         })
     );
 });
 
-// 2. ขั้นตอน Activate: กวาดล้างแคชเก่าทิ้งทั้งหมด และเข้ายึดการควบคุมทุกแท็บทันที (clients.claim)
+// 2. เคลียร์แคชเก่าทั้งหมดทันทีที่ Service Worker ตัวใหม่ Activate
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -49,58 +50,59 @@ self.addEventListener('activate', (event) => {
                 })
             );
         }).then(() => {
+            // เข้าควบคุมหน้าเว็บทั้งหมดทันที
             return self.clients.claim();
         })
     );
 });
 
-// 3. ขั้นตอน Fetch: ดึงหน้าหลัก (index.html) จาก Network ก่อนเสมอเพื่อรับ UI ล่าสุด
+// 3. ดักจับการ Request ไฟล์ (Network First หรือ Cache Fallback)
 self.addEventListener('fetch', (event) => {
-    // ข้ามการแคชคำขอไปยัง Google Gemini API และ Firebase Database
-    if (event.request.url.includes('generativelanguage.googleapis.com') || 
-        event.request.url.includes('firebaseio.com') ||
-        event.request.url.includes('googleapis.com')) {
+    const requestUrl = new URL(event.request.url);
+
+    // ข้ามการแคชสำหรับ Firebase Realtime Database, Gemini API และภายนอก
+    if (
+        event.request.method !== 'GET' ||
+        requestUrl.origin !== self.location.origin ||
+        requestUrl.pathname.includes('/v1beta/models') ||
+        requestUrl.hostname.includes('firebaseio.com') ||
+        requestUrl.hostname.includes('googleapis.com')
+    ) {
         return;
     }
 
-    // สำหรับคำขอหน้าหลักและ Navigation: ดึงจาก Network ก่อนเสมอ หากออฟไลน์จึงเปิดจากแคช
-    if (event.request.mode === 'navigate' || event.request.url.endsWith('index.html') || event.request.url.endsWith('/')) {
-        event.respondWith(
-            fetch(event.request)
-                .then((networkResponse) => {
-                    if (networkResponse && networkResponse.status === 200) {
-                        const responseClone = networkResponse.clone();
-                        caches.open(CACHE_NAME).then((cache) => {
-                            cache.put(event.request, responseClone);
-                        });
-                    }
-                    return networkResponse;
-                })
-                .catch(() => {
-                    return caches.match('./index.html').then((res) => res || caches.match('./'));
-                })
-        );
-        return;
-    }
-
-    // สำหรับไฟล์ Assets อื่นๆ: ตรวจสอบจาก Cache ก่อน หากไม่มีจึงดึงจาก Network
+    // กลยุทธ์ Stale-While-Revalidate: ดึงจากแคชเพื่อความเร็ว แล้วอัปเดตจากเครือข่ายเบื้องหลัง
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                return cachedResponse;
-            }
-            return fetch(event.request).then((networkResponse) => {
-                if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-                    return networkResponse;
+        caches.open(CACHE_NAME).then(async (cache) => {
+            const cachedResponse = await cache.match(event.request);
+            
+            const fetchPromise = fetch(event.request).then((networkResponse) => {
+                if (networkResponse && networkResponse.status === 200) {
+                    cache.put(event.request, networkResponse.clone());
                 }
-
-                const responseToCache = networkResponse.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, responseToCache);
-                });
-
                 return networkResponse;
+            }).catch(() => {
+                return cachedResponse;
             });
+
+            return cachedResponse || fetchPromise;
         })
     );
+});
+
+// 4. รับ Event การสั่งล้างแคชจากหน้าบ้าน (Manual Clear Cache Command)
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.action === 'skipWaiting') {
+        self.skipWaiting();
+    } else if (event.data && event.data.action === 'clearCache') {
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cache) => caches.delete(cache))
+            );
+        }).then(() => {
+            if (event.ports && event.ports[0]) {
+                event.ports[0].postMessage({ success: true });
+            }
+        });
+    }
 });
