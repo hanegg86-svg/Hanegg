@@ -447,13 +447,20 @@ function updateFarmSpeedButtonUI() {
     }
 }
 
-function checkFarmPestSpawns() {
+let farmPestCheckAccumulator = 0;
+function checkFarmPestSpawns(deltaSec = 0) {
+    farmPestCheckAccumulator += deltaSec;
+    // เว้นระยะการตรวจสอบการเกิดแมลงเป็นทุก 60 วินาที
+    if (farmPestCheckAccumulator < 60) return;
+    farmPestCheckAccumulator = 0;
+
     const now = Date.now();
     let newPestCount = 0;
     farmState.plots.forEach(plot => {
         if (!plot.isUnlocked || !plot.cropId || plot.hasPest) return;
         if (plot.pestProtectedUntil && plot.pestProtectedUntil > now) return;
-        if (Math.random() < 0.015) {
+        // โอกาสเกิด 12% ต่อแปลงที่มีพืชและไม่ได้ป้องกัน เมื่อครบระยะเวลาเช็ก
+        if (Math.random() < 0.12) {
             plot.hasPest = true;
             newPestCount++;
         }
@@ -594,17 +601,21 @@ function updateFarmRealTimeGrowth() {
 
     updateFarmWindmillSystem(elapsedDeltaSec);
     updateFarmStormCycle();
-    checkFarmPestSpawns();
+    checkFarmPestSpawns(elapsedDeltaSec);
 
     let activePests = 0;
     farmState.plots.forEach(plot => {
         if (!plot.isUnlocked) return;
-        if (plot.hasPest) { activePests++; return; }
+        if (plot.hasPest) {
+            activePests++;
+        }
         if (!plot.cropId) return;
         const cropConfig = FARM_CROPS_CONFIG[plot.cropId];
         if (!cropConfig) return;
         if (plot.isWatered) {
-            plot.growthProgressSec = Math.min(cropConfig.durationSec, plot.growthProgressSec + elapsedDeltaSec);
+            // เมื่อมีแมลง ให้พืชโตช้าลง 50% แทนการหยุดโตสนิท
+            const growthRate = plot.hasPest ? 0.5 : 1.0;
+            plot.growthProgressSec = Math.min(cropConfig.durationSec, plot.growthProgressSec + (elapsedDeltaSec * growthRate));
         }
     });
 
@@ -698,7 +709,7 @@ function renderFarmPlotsUI() {
             const pestOverlayHtml = plot.hasPest ? `
                 <div class="absolute inset-0 bg-rose-950/60 backdrop-blur-xs flex flex-col items-center justify-center p-1 z-20 animate-pulse">
                     <span class="text-2xl pest-active">🐛</span>
-                    <span class="text-[8px] font-black text-rose-300 bg-rose-900 px-1 rounded mt-0.5">หนอนบุก!</span>
+                    <span class="text-[8px] font-black text-rose-300 bg-rose-900 px-1 rounded mt-0.5">หนอนบุก! โตช้าลง 50%</span>
                 </div>
             ` : '';
 
@@ -1113,9 +1124,12 @@ async function initFarmGame() {
         const now = Date.now();
         const offlineSec = Math.max(0, (now - (farmState.lastTickTimestamp || now)) / 1000);
         farmState.plots.forEach(plot => {
-            if (plot.isUnlocked && plot.cropId && plot.isWatered && !plot.hasPest) {
+            if (plot.isUnlocked && plot.cropId && plot.isWatered) {
                 const crop = FARM_CROPS_CONFIG[plot.cropId];
-                if (crop) plot.growthProgressSec = Math.min(crop.durationSec, plot.growthProgressSec + offlineSec);
+                if (crop) {
+                    const rate = plot.hasPest ? 0.5 : 1.0;
+                    plot.growthProgressSec = Math.min(crop.durationSec, plot.growthProgressSec + (offlineSec * rate));
+                }
             }
         });
         farmState.lastTickTimestamp = now;

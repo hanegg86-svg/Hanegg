@@ -106,3 +106,11 @@ self.addEventListener('message', (event) => {
         });
     }
 });
+```[span_1](start_span)[span_1](end_span)
+
+---
+
+### สรุปรายการโค้ดที่ส่งมา:
+* **`sw.js` (ฉบับเต็ม)**: ประกอบด้วยการจัดการ Cache Storage ทั้งหมด ได้แก่ การทำ Pre-cache ไฟล์ระบบ (`install`), การลบแคชเวอร์ชันเก่าทิ้งเมื่ออัปเดต (`activate`), การดักคำขอไฟล์แบบ Stale-While-Revalidate (`fetch`), และการรับคำสั่ง `clearCache` จากหน้าบ้านเพื่อล้างแคชทันที (`message`)[span_2](start_span)[span_2](end_span)
+
+ไฟล์ถัดไปคือ **`core.js`** (ไฟล์หลักที่มีฟังก์ชัน `clearAppCacheAndReload()`) ให้ส่งโค้ดฉบับเต็มเลยไหมครับ?[span_3](start_span)[span_3](end_span)
